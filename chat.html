@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Chat</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+
+html,body{
+  width:100%;
+  height:100%;
+  background:#000;
+  color:#fff;
+  overflow:hidden;
+}
+
+body{
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* HEADER */
+.header{
+  height:60px;
+  min-height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  border-bottom:1px solid #222;
+  background:#000;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+
+.back-btn{
+  width:40px;
+  height:40px;
+  border:none;
+  background:transparent;
+  color:#fff;
+  font-size:24px;
+  cursor:pointer;
+}
+
+.header-main{
+  flex:1;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.header-title-wrap{
+  min-width:0;
+  flex:1;
+  text-align:left;
+}
+
+#chatTitle{
+  display:block;
+  font-size:18px;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.header-sub{
+  display:block;
+  font-size:12px;
+  color:#777;
+  margin-top:2px;
+}
+
+#streakBox{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#111;
+  border:1px solid #222;
+  font-weight:700;
+  font-size:13px;
+  flex-shrink:0;
+}
+
+/* MESSAGES */
+.messages{
+  flex:1;
+  overflow-y:auto;
+  padding:16px 14px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  background:#000;
+  scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;
+}
+
+.messages::-webkit-scrollbar{
+  width:0;
+}
+
+.message-row{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  width:100%;
+}
+
+.me-row{
+  justify-content:flex-end;
+}
+
+.other-row{
+  justify-content:flex-start;
+}
+
+.msg{
+  width:fit-content;
+  min-width:95px;
+  max-width:78%;
+  padding:11px 14px;
+  border-radius:18px;
+  font-size:15px;
+  line-height:1.45;
+  white-space:pre-wrap;
+  overflow-wrap:break-word;
+  word-break:break-word;
+}
+
+.me{
+  background:#ff0050;
+  color:#fff;
+  border-bottom-right-radius:6px;
+}
+
+.other{
+  background:#111;
+  border:1px solid #222;
+  color:#fff;
+  border-bottom-left-radius:6px;
+}
+
+.other-avatar{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#111;
+  border:1px solid #222;
+  flex-shrink:0;
+}
+
+.message-meta-name{
+  font-size:12px;
+  color:#aaa;
+  margin-bottom:4px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  flex-wrap:wrap;
+}
+
+.message-time{
+  font-size:11px;
+  color:#777;
+  margin-top:5px;
+  padding:0 4px;
+}
+
+.system-message{
+  text-align:center;
+  font-size:13px;
+  color:#aaa;
+  margin:8px 0;
+  padding:0 20px;
+}
+
+/* BADGE */
+.chat-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  margin-left:2px;
+  background:linear-gradient(135deg,#ffd700,#ffb700,#ff8c00);
+}
+
+.chat-badge svg{
+  width:10px;
+  height:10px;
+  fill:black;
+}
+
+/* INPUT */
+.inputBar{
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  border-top:1px solid #222;
+  background:#000;
+  flex-shrink:0;
+}
+
+.inputBox{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#111;
+  border:1px solid #222;
+  border-radius:30px;
+  padding:6px;
+}
+
+.inputBox input{
+  flex:1;
+  min-width:0;
+  border:none;
+  outline:none;
+  background:transparent;
+  color:#fff;
+  font-size:15px;
+  padding:11px 12px;
+}
+
+.inputBox input::placeholder{
+  color:#777;
+}
+
+.inputBox button{
+  border:none;
+  border-radius:30px;
+  background:#ff0050;
+  color:#fff;
+  cursor:pointer;
+  padding:11px 16px;
+  font-weight:700;
+  font-size:14px;
+  flex-shrink:0;
+}
+
+.inputBox button:active{
+  transform:scale(.98);
+}
+
+/* EMPTY */
+.empty-chat{
+  margin:auto 0;
+  text-align:center;
+  color:#aaa;
+  font-size:14px;
+  padding:30px 20px;
+}
+
+/* GAME 365 */
+@keyframes pinkPulse{
+  0%{box-shadow:0 0 15px #ff0050}
+  50%{box-shadow:0 0 45px #ff0050}
+  100%{box-shadow:0 0 15px #ff0050}
+}
+
+/* MOBILE */
+@media(max-width:480px){
+  .header{
+    padding:0 12px;
+  }
+
+  .msg{
+    max-width:82%;
+    font-size:15px;
+  }
+
+  #streakBox{
+    padding:6px 9px;
+    font-size:12px;
+  }
+
+  .inputBox button{
+    padding:11px 14px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="header" id="chatHeader">
+  <button class="back-btn" onclick="history.back()">←</button>
+
+  <div class="header-main">
+    <div class="header-title-wrap">
+      <span id="chatTitle">Chat</span>
+      <span class="header-sub">Conversation privée</span>
+    </div>
+
+    <div id="streakBox">
+      <svg id="streakFire" width="18" height="18" viewBox="0 0 24 24" fill="#555">
+        <path d="M12 2C10 6 6 8 6 13a6 6 0 0012 0c0-3-2-5-4-7 0 2-1 3-2 4-1-1-1-3 0-8z"/>
+      </svg>
+      <span id="streakNumber">0</span>
+    </div>
+  </div>
+</div>
+
+<div class="messages" id="messages"></div>
+
+<div class="inputBar">
+  <div class="inputBox">
+    <input type="text" id="messageInput" placeholder="Écrire un message...">
+    <button id="sendBtn">Envoyer</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+  deleteDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const messagesDiv = document.getElementById("messages");
+const sendBtn = document.getElementById("sendBtn");
+const input = document.getElementById("messageInput");
+const header = document.getElementById("chatTitle");
+const streakNumber = document.getElementById("streakNumber");
+const streakFire = document.getElementById("streakFire");
+
+const convId = new URLSearchParams(window.location.search).get("conv");
+
+onAuthStateChanged(auth, async (user)=>{
+
+  if(!user || !convId){
+    location.href="conversations.html";
+    return;
+  }
+
+  const convoRef = doc(db,"conversations",convId);
+  const convoSnap = await getDoc(convoRef);
+
+  if(!convoSnap.exists()){
+    location.href="conversations.html";
+    return;
+  }
+
+  const data = convoSnap.data();
+  const participants = data.participants;
+  const p1 = participants[0];
+  const p2 = participants[1];
+
+  onSnapshot(convoRef,(snap)=>{
+
+    const game = snap.data().game365;
+    if(!game) return;
+
+    streakNumber.textContent = game.streak || 0;
+
+    const today = new Date().toISOString().slice(0,10);
+
+    if(
+      game.todayPlayers &&
+      game.todayPlayers[p1] &&
+      game.todayPlayers[p2] &&
+      game.lastDay === today
+    ){
+      streakFire.style.fill = "#ff2b2b";
+    }else{
+      streakFire.style.fill = "#555";
+    }
+  });
+
+  function resetFireAtMidnight(){
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24,0,0,0);
+
+    const timeout = midnight.getTime() - now.getTime();
+
+    setTimeout(()=>{
+      streakFire.style.fill = "#555";
+      resetFireAtMidnight();
+    },timeout);
+  }
+
+  resetFireAtMidnight();
+
+  if(data.game365?.streak){
+    streakNumber.textContent = data.game365.streak;
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+
+  if(
+    data.game365?.todayPlayers &&
+    data.game365.todayPlayers[p1] &&
+    data.game365.todayPlayers[p2] &&
+    data.game365.lastDay === today
+  ){
+    streakFire.style.fill = "#ff2b2b";
+  }
+
+  if(!data.participants.includes(user.uid)){
+    location.href="conversations.html";
+    return;
+  }
+
+  const otherUid = data.participants.find(p=>p!==user.uid);
+  const otherSnap = await getDoc(doc(db,"users",otherUid));
+  if(otherSnap.exists()){
+    header.textContent = otherSnap.data().username;
+  }
+
+  const msgQuery = query(
+    collection(db,"conversations",convId,"messages"),
+    orderBy("createdAt","asc")
+  );
+
+  onSnapshot(msgQuery, async (snap)=>{
+
+    messagesDiv.innerHTML="";
+
+    if(snap.empty){
+      messagesDiv.innerHTML = `<div class="empty-chat">Aucun message pour le moment.</div>`;
+      return;
+    }
+
+    for(const d of snap.docs){
+
+      const m = d.data();
+    
+      if(m.system && !m.type){
+        const sys = document.createElement("div");
+        sys.className = "system-message";
+        sys.textContent = m.text;
+        messagesDiv.appendChild(sys);
+        continue;
+      }
+
+      if(m.type === "game365_win"){
+        const box = document.createElement("div");
+
+        box.style.textAlign="center";
+        box.style.padding="22px 18px";
+        box.style.margin="15px 0";
+        box.style.borderRadius="20px";
+        box.style.background="linear-gradient(135deg,#111,#000)";
+        box.style.boxShadow="0 0 25px rgba(255,0,80,0.6), 0 0 60px rgba(255,0,80,0.25)";
+        box.style.animation="pinkPulse 2s infinite";
+
+        box.innerHTML = `
+        <div style="margin-bottom:15px">
+          <svg width="52" height="52" viewBox="0 0 24 24"
+          style="filter: drop-shadow(0 0 8px #ff0050) drop-shadow(0 0 18px #ff0050);">
+            <defs>
+              <linearGradient id="starPremium" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff2a6d"/>
+                <stop offset="100%" stop-color="#ff0050"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#starPremium)"
+            d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782
+            1.402 8.177L12 18.896l-7.336 3.874
+            1.402-8.177L.132 9.211l8.2-1.193z"/>
+          </svg>
+        </div>
+
+        <div style="
+        font-size:22px;
+        font-weight:bold;
+        color:#ff0050;
+        text-shadow:0 0 10px #ff0050;
+        margin-bottom:8px;
+        ">
+        365 / 365
+        </div>
+
+        <div style="
+        font-size:15px;
+        opacity:.9;
+        line-height:1.5;
+        ">
+          <strong>${header.textContent}</strong> & <strong>vous</strong><br>
+          officiellement nommés<br>
+          <b>Amis de l'année</b><br>
+          par <b>HaytiClips</b>
+        </div>
+        `;
+
+        messagesDiv.appendChild(box);
+        continue;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.style.display = "flex";
+      wrapper.style.flexDirection = "column";
+      wrapper.style.alignItems = (m.sender===user.uid ? "flex-end":"flex-start");
+
+      const row = document.createElement("div");
+row.className = "message-row " + (m.sender === user.uid ? "me-row" : "other-row");
+
+      if(m.sender !== user.uid){
+
+        const userSnap = await getDoc(doc(db,"users",m.sender));
+
+        let avatarUrl = "https://i.pravatar.cc/150";
+        let username = "Utilisateur";
+        let badge = "";
+
+        if(userSnap.exists()){
+          const u = userSnap.data();
+          avatarUrl = u.avatar || avatarUrl;
+          username = u.username || username;
+
+          if(u.verification?.type === "blue"){
+            badge = `
+              <span class="chat-badge" style="
+                background:linear-gradient(135deg,#1da1f2,#0d8ddb);
+                box-shadow:0 0 8px rgba(29,161,242,0.8);
+              ">
+                <svg viewBox="0 0 24 24" fill="white">
+                  <path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/>
+                </svg>
+              </span>
+            `;
+          }
+
+          if(u.verification?.type === "gold" && u.verification?.status === "active"){
+            badge = `
+              <span class="chat-badge">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/>
+                </svg>
+              </span>
+            `;
+          }
+        }
+
+        const avatar = document.createElement("img");
+        avatar.src = avatarUrl;
+        avatar.className = "other-avatar";
+
+        const messageContainer = document.createElement("div");
+
+        const name = document.createElement("div");
+        name.className = "message-meta-name";
+        name.innerHTML = username + badge;
+
+        const bubble = document.createElement("div");
+        bubble.className="msg other";
+        bubble.textContent = m.text;
+
+        messageContainer.appendChild(name);
+        messageContainer.appendChild(bubble);
+
+        row.appendChild(avatar);
+        row.appendChild(messageContainer);
+
+      } else {
+
+        const bubble = document.createElement("div");
+        bubble.className="msg me";
+        bubble.textContent = m.text;
+      
+        let pressTimer;
+
+        bubble.addEventListener("touchstart", ()=>{
+          pressTimer = setTimeout(async ()=>{
+            const confirmDelete = confirm("Supprimer ce message ?");
+            if(!confirmDelete) return;
+
+            await deleteDoc(
+              doc(db,"conversations",convId,"messages",d.id)
+            );
+          }, 600);
+        });
+
+        bubble.addEventListener("touchend", ()=>{
+          clearTimeout(pressTimer);
+        });
+
+        bubble.addEventListener("mousedown", ()=>{
+          pressTimer = setTimeout(async ()=>{
+            const confirmDelete = confirm("Supprimer ce message ?");
+            if(!confirmDelete) return;
+
+            await deleteDoc(
+              doc(db,"conversations",convId,"messages",d.id)
+            );
+          }, 600);
+        });
+
+        bubble.addEventListener("mouseup", ()=>{
+          clearTimeout(pressTimer);
+        });
+
+        row.appendChild(bubble);
+      }
+
+      wrapper.appendChild(row);
+
+      if(m.createdAt){
+        const date = m.createdAt.toDate();
+        const formatted =
+          date.toLocaleDateString("fr-FR") +
+          " à " +
+          date.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+
+        const time = document.createElement("div");
+        time.className = "message-time";
+        time.textContent = formatted;
+
+        wrapper.appendChild(time);
+      }
+
+      messagesDiv.appendChild(wrapper);
+    }
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+
+  sendBtn.onclick = async ()=>{
+    const text = input.value.trim();
+    if(!text) return;
+
+    await addDoc(collection(db,"conversations",convId,"messages"),{
+      sender:user.uid,
+      text:text,
+      createdAt:serverTimestamp()
+    });
+
+    await updateDoc(convoRef,{
+      lastMessage:text,
+      lastMessageAt:serverTimestamp()
+    });
+    
+    const convoSnap2 = await getDoc(convoRef);
+    let game = convoSnap2.data().game365 || {};
+
+    if(!convoSnap2.data().game365){
+      await updateDoc(convoRef,{
+        game365:{
+          streak:0,
+          todayPlayers:{},
+          lastDay:"",
+          dayValidated:false
+        }
+      });
+
+      game = {
+        streak:0,
+        todayPlayers:{},
+        lastDay:"",
+        dayValidated:false
+      };
+    }
+
+    function getLocalDateString(date = new Date()) {
+  const offset = date.getTimezoneOffset() * 60000;
+  const local = new Date(date.getTime() - offset);
+  return local.toISOString().slice(0,10);
+}
+
+    const today = getLocalDateString();
+
+    let players = {...(game.todayPlayers || {})};
+    let streak = Number(game.streak || 0);
+    let dayValidated = game.dayValidated === true;
+
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = getLocalDateString(yesterdayDate);
+
+console.log("DEBUG STREAK:", {
+  lastDay: game.lastDay,
+  today: today,
+  yesterday: yesterday
+});
+
+// 🔥 RESET LOGIQUE PROPRE
+
+if (game.lastDay !== today) {
+
+  // si dernier jour ≠ hier → streak cassé
+  if (game.lastDay !== yesterday) {
+    streak = 0;
+  }
+
+  // nouveau jour = reset joueurs
+  players = {};
+  dayValidated = false;
+}
+
+    players[user.uid] = true;
+
+    if (players[p1] && players[p2] && !dayValidated) {
+      streakFire.style.fill = "#ff2b2b";
+      streak++;
+      dayValidated = true;
+
+      await addDoc(collection(db,"conversations",convId,"messages"),{
+        system:true,
+        sender:"system",
+        text:"🔥 Jour validé ("+streak+"/365)",
+        createdAt:serverTimestamp()
+      });
+
+      if (streak === 365) {
+        await addDoc(collection(db,"conversations",convId,"messages"),{
+          system:true,
+          sender:"system",
+          type:"game365_win",
+          createdAt:serverTimestamp()
+        });
+      }
+    }
+
+    await updateDoc(convoRef,{
+      "game365.streak": streak,
+      "game365.todayPlayers": players,
+      "game365.lastDay": today,
+      "game365.dayValidated": dayValidated
+    });
+
+    streakNumber.textContent = streak;
+
+    const convoSnap = await getDoc(convoRef);
+    const convoData = convoSnap.data();
+
+    const otherUid = convoData.participants.find(p=>p!==user.uid);
+
+    const meSnap = await getDoc(doc(db,"users",user.uid));
+    const meData = meSnap.data();
+
+    await addDoc(collection(db,"notifications"),{
+      type:"message",
+      from:user.uid,
+      fromUsername: meData.username || "Utilisateur",
+      fromAvatar: meData.avatar || null,
+      to: otherUid,
+      read:false,
+      preview: text.substring(0,100),
+      conversationId: convId,
+      createdAt: serverTimestamp()
+    });
+
+    input.value="";
+  };
+
+  input.addEventListener("keydown", async (e)=>{
+    if(e.key === "Enter"){
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+
+});
+</script>
+</body>
+</html>

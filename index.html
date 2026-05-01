@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>hayticlips</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+html, body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#000; /* vrai noir profond */
+}
+
+.splash{
+  position:fixed;
+  inset:0;
+  background-color:#000;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.splash img{
+  width:100%;
+  height:100%;
+  object-fit:contain; /* PAS cover → évite la déformation */
+  image-rendering: -webkit-optimize-contrast;
+}
+
+</style>
+</head>
+
+<body>
+  
+<div class="splash">
+  <img src="bon.PNG" alt="HaytiClips">
+</div>
+
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } 
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // ⏳ Splash screen (3 secondes)
+    setTimeout(() => {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // ✅ déjà connecté → feed
+          window.location.replace("feed.html");
+        } else {
+          // ❌ pas connecté → login
+          window.location.replace("login.html");
+        }
+      });
+    }, 5000);
+  </script>
+
+</body>
+</html>

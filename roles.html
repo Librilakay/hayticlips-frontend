@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion des rôles – HaytiClips</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+
+body{
+  background:#000;
+  color:#fff;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* HEADER */
+.page{
+  flex:1;
+  padding:0 16px 80px;
+  max-width:1000px;
+  width:100%;
+  margin:0 auto;
+}
+
+/* HEADER */
+.topbar{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  border-bottom:1px solid #222;
+  background:#000;
+  position:sticky;
+  top:0;
+  z-index:10;
+  margin:0 -16px 20px;
+}
+
+.topbar p{
+  flex:1;
+  text-align:center;
+  font-size:18px;
+  font-weight:700;
+}
+.topbar a{
+font-size : 20px;
+border: 2px solid;
+color: black;
+background: #ff0050;
+border-radius: 10px;
+width:90px
+  }
+
+.topbar::after{
+  content:"";
+  width:40px;
+  display:block;
+}
+
+.back-btn{
+  width:40px;
+  height:40px;
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:24px;
+  cursor:pointer;
+  padding:0;
+  border-radius:0;
+}
+
+/* HERO SIMPLE */
+.hero{
+  margin-bottom:20px;
+}
+
+.hero h1{
+  font-size:22px;
+  font-weight:700;
+  text-align:center;
+  margin-bottom:10px;
+}
+
+.hero p{
+  color:#aaa;
+  font-size:14px;
+  line-height:1.5;
+  text-align:center;
+}
+
+/* SEARCH */
+.search-box{
+  margin-top:18px;
+}
+
+.search-box input{
+  width:100%;
+  padding:12px 16px;
+  border-radius:12px;
+  border:1px solid #333;
+  background:#111;
+  color:#fff;
+  font-size:16px;
+  outline:none;
+}
+
+.search-box input:focus{
+  border-color:#ff0050;
+}
+
+/* RESULTS */
+.results{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+/* CARD */
+.card{
+  background:#000;
+  border:1px solid #222;
+  border-radius:16px;
+  padding:16px;
+}
+
+.user-main{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  cursor:pointer;
+}
+
+.avatar{
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid #333;
+  background:#111;
+  flex-shrink:0;
+}
+
+.meta{
+  flex:1;
+  min-width:0;
+}
+
+.user-row{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:6px;
+}
+
+.username{
+  font-size:16px;
+  font-weight:700;
+  word-break:break-word;
+}
+
+.uid{
+  font-size:12px;
+  color:#777;
+  word-break:break-all;
+  margin-bottom:6px;
+}
+
+.bio{
+  font-size:13px;
+  color:#aaa;
+  line-height:1.5;
+  word-break:break-word;
+}
+
+/* META */
+.meta-box{
+  margin-top:10px;
+  padding:12px;
+  background:#111;
+  border:1px solid #222;
+  border-radius:12px;
+}
+
+.meta-line{
+  font-size:13px;
+  color:#d4d4d8;
+  line-height:1.5;
+  word-break:break-word;
+  margin-top:4px;
+}
+
+/* PILLS */
+.role-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  border:1px solid #333;
+  background:#1a1a1a;
+}
+
+.role-admin{
+  color:#7fccff;
+  border-color:rgba(29,161,242,.35);
+  background:rgba(29,161,242,.12);
+}
+
+.role-moderator{
+  color:#ffcf70;
+  border-color:rgba(255,176,32,.35);
+  background:rgba(255,176,32,.12);
+}
+
+.role-badge{
+  color:#6ff0b6;
+  border-color:rgba(25,195,125,.35);
+  background:rgba(25,195,125,.12);
+}
+
+.role-merchant{
+  color:#d5b3ff;
+  border-color:rgba(155,89,255,.35);
+  background:rgba(155,89,255,.12);
+}
+
+.role-user{
+  color:#ddd;
+}
+
+.role-parrain{
+  color:#ff7ac3;
+  border-color:rgba(255,0,80,.35);
+  background:rgba(255,0,80,.12);
+}
+
+/* ACTIONS */
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+
+button{
+  border:none;
+  border-radius:30px;
+  padding:10px 16px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.btn-moderator{
+  background:#ffb020;
+  color:#111;
+}
+
+.btn-badge{
+  background:#19c37d;
+  color:#fff;
+}
+
+.btn-merchant{
+  background:#9b59ff;
+  color:#fff;
+}
+
+.btn-parrain{
+  background:#ff0050;
+  color:#fff;
+}
+
+.btn-remove{
+  background:#ff4d4d;
+  color:#fff;
+}
+
+button:disabled{
+  background:#444;
+  cursor:not-allowed;
+}
+
+/* EMPTY / MESSAGE */
+.empty{
+  text-align:center;
+  color:#aaa;
+  padding:24px 16px;
+  border:1px solid #222;
+  border-radius:16px;
+  background:#111;
+}
+
+.message{
+  margin-top:16px;
+  text-align:center;
+  color:#aaa;
+  font-size:14px;
+}
+
+/* MOBILE */
+@media(max-width:640px){
+  .hero h1{
+    font-size:20px;
+  }
+
+  .actions{
+    flex-direction:column;
+  }
+
+  .actions button{
+    width:100%;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">←</button>
+    <p>Gestion des rôles</p>
+    <a href="admin-finance.html">finance</a> 
+  </div>
+
+  <div class="hero">
+   
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Rechercher par username ou UID...">
+    </div>
+  </div>
+
+  <div class="results" id="results"></div>
+  <div class="message" id="statusMsg"></div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474",
+  storageBucket:"tstx-58474.firebasestorage.app",
+  messagingSenderId:"1010020144942",
+  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const results = document.getElementById("results");
+const searchInput = document.getElementById("searchInput");
+const statusMsg = document.getElementById("statusMsg");
+const API_BASE = "https://hayticlip-server.onrender.com";
+
+let allUsers = [];
+let currentAdminUid = null;
+
+onAuthStateChanged(auth, async (user)=>{
+  if(!user){
+    window.location.href = "login.html";
+    return;
+  }
+
+  const meSnap = await getDoc(doc(db,"users",user.uid));
+
+  if(!meSnap.exists() || meSnap.data().role !== "admin"){
+    window.location.href = "feed.html";
+    return;
+  }
+
+  currentAdminUid = user.uid;
+  await loadUsers();
+  renderUsers(allUsers);
+});
+
+async function loadUsers(){
+  allUsers = [];
+  const snap = await getDocs(collection(db,"users"));
+
+  snap.forEach(d=>{
+    allUsers.push({
+      id:d.id,
+      ...d.data()
+    });
+  });
+
+  allUsers.sort((a,b)=>{
+    const nameA = (a.username || "").toLowerCase();
+    const nameB = (b.username || "").toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+}
+
+function getAvatar(user){
+  return user.avatar || `https://i.pravatar.cc/150?u=${user.id}`;
+}
+
+function getRolePill(role){
+  if(role === "admin"){
+    return `<span class="role-pill role-admin">ADMIN</span>`;
+  }
+  if(role === "moderator"){
+    return `<span class="role-pill role-moderator">MODERATOR</span>`;
+  }
+  if(role === "badge_manager"){
+    return `<span class="role-pill role-badge">BADGE MANAGER</span>`;
+  }
+  if(role === "merchant_manager"){
+    return `<span class="role-pill role-merchant">MERCHANT MANAGER</span>`;
+  }
+  return `<span class="role-pill role-user">USER</span>`;
+}
+
+function getParrainPill(canReferMerchant){
+  if(canReferMerchant === true){
+    return `<span class="role-pill role-parrain">PARRAIN</span>`;
+  }
+  return "";
+}
+
+function escapeHTML(str=""){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+
+function renderUsers(list){
+  results.innerHTML = "";
+
+  if(!list.length){
+    results.innerHTML = `<div class="empty">Aucun utilisateur trouvé.</div>`;
+    return;
+  }
+
+  list.forEach(user=>{
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const isMe = user.id === currentAdminUid;
+    const isAdmin = user.role === "admin";
+    const isModerator = user.role === "moderator";
+    const isBadgeManager = user.role === "badge_manager";
+    const isMerchantManager = user.role === "merchant_manager";
+    const isParrain = user.canReferMerchant === true;
+
+    card.innerHTML = `
+      <div class="user-main" onclick="openUserProfile('${user.id}')">
+        <img src="${getAvatar(user)}" class="avatar">
+
+        <div class="meta">
+          <div class="user-row">
+            <div class="username">${escapeHTML(user.username || "Sans nom")}</div>
+            ${getRolePill(user.role || "user")}
+            ${getParrainPill(user.canReferMerchant)}
+          </div>
+
+          <div class="uid">${user.id}</div>
+          <div class="bio">${escapeHTML(user.bio || "")}</div>
+
+          <div class="meta-box">
+            <div class="meta-line"><strong>Rôle :</strong> ${escapeHTML(user.role || "user")}</div>
+            <div class="meta-line"><strong>Parrain actif :</strong> ${isParrain ? "Oui" : "Non"}</div>
+            <div class="meta-line"><strong>Code parrain :</strong> ${escapeHTML(user.referralCode || "-")}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        ${!isAdmin && !isModerator ? `
+          <button class="btn-moderator" onclick="event.stopPropagation(); setRole('${user.id}','moderator')">
+            Nommer moderator
+          </button>
+        ` : ""}
+
+        ${!isAdmin && !isBadgeManager ? `
+          <button class="btn-badge" onclick="event.stopPropagation(); setRole('${user.id}','badge_manager')">
+            Nommer badge_manager
+          </button>
+        ` : ""}
+
+        ${!isAdmin && !isMerchantManager ? `
+          <button class="btn-merchant" onclick="event.stopPropagation(); setRole('${user.id}','merchant_manager')">
+            Nommer merchant_manager
+          </button>
+        ` : ""}
+
+        ${!isAdmin && !isParrain ? `
+          <button class="btn-parrain" onclick="event.stopPropagation(); enableParrain('${user.id}')">
+            Nommer parrain
+          </button>
+        ` : ""}
+
+        ${isParrain && !isAdmin ? `
+          <button class="btn-remove" onclick="event.stopPropagation(); removeParrain('${user.id}')">
+            Retirer parrain
+          </button>
+        ` : ""}
+
+        ${(isModerator || isBadgeManager || isMerchantManager) && !isAdmin ? `
+          <button class="btn-remove" onclick="event.stopPropagation(); removeRole('${user.id}')">
+            Enlever fonction
+          </button>
+        ` : ""}
+
+        ${isMe ? `
+          <button class="btn-remove" style="opacity:.5;cursor:not-allowed;" disabled>
+            Votre compte admin
+          </button>
+        ` : ""}
+      </div>
+    `;
+
+    results.appendChild(card);
+  });
+}
+
+window.openUserProfile = (uid)=>{
+  window.location.href = `profil.html?uid=${uid}`;
+};
+
+window.setRole = async (uid, role)=>{
+  try{
+    if(uid === currentAdminUid){
+      statusMsg.textContent = "Impossible de modifier votre propre compte admin ici.";
+      return;
+    }
+
+    await updateDoc(doc(db,"users",uid),{
+      role: role
+    });
+
+    statusMsg.textContent = `Rôle mis à jour : ${role}`;
+    await loadUsers();
+    applySearch();
+  }catch(e){
+    console.error(e);
+    statusMsg.textContent = "Erreur : " + e.message;
+  }
+};
+
+window.removeRole = async (uid)=>{
+  try{
+    if(uid === currentAdminUid){
+      statusMsg.textContent = "Impossible de modifier votre propre compte admin ici.";
+      return;
+    }
+
+    await updateDoc(doc(db,"users",uid),{
+      role: "user"
+    });
+
+    statusMsg.textContent = "Fonction retirée.";
+    await loadUsers();
+    applySearch();
+  }catch(e){
+    console.error(e);
+    statusMsg.textContent = "Erreur : " + e.message;
+  }
+};
+
+window.enableParrain = async (uid)=>{
+  try{
+    if(uid === currentAdminUid){
+      statusMsg.textContent = "Impossible de modifier votre propre compte admin ici.";
+      return;
+    }
+
+    const user = auth.currentUser;
+
+    if(!user){
+      statusMsg.textContent = "Utilisateur non connecté.";
+      return;
+    }
+
+    const token = await user.getIdToken(true);
+
+    const res = await fetch(`${API_BASE}/api/enableMerchantReferrer`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({
+        targetUid: uid
+      })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok || !result.success){
+      statusMsg.textContent = result.error || "Erreur serveur";
+      return;
+    }
+
+    statusMsg.textContent = `Parrain activé. Code : ${result.referralCode}`;
+    await loadUsers();
+    applySearch();
+
+  }catch(e){
+    console.error(e);
+    statusMsg.textContent = "Erreur : " + e.message;
+  }
+};
+
+window.removeParrain = async (uid)=>{
+  try{
+    if(uid === currentAdminUid){
+      statusMsg.textContent = "Impossible de modifier votre propre compte admin ici.";
+      return;
+    }
+
+    const user = auth.currentUser;
+
+    if(!user){
+      statusMsg.textContent = "Utilisateur non connecté.";
+      return;
+    }
+
+    const token = await user.getIdToken(true);
+
+    const res = await fetch(`${API_BASE}/api/disableMerchantReferrer`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({
+        targetUid: uid
+      })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok || !result.success){
+      statusMsg.textContent = result.error || "Erreur serveur";
+      return;
+    }
+
+    statusMsg.textContent = "Fonction parrain retirée.";
+    await loadUsers();
+    applySearch();
+
+  }catch(e){
+    console.error(e);
+    statusMsg.textContent = "Erreur : " + e.message;
+  }
+};
+
+function applySearch(){
+  const value = searchInput.value.toLowerCase().trim();
+
+  if(!value){
+    renderUsers(allUsers);
+    return;
+  }
+
+  const filtered = allUsers.filter(user =>
+    (user.username || "").toLowerCase().includes(value) ||
+    user.id.toLowerCase().includes(value) ||
+    (user.referralCode || "").toLowerCase().includes(value)
+  );
+
+  renderUsers(filtered);
+}
+
+searchInput.addEventListener("input", applySearch);
+</script>
+
+</body>
+</html>

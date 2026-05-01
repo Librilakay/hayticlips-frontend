@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Transactions – HaytiClips</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:-apple-system,BlinkMacSystemFont,Arial;
+}
+
+body{
+background:#000;
+color:#fff;
+padding:20px;
+}
+
+/* HEADER */
+
+.header{
+display:flex;
+align-items:center;
+justify-content:center;
+margin-bottom:25px;
+}
+
+.logo{
+display:flex;
+align-items:center;
+gap:10px;
+font-size:22px;
+font-weight:700;
+}
+
+/* LIST */
+
+.list{
+margin-top:20px;
+}
+
+/* CARD */
+
+.card{
+background:#111;
+border:1px solid #222;
+border-radius:14px;
+padding:16px;
+margin-bottom:12px;
+}
+
+/* ROW */
+
+.row{
+display:flex;
+justify-content:space-between;
+margin-bottom:6px;
+}
+
+.label{
+opacity:0.6;
+font-size:13px;
+}
+
+.value{
+font-weight:600;
+}
+
+/* TYPE COLORS */
+
+.deposit{
+color:#2ecc71;
+}
+
+.withdraw{
+color:#ff0033;
+}
+
+.gift{
+color:#f39c12;
+}
+
+.blue{
+color:#3498db;
+}
+
+/* BUTTON */
+
+.download{
+margin-top:12px;
+width:100%;
+padding:10px;
+border:none;
+border-radius:8px;
+background:#ff0033;
+color:white;
+font-weight:700;
+cursor:pointer;
+font-size:13px;
+}
+
+.header{
+display:flex;
+justify-content:center;
+align-items:center;
+margin-bottom:30px;
+}
+
+.logo-img{
+width:200px;
+max-width:80%;
+}
+
+.back{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#ff0050;
+  padding:10px 15px;
+  border-radius:8px;
+  color:white;
+  text-decoration:none;
+  font-size:14px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+<img src="ticlip.jpg" class="logo-img">
+
+</div>
+
+
+<div class="list" id="txList"></div>
+
+
+
+<a href="profil.html" class="back">Retour</a>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+getFirestore,
+collection,
+query,
+where,
+orderBy,
+getDocs
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+
+apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+authDomain:"tstx-58474.firebaseapp.com",
+projectId:"tstx-58474",
+storageBucket:"tstx-58474.firebasestorage.app",
+messagingSenderId:"1010020144942",
+appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const txList = document.getElementById("txList");
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  try {
+    const q = query(
+      collection(db, "walletTransactions"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const snap = await getDocs(q);
+
+    txList.innerHTML = "";
+
+    if (snap.empty) {
+      txList.innerHTML = `
+        <div style="padding:20px;text-align:center;opacity:0.7;">
+          Aucune transaction pour le moment
+        </div>
+      `;
+      return;
+    }
+
+    let html = "";
+
+    snap.forEach(doc => {
+      const tx = doc.data();
+
+      let date = "—";
+      if (tx.createdAt && tx.createdAt.toDate) {
+        date = tx.createdAt.toDate().toLocaleString();
+      }
+
+      let label = "";
+      let color = "";
+      let sign = "-";
+
+      switch (tx.type) {
+  case "deposit":
+    label = "Recharge";
+    color = "#2ecc71";
+    sign = "+";
+    break;
+
+  case "withdraw":
+    label = "Retrait";
+    color = "#ff0033";
+    sign = "-";
+    break;
+
+  case "gift_sent":
+    label = "Cadeau envoyé";
+    color = "#f39c12";
+    sign = "-";
+    break;
+
+  case "gift_received":
+    label = "Cadeau reçu";
+    color = "#f39c12";
+    sign = "+";
+    break;
+
+  case "blue_payment":
+    label = "Badge Blue";
+    color = "#3498db";
+    sign = "-";
+    break;
+
+  case "merchant_request_payment":
+    label = "Paiement accès marchand";
+    color = "#ff0050";
+    sign = "-";
+    break;
+
+  case "merchant_request_refund":
+    label = "Remboursement accès marchand";
+    color = "#2ecc71";
+    sign = "+";
+    break;
+
+  case "merchant_referral_reward":
+    label = "Récompense parrain marchand";
+    color = "#2ecc71";
+    sign = "+";
+    break;
+
+  case "merchant_platform_fee":
+    label = "Frais plateforme marchand";
+    color = "#3498db";
+    sign = "+";
+    break;
+
+  case "merchant_renewal_payment":
+    label = "Renouvellement marchand";
+    color = "#ff0050";
+    sign = "-";
+    break;
+
+  case "merchant_renewal_referral_reward":
+    label = "Gain parrain renouvellement";
+    color = "#2ecc71";
+    sign = "+";
+    break;
+
+  case "merchant_renewal_admin_fee":
+    label = "Part admin renouvellement";
+    color = "#3498db";
+    sign = "+";
+    break;
+
+  case "merchant_order_created":
+    label = "Commande créée";
+    color = "#f39c12";
+    sign = "-";
+    break;
+
+  case "merchant_order_paid":
+    label = "Commande validée";
+    color = "#f39c12";
+    sign = "-";
+    break;
+
+  case "merchant_order_refund":
+    label = "Commande remboursée";
+    color = "#2ecc71";
+    sign = "+";
+    break;
+
+  case "merchant_sale_pending":
+    label = "Vente en attente";
+    color = "#f39c12";
+    sign = "+";
+    break;
+
+  case "merchant_sale_received":
+    label = "Vente reçue";
+    color = "#2ecc71";
+    sign = "+";
+    break;
+
+  case "merchant_sale_fee":
+    label = "Frais admin sur vente";
+    color = "#3498db";
+    sign = "+";
+    break;
+
+  case "merchant_sale_rejected":
+    label = "Vente refusée";
+    color = "#ff0033";
+    sign = "-";
+    break;
+
+  default:
+    label = tx.type || "Transaction";
+    color = "#ffffff";
+    sign = tx.amount >= 0 ? "+" : "-";
+}
+
+      let statusLabel = "—";
+      let statusColor = "#aaa";
+
+      switch (tx.status) {
+        case "pending":
+          statusLabel = "En attente";
+          statusColor = "#f39c12";
+          break;
+
+        case "completed":
+          statusLabel = "Terminée";
+          statusColor = "#2ecc71";
+          break;
+
+        case "failed":
+          statusLabel = "Échouée";
+          statusColor = "#ff0033";
+          break;
+
+        default:
+          statusLabel = tx.status || "—";
+      }
+
+      const balanceAfter =
+        typeof tx.balanceAfter === "number"
+          ? `${tx.balanceAfter} Gdes`
+          : "—";
+
+      html += `
+        <div class="card">
+
+          <div class="row">
+            <span class="label">Date</span>
+            <span class="value">${date}</span>
+          </div>
+
+          <div class="row">
+            <span class="label">Détails</span>
+            <span class="value" style="color:${color}">
+              ${label}
+            </span>
+          </div>
+
+          <div class="row">
+            <span class="label">Statut</span>
+            <span class="value" style="color:${statusColor}">
+              ${statusLabel}
+            </span>
+          </div>
+
+          <div class="row">
+            <span class="label">Montant</span>
+            <span class="value">
+              ${sign}${tx.amount} Gdes
+            </span>
+          </div>
+
+          <div class="row">
+            <span class="label">Solde après</span>
+            <span class="value">
+              ${balanceAfter}
+            </span>
+          </div>
+
+        </div>
+      `;
+    });
+
+    txList.innerHTML = html;
+
+  } catch (e) {
+    console.error("Erreur chargement transactions:", e);
+    console.error("code:", e.code);
+    console.error("message:", e.message);
+
+    txList.innerHTML = `
+      <div style="padding:20px;text-align:center;">
+        Erreur chargement transactions
+      </div>
+    `;
+  }
+});
+console.log("transaction ok");
+</script>
+
+</body>
+</html>

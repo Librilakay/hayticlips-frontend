@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demande Gold – HaytiClips</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+}
+
+html,body{
+  background:#000;
+  color:#fff;
+  min-height:100%;
+  overflow-x:hidden;
+}
+
+/* HEADER FIXE PROPRE */
+.header{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  border-bottom:1px solid #222;
+  background:#000;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+
+.header-left{
+  font-size:22px;
+  cursor:pointer;
+  width:40px;
+}
+
+.header-center{
+  font-weight:700;
+  font-size:16px;
+  text-align:center;
+  flex:1;
+}
+
+.header-right{
+  width:40px;
+}
+
+/* CONTAINER STABLE */
+.container{
+  width:100%;
+  max-width:520px;
+  margin:0 auto;
+  padding:20px 16px 40px;
+}
+
+/* CARD */
+.card{
+  background:#000;
+  border:1px solid #222;
+  border-radius:18px;
+  padding:18px;
+}
+
+/* TITRE */
+h1{
+  font-size:18px;
+  margin-bottom:16px;
+}
+
+/* SECTIONS */
+.section-title{
+  margin:22px 0 12px;
+  font-weight:700;
+  font-size:14px;
+  color:#aaa;
+}
+
+/* INPUTS STABLE */
+input, textarea, select{
+  width:100%;
+  padding:14px;
+  margin-bottom:12px;
+  background:#111;
+  border:1px solid #333;
+  border-radius:12px;
+  color:white;
+  font-size:15px;
+}
+
+input:focus, textarea:focus, select:focus{
+  outline:none;
+  border-color:#ff0050;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:14px;
+  background:#ff0050;
+  border:none;
+  border-radius:30px;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+button:active{
+  transform:scale(0.98);
+}
+
+/* TEXTAREA */
+textarea{
+  resize:vertical;
+  min-height:100px;
+}
+
+/* MESSAGE */
+.message{
+  margin-top:14px;
+  text-align:center;
+  color:#aaa;
+  font-size:14px;
+}
+
+/* MOBILE */
+@media(max-width:520px){
+  .container{
+    padding:18px 14px 40px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+<div class="header">
+  <div class="header-left" onclick="history.back()">←</div>
+  <div class="header-center">Demande Gold</div>
+  <div class="header-right"></div>
+</div>
+
+<form id="goldForm">
+
+<div class="section-title">Étape 1 : Confirmez l'authenticité</div>
+
+<input type="text" id="profileName" placeholder="Nom de profil" required>
+<input type="text" id="fullName" placeholder="Nom complet" required>
+<input type="email" id="contactEmail" placeholder="Votre email " required>
+
+<select id="documentType" required>
+<option value="">Type de document</option>
+<option>Permis de conduire</option>
+<option>Passeport</option>
+<option>Carte nationale d'identité</option>
+<option>Déclaration fiscale</option>
+<option>Facture (eau, gaz, électricité)</option>
+<option>Document entreprise</option>
+</select>
+
+<input type="file" id="identityFile" required>
+
+<div class="section-title">Étape 2 : Confirmez l'intérêt public</div>
+
+<select id="category" required>
+<option value="">Catégorie</option>
+<option>Artiste</option>
+<option>Influenceur</option>
+<option>Journaliste</option>
+<option>Entreprise</option>
+<option>Sportif</option>
+<option>Autre</option>
+</select>
+
+<select id="country" required>
+<option value="">Pays / Région</option>
+<option>Haïti</option>
+<option>Cuba</option>
+<option>Bahamas</option>
+<option>Jamaïque</option>
+<option>Autre</option>
+</select>
+
+<textarea id="whyGold" placeholder="Pourquoi voudriez-vous ce badge ?" rows="4" required></textarea>
+<textarea id="audience" placeholder="Décrivez votre audience (facultatif)" rows="3"></textarea>
+<input type="text" id="knownAs" placeholder="Également connu sous le nom (facultatif)">
+
+<div class="section-title">Liens (facultatif)</div>
+
+<input type="text" id="link1" placeholder="Lien 1 (article, réseau social...)">
+<input type="text" id="link2" placeholder="Lien 2">
+<input type="text" id="link3" placeholder="Lien 3">
+
+<button type="submit" id="submitBtn">Envoyer la demande</button>
+
+</form>
+
+<div class="message" id="statusMsg"></div>
+
+</div>
+</div>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc,
+  getDoc,
+  setDoc, 
+  updateDoc, 
+  addDoc,
+  collection,
+  serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
+
+/* SUPABASE CONFIG */
+const SUPABASE_URL = "https://nxpifzslxoigcuuhslox.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cGlmenNseG9pZ2N1dWhzbG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTgwODgsImV4cCI6MjA4NTk5NDA4OH0.yYQ3nQn6Z0ZCC9ZjuHt_HGJbf1CQVPHlz-b6nnEhFqg";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const form = document.getElementById("goldForm");
+const statusMsg = document.getElementById("statusMsg");
+const submitBtn = document.getElementById("submitBtn");
+
+let currentUser = null;
+
+onAuthStateChanged(auth, async(user)=>{
+  if(!user) return location.href="login.html";
+  currentUser = user;
+});
+
+form.addEventListener("submit", async (e) => {
+
+  e.preventDefault();
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const uid = user.uid;
+
+  const file = document.getElementById("identityFile").files[0];
+  const profileName = document.getElementById("profileName").value.trim();
+const fullName = document.getElementById("fullName").value.trim();
+const contactEmail = document.getElementById("contactEmail").value.trim();
+const documentType = document.getElementById("documentType").value;
+const category = document.getElementById("category").value;
+const country = document.getElementById("country").value;
+const audience = document.getElementById("audience").value.trim();
+const knownAs = document.getElementById("knownAs").value.trim();
+const whyGold = document.getElementById("whyGold").value.trim();
+const link1 = document.getElementById("link1").value.trim();
+const link2 = document.getElementById("link2").value.trim();
+const link3 = document.getElementById("link3").value.trim();
+
+  if (!file) {
+    statusMsg.textContent = "❌ Document obligatoire.";
+    return;
+  }
+
+if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+  statusMsg.textContent = "❌ Email de contact invalide.";
+  return;
+}
+
+if (!whyGold) {
+  statusMsg.textContent = "❌ Expliquez pourquoi vous voulez ce badge.";
+  return;
+}
+  submitBtn.disabled = true;
+  statusMsg.textContent = "Upload document...";
+
+  try {
+
+    const filePath = `${uid}/${Date.now()}_${file.name}`;
+
+    const { error } = await supabase.storage
+      .from("media")
+      .upload(filePath, file);
+
+    if (error) throw error;
+
+    const { data } = supabase.storage
+      .from("media")
+      .getPublicUrl(filePath);
+
+    const documentUrl = data.publicUrl;
+
+    await addDoc(collection(db,"verificationRequests"),{
+  uid: uid,
+  profileName,
+  fullName,
+  contactEmail,
+  documentType,
+  category,
+  country,
+  audience,
+  knownAs,
+  whyGold,
+  links: [link1, link2, link3],
+  documentUrl,
+  createdAt: serverTimestamp(),
+  status: "pending"
+});
+
+    statusMsg.textContent = "Demande envoyée avec succès.";
+    form.reset();
+
+  } catch (err) {
+    console.error("Erreur complète:", err);
+    alert(JSON.stringify(err));
+  }
+
+});
+console.log("page charger");
+</script>
+
+</body>
+</html>

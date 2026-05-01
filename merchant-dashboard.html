@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard marchand – HaytiClips</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+
+html,body{background:#000;color:#fff;min-height:100%;overflow-x:hidden}
+body{min-height:100vh}
+
+.header{
+  height:60px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;border-bottom:1px solid #222;background:#000;
+  position:sticky;top:0;z-index:100;
+}
+.header-left{font-size:24px;cursor:pointer;width:40px}
+.header-center{font-weight:700;font-size:18px}
+.header-right{min-width:40px;display:flex;justify-content:flex-end}
+
+.page{max-width:980px;margin:0 auto;padding:20px 16px 50px}
+.topbar{display:none}
+
+.hero,.card,.stat,.item{
+  background:#000;border:1px solid #222;border-radius:16px;
+}
+.hero{padding:16px;margin-bottom:18px}
+.hero h1{font-size:24px;margin-bottom:6px}
+.hero p,.card p.small,.stat .label{color:#aaa;font-size:14px}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.stat{padding:14px}
+.stat .label{font-size:12px;margin-bottom:8px}
+.stat .value{font-size:24px;font-weight:800}
+
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{padding:16px;margin-bottom:14px}
+.card h2{font-size:18px;margin-bottom:5px}
+
+label{display:block;font-size:14px;color:#aaa;margin:12px 0 6px}
+
+input,textarea{
+  width:100%;background:#111;color:#fff;border:1px solid #333;
+  border-radius:12px;padding:12px 16px;margin-bottom:10px;
+  outline:none;font-size:16px;
+}
+textarea{min-height:95px;resize:vertical}
+input:focus,textarea:focus{border-color:#ff0050}
+
+button{
+  border:none;border-radius:30px;padding:12px 15px;
+  font-size:14px;font-weight:700;cursor:pointer;
+}
+.btn-primary{background:#ff0050;color:#fff}
+.btn-dark{background:#1a1a1a;border:1px solid #333;color:#fff}
+.btn-danger{background:#ff4d4d;color:#fff}
+.top-btn{background:#ff0050;color:#fff;padding:8px 12px;font-size:13px}
+
+.message{min-height:18px;margin-top:10px;font-size:13px}
+.message.success{color:#19c37d}
+.message.error{color:#ff4d4d}
+
+.list{display:flex;flex-direction:column;gap:10px}
+.item{padding:12px}
+.item-top{display:flex;gap:10px}
+.item-img{
+  width:66px;height:66px;border-radius:12px;object-fit:cover;
+  background:#111;border:1px solid #333;flex-shrink:0;
+}
+.item-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.item-line{font-size:13px;color:#ccc;margin-top:4px;line-height:1.45;word-break:break-word}
+.item-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+.pill{
+  display:inline-flex;padding:4px 10px;border-radius:999px;
+  font-size:11px;font-weight:800;border:1px solid #333;
+}
+.pill-success{color:#6ff0b6;background:rgba(25,195,125,.12)}
+.pill-danger{color:#ff9a9a;background:rgba(255,77,77,.12)}
+
+.empty{
+  color:#aaa;text-align:center;padding:20px;
+  border:1px dashed #333;border-radius:16px;
+}
+
+@media(max-width:900px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .layout{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .page{padding:18px 14px 45px}
+  .stats{grid-template-columns:1fr}
+  .hero h1{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+ <div class="header">
+  <div class="header-left" onclick="history.back()">←</div>
+  <div class="header-center">Dashboard</div>
+  <div class="header-right">
+    <button id="openShopBtn" class="top-btn">Boutique</button>
+  </div>
+</div>
+
+  <div class="hero">
+    <p>Gère ta boutique et tes produits.</p>
+    <p>Une commission fixe de <strong>10 Gdes</strong> est prélevée sur chaque vente effectuée</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Produits actifs</div>
+      <div class="value" id="statProducts">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">Unités vendues</div>
+      <div class="value" id="statSold">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">Achats reçus</div>
+      <div class="value" id="statOrders">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">Revenu estimé</div>
+      <div class="value" id="statRevenue">0 G</div>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <div>
+      <div class="card">
+        <h2>Boutique</h2>
+        <p class="small">Infos visibles dans ta page produits.</p>
+
+        <label for="shopNameInput">Nom boutique</label>
+        <input type="text" id="shopNameInput" maxlength="60" placeholder="Nom de boutique">
+
+        <label for="shopBioInput">Bio boutique</label>
+        <textarea id="shopBioInput" maxlength="300" placeholder="Décris ta boutique"></textarea>
+
+<label for="shopLogoFile">Photo / logo boutique</label>
+<input type="file" id="shopLogoFile" accept="image/*">
+
+<label for="shopLogoInput">Ou lien direct</label>
+<input type="text" id="shopLogoInput" placeholder="https://...">
+
+        <button class="btn-primary" id="saveShopBtn">Enregistrer</button>
+        <div class="message" id="shopMsg"></div>
+      </div>
+
+      <div class="card">
+        <h2>Ajouter produit</h2>
+        <p class="small">Ajoute un produit visible dans ta boutique.</p>
+
+        <label for="productName">Nom produit</label>
+        <input type="text" id="productName" maxlength="80" placeholder="Ex: T-shirt noir">
+
+        <label for="productDescription">Description</label>
+        <textarea id="productDescription" maxlength="500" placeholder="Description"></textarea>
+
+        <label for="productPrice">Prix (Gdes)</label>
+        <input type="number" id="productPrice" min="1" placeholder="1500">
+
+        <label for="productStock">Stock</label>
+        <input type="number" id="productStock" min="0" placeholder="10">
+
+<label for="productImagesFiles">Photos du produit</label>
+<input type="file" id="productImagesFiles" accept="image/*" multiple>
+
+<label for="productImages">Ou liens directs</label>
+<textarea id="productImages" placeholder="Une URL par ligne&#10;https://...&#10;https://..."></textarea>
+
+        <button class="btn-primary" id="addProductBtn">Ajouter</button>
+        <div class="message" id="productMsg"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Mes produits</h2>
+        <p class="small">Active, désactive ou supprime.</p>
+        <div class="list" id="productList"></div>
+      </div>
+
+      <div class="card">
+        <h2>Achats reçus</h2>
+        <p class="small">Historique achats.</p>
+        <div class="list" id="orderList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474",
+  storageBucket:"tstx-58474.firebasestorage.app",
+  messagingSenderId:"1010020144942",
+  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const SUPABASE_URL = "https://nxpifzslxoigcuuhslox.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cGlmenNseG9pZ2N1dWhzbG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTgwODgsImV4cCI6MjA4NTk5NDA4OH0.yYQ3nQn6Z0ZCC9ZjuHt_HGJbf1CQVPHlz-b6nnEhFqg";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const API_BASE = "https://hayticlip-server.onrender.com";
+
+const statProducts = document.getElementById("statProducts");
+const statSold = document.getElementById("statSold");
+const statOrders = document.getElementById("statOrders");
+const statRevenue = document.getElementById("statRevenue");
+
+const shopNameInput = document.getElementById("shopNameInput");
+const shopBioInput = document.getElementById("shopBioInput");
+const shopLogoInput = document.getElementById("shopLogoInput");
+const shopLogoFile = document.getElementById("shopLogoFile");
+const saveShopBtn = document.getElementById("saveShopBtn");
+const shopMsg = document.getElementById("shopMsg");
+
+const productName = document.getElementById("productName");
+const productDescription = document.getElementById("productDescription");
+const productPrice = document.getElementById("productPrice");
+const productStock = document.getElementById("productStock");
+const productImages = document.getElementById("productImages");
+const productImagesFiles = document.getElementById("productImagesFiles");
+const addProductBtn = document.getElementById("addProductBtn");
+const productMsg = document.getElementById("productMsg");
+
+const productList = document.getElementById("productList");
+const orderList = document.getElementById("orderList");
+const openShopBtn = document.getElementById("openShopBtn");
+
+let currentUser = null;
+let currentUserData = null;
+let allProducts = [];
+let allOrders = [];
+
+function renderEmpty(container, text){
+  container.innerHTML = `<div class="empty">${text}</div>`;
+}
+
+function escapeHTML(str=""){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function setMessage(el, text, type=""){
+  el.textContent = text;
+  el.className = "message" + (type ? " " + type : "");
+}
+
+function getProductMainImage(product){
+  if(Array.isArray(product.images) && product.images.length){
+    return product.images[0];
+  }
+  return product.imageUrl || "https://placehold.co/600x600/png?text=Produit";
+}
+
+async function uploadImageToSupabase(file, path){
+  const { error } = await supabase.storage
+    .from("media")
+    .upload(path, file, {
+      upsert: true,
+      contentType: file.type
+    });
+
+  if(error){
+    throw new Error(error.message);
+  }
+
+  const { data } = supabase.storage
+    .from("media")
+    .getPublicUrl(path);
+
+  return data.publicUrl;
+}
+
+function updateStats(){
+  const activeProducts = allProducts.filter(p => p.isActive === true).length;
+  const sold = allOrders.reduce((sum,o)=> sum + Number(o.quantity || 0), 0);
+  const revenue = allOrders.reduce((sum,o)=> sum + Number(o.totalAmount || 0), 0);
+
+  statProducts.textContent = activeProducts;
+  statSold.textContent = sold;
+  statOrders.textContent = allOrders.length;
+  statRevenue.textContent = revenue + " G";
+}
+
+function renderProducts(){
+  productList.innerHTML = "";
+
+  if(!allProducts.length){
+    renderEmpty(productList, "Aucun produit");
+    return;
+  }
+
+  allProducts.forEach(product=>{
+    const stock = Number(product.stock || 0);
+    const active = product.isActive === true;
+
+    const div = document.createElement("div");
+    div.className = "item";
+
+    div.innerHTML = `
+      <div class="item-top">
+        <img class="item-img" src="${getProductMainImage(product)}" alt="Produit">
+        <div style="min-width:0;flex:1;">
+          <div class="item-title">${escapeHTML(product.name || "Produit")}</div>
+          <div class="item-line">${escapeHTML(product.description || "")}</div>
+          <div class="item-line">Prix : ${Number(product.price || 0)} Gdes</div>
+          <div class="item-line">Stock : ${stock}</div>
+          <div class="item-line">Photos : ${Array.isArray(product.images) ? product.images.length : (product.imageUrl ? 1 : 0)}</div>
+          <div class="item-line">
+            ${active ? `<span class="pill pill-success">ACTIF</span>` : `<span class="pill pill-danger">INACTIF</span>`}
+          </div>
+        </div>
+      </div>
+
+      <div class="item-actions">
+        <button class="btn-dark" onclick="toggleProductStatus('${product.id}', ${active})">
+          ${active ? "Désactiver" : "Activer"}
+        </button>
+        <button class="btn-danger" onclick="deleteProduct('${product.id}')">Supprimer</button>
+      </div>
+    `;
+
+    productList.appendChild(div);
+  });
+}
+
+function renderOrders(){
+  orderList.innerHTML = "";
+
+  if(!allOrders.length){
+    renderEmpty(orderList, "Aucun achat");
+    return;
+  }
+
+  allOrders
+  .filter(order => order.status !== "completed")
+  .forEach(order=>{
+    const div = document.createElement("div");
+    div.className = "item";
+
+    div.innerHTML = `
+  <div class="item-title">${escapeHTML(order.productName || "Produit")}</div>
+  <div class="item-line">Nom : ${escapeHTML(order.customerNom || "-")}</div>
+  <div class="item-line">Prénom : ${escapeHTML(order.customerPrenom || "-")}</div>
+  <div class="item-line">Sexe : ${escapeHTML(order.customerSexe || "-")}</div>
+  <div class="item-line">Email : ${escapeHTML(order.customerEmail || "-")}</div>
+  <div class="item-line">Appel : ${escapeHTML(order.customerPhone || "-")}</div>
+  <div class="item-line">WhatsApp : ${escapeHTML(order.customerWhatsapp || "-")}</div>
+  <div class="item-line">Détails : ${escapeHTML(order.customerDetails || "-")}</div>
+  <div class="item-line">Quantité : ${Number(order.quantity || 0)}</div>
+  <div class="item-line">Total : ${Number(order.totalAmount || 0)} Gdes</div>
+  <div class="item-line">Statut : ${escapeHTML(order.status || "pending")}</div>
+  <div class="item-line">Code livraison : ${escapeHTML(order.deliveryCode || "-")}</div>
+
+  <div class="item-actions">
+    ${
+      order.status === "pending"
+        ? `
+          <button class="btn-primary" onclick="acceptOrder('${order.id}')">Accepter</button>
+          <button class="btn-danger" onclick="rejectOrder('${order.id}')">Refuser</button>
+          <button class="btn-dark" onclick="completeOrder('${order.id}')">Traiter immédiatement</button>
+        `
+        : ""
+    }
+  </div>
+`;
+
+    orderList.appendChild(div);
+  });
+}
+
+async function loadMerchant(){
+  const snap = await getDoc(doc(db,"users",currentUser.uid));
+
+  if(!snap.exists()){
+    alert("Profil introuvable");
+    location.href = "profil.html";
+    return false;
+  }
+
+  currentUserData = snap.data();
+
+  const expireDate = currentUserData.merchantExpiresAt?.toDate?.() || null;
+const expired = !expireDate || expireDate.getTime() <= Date.now();
+const blocked = currentUserData.merchantRenewalBlocked === true;
+
+if(!(currentUserData.merchantEnabled === true && currentUserData.merchantStatus === "active")){
+  alert("Votre espace marchand n'est pas actif");
+  location.href = "profil.html";
+  return false;
+}
+
+if(blocked || expired){
+  alert("Votre accès marchand est bloqué. Veuillez renouveler.");
+  location.href = "merchant-request.html";
+  return false;
+}
+
+  shopNameInput.value = currentUserData.merchantShopName || "";
+  shopBioInput.value = currentUserData.merchantBio || "";
+  shopLogoInput.value = currentUserData.merchantLogo || "";
+
+  return true;
+}
+
+async function loadProducts(){
+  allProducts = [];
+
+  const q = query(
+    collection(db,"merchantProducts"),
+    where("merchantUid","==",currentUser.uid)
+  );
+
+  const snap = await getDocs(q);
+
+  snap.forEach(d=>{
+    allProducts.push({ id:d.id, ...d.data() });
+  });
+
+  renderProducts();
+  updateStats();
+}
+
+async function loadOrders(){
+  allOrders = [];
+
+  try{
+    const q = query(
+      collection(db,"merchantOrders"),
+      where("merchantUid","==",currentUser.uid)
+    );
+
+    const snap = await getDocs(q);
+
+    snap.forEach(d=>{
+      allOrders.push({ id:d.id, ...d.data() });
+    });
+  }catch(e){
+    console.log("merchantOrders:", e);
+  }
+
+  renderOrders();
+  updateStats();
+}
+
+saveShopBtn.onclick = async ()=>{
+  try{
+    const shopName = shopNameInput.value.trim();
+    const shopBio = shopBioInput.value.trim();
+    let shopLogo = shopLogoInput.value.trim();
+
+    if(shopName.length < 2){
+      setMessage(shopMsg, "Nom invalide", "error");
+      return;
+    }
+
+    const logoFile = shopLogoFile?.files?.[0];
+
+    if(logoFile){
+      const ext = logoFile.name.split(".").pop() || "jpg";
+      const path = `shops/${currentUser.uid}/logo.${ext}`;
+      shopLogo = await uploadImageToSupabase(logoFile, path);
+    }
+
+    await updateDoc(doc(db,"users",currentUser.uid),{
+      merchantShopName: shopName,
+      merchantBio: shopBio,
+      merchantLogo: shopLogo
+    });
+
+    setMessage(shopMsg, "Boutique mise à jour", "success");
+  }catch(e){
+    setMessage(shopMsg, "Erreur : " + e.message, "error");
+  }
+};
+
+addProductBtn.onclick = async ()=>{
+  try{
+    const name = productName.value.trim();
+    const description = productDescription.value.trim();
+    const price = Number(productPrice.value);
+    const stock = Number(productStock.value);
+
+    const urlImages = productImages.value
+      .split("\n")
+      .map(v => v.trim())
+      .filter(Boolean);
+
+    const fileImages = [...(productImagesFiles?.files || [])];
+
+    if(name.length < 2){
+      setMessage(productMsg, "Nom produit invalide", "error");
+      return;
+    }
+
+    if(!Number.isFinite(price) || price <= 0){
+      setMessage(productMsg, "Prix invalide", "error");
+      return;
+    }
+
+    if(!Number.isFinite(stock) || stock < 0){
+      setMessage(productMsg, "Stock invalide", "error");
+      return;
+    }
+
+    let uploadedImages = [];
+
+    for(const file of fileImages){
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `products/${currentUser.uid}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const publicUrl = await uploadImageToSupabase(file, path);
+      uploadedImages.push(publicUrl);
+    }
+
+    const images = [...uploadedImages, ...urlImages];
+
+    if(images.length === 0){
+      setMessage(productMsg, "Ajoute au moins une photo", "error");
+      return;
+    }
+
+    await addDoc(collection(db,"merchantProducts"),{
+      merchantUid: currentUser.uid,
+      name,
+      description,
+      price,
+      stock,
+      images,
+      imageUrl: images[0],
+      isActive: true,
+      createdAt: serverTimestamp()
+    });
+
+    productName.value = "";
+    productDescription.value = "";
+    productPrice.value = "";
+    productStock.value = "";
+    productImages.value = "";
+    if(productImagesFiles) productImagesFiles.value = "";
+
+    setMessage(productMsg, "Produit ajouté", "success");
+    await loadProducts();
+
+  }catch(e){
+    setMessage(productMsg, "Erreur : " + e.message, "error");
+  }
+};
+
+window.toggleProductStatus = async (productId, currentState)=>{
+  try{
+    await updateDoc(doc(db,"merchantProducts",productId),{
+      isActive: !currentState
+    });
+    await loadProducts();
+  }catch(e){
+    alert("Erreur : " + e.message);
+  }
+};
+
+window.deleteProduct = async (productId)=>{
+  try{
+    if(!confirm("Supprimer ce produit ?")) return;
+    await deleteDoc(doc(db,"merchantProducts",productId));
+    await loadProducts();
+  }catch(e){
+    alert("Erreur : " + e.message);
+  }
+};
+
+window.completeOrder = async (orderId)=>{
+  try{
+    const token = await auth.currentUser.getIdToken();
+
+    const res = await fetch(`${API_BASE}/api/merchant/complete-order`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({ orderId })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok){
+      throw new Error(result.error || "Erreur");
+    }
+
+    await loadOrders();
+  }catch(e){
+    alert(e.message || "Erreur réseau");
+  }
+};
+
+window.acceptOrder = async (orderId)=>{
+  try{
+    const token = await auth.currentUser.getIdToken();
+
+    const res = await fetch(`${API_BASE}/api/merchant/accept-order`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({ orderId })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok){
+      throw new Error(result.error || "Erreur");
+    }
+
+    await loadOrders();
+  }catch(e){
+    alert(e.message || "Erreur réseau");
+  }
+};
+
+window.rejectOrder = async (orderId)=>{
+  try{
+    const token = await auth.currentUser.getIdToken();
+
+    const res = await fetch(`${API_BASE}/api/merchant/reject-order`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({ orderId })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok){
+      throw new Error(result.error || "Erreur");
+    }
+
+    await loadOrders();
+  }catch(e){
+    alert(e.message || "Erreur réseau");
+  }
+};
+
+onAuthStateChanged(auth, async(user)=>{
+  if(!user){
+    location.href = "login.html";
+    return;
+  }
+
+  currentUser = user;
+
+  const ok = await loadMerchant();
+  if(!ok) return;
+
+  openShopBtn.onclick = () => {
+    window.location.href = `merchant-products.html?uid=${currentUser.uid}`;
+  };
+
+  await loadProducts();
+  await loadOrders();
+});
+</script>
+
+</body>
+</html>

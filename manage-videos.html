@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes vidéos</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+
+html,body{
+  background:#000;
+  color:#fff;
+  min-height:100%;
+  overflow-x:hidden;
+}
+
+body{
+  min-height:100vh;
+}
+
+/* HEADER */
+.topbar{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  border-bottom:1px solid #222;
+  background:#000;
+  position:sticky;
+  top:0;
+  z-index:100;
+  margin-bottom:0;
+}
+
+.back-btn{
+  width:40px;
+  height:40px;
+  border:none;
+  background:transparent;
+  color:#fff;
+  font-size:24px;
+  cursor:pointer;
+  border-radius:0;
+  box-shadow:none;
+}
+
+.topbar::after{
+  content:"";
+  width:40px;
+}
+
+.topbar::before{
+  content:"Mes vidéos";
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:18px;
+  font-weight:700;
+}
+
+/* PAGE */
+.page{
+  width:100%;
+  max-width:820px;
+  margin:0 auto;
+  padding:20px 16px 40px;
+}
+
+/* HERO */
+.hero{
+  margin-bottom:22px;
+}
+
+.hero-title{
+  display:none;
+}
+
+.hero-sub{
+  color:#aaa;
+  font-size:14px;
+  line-height:1.5;
+  margin-bottom:16px;
+}
+
+/* STATS */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top: 30px;
+}
+
+.stat-box{
+  background:#111;
+  border:1px solid #222;
+  border-radius:16px;
+  padding:14px;
+  min-width:0;
+}
+
+.stat-label{
+  color:#aaa;
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+.stat-value{
+  font-size:24px;
+  font-weight:800;
+}
+
+/* LISTE */
+.video-list{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.video-card{
+  background:#000;
+  border:1px solid #222;
+  border-radius:16px;
+  overflow:hidden;
+}
+
+.video-top{
+  display:grid;
+  grid-template-columns:150px 1fr;
+  gap:14px;
+  padding:14px;
+}
+
+.preview-wrap{
+  width:100%;
+  aspect-ratio:9/16;
+  background:#111;
+  border:1px solid #222;
+  border-radius:14px;
+  overflow:hidden;
+}
+
+.preview-wrap video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  background:#000;
+}
+
+.video-info{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.video-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.video-title{
+  font-size:16px;
+  font-weight:700;
+  line-height:1.35;
+  word-break:break-word;
+}
+
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  flex-shrink:0;
+}
+
+.status-active{
+  color:#19c37d;
+  background:#0f2a20;
+  border:1px solid #1d6b4b;
+}
+
+.status-archived{
+  color:#ffcf70;
+  background:#2a210c;
+  border:1px solid #5a4210;
+}
+
+.video-desc{
+  color:#aaa;
+  font-size:13px;
+  line-height:1.5;
+  word-break:break-word;
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  margin-bottom:14px;
+}
+
+.video-meta{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+  margin-bottom:14px;
+}
+
+.meta-item{
+  background:#111;
+  border:1px solid #222;
+  border-radius:12px;
+  padding:10px;
+}
+
+.meta-label{
+  font-size:11px;
+  color:#777;
+  margin-bottom:6px;
+}
+
+.meta-value{
+  font-size:14px;
+  font-weight:700;
+}
+
+/* BOUTONS */
+.actions{
+  display:flex;
+  gap:10px;
+}
+
+button{
+  border:none;
+  border-radius:30px;
+  padding:12px 14px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+button:disabled{
+  background:#444;
+  opacity:.7;
+  cursor:not-allowed;
+}
+
+.archive-btn{
+  background:#1a1a1a;
+  border:1px solid #333;
+  color:#fff;
+  flex:1;
+}
+
+.delete-btn{
+  background:#ff0050;
+  color:#fff;
+  flex:1;
+}
+
+/* EMPTY / MESSAGE */
+.empty-state,
+.message-box{
+  background:#111;
+  border:1px solid #222;
+  border-radius:16px;
+  padding:24px 16px;
+  text-align:center;
+  color:#aaa;
+}
+
+.empty-state strong{
+  display:block;
+  color:#fff;
+  margin-bottom:8px;
+  font-size:16px;
+}
+
+.message{
+  margin-top:14px;
+  text-align:center;
+  color:#aaa;
+  font-size:14px;
+  min-height:18px;
+}
+
+/* MOBILE */
+@media(max-width:700px){
+  .video-top{
+    grid-template-columns:1fr;
+  }
+
+  .preview-wrap{
+    width:100%;
+    max-width:260px;
+    margin:0 auto;
+  }
+}
+
+@media(max-width:520px){
+  .page{
+    padding:18px 14px 36px;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .video-meta{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .actions{
+    flex-direction:column;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">←</button>
+  </div>
+
+  <div class="hero">
+    <div class="hero-title">Mes vidéos</div>
+   
+
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label">Total</div>
+        <div class="stat-value" id="totalVideos">0</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">Actives</div>
+        <div class="stat-value" id="activeVideos">0</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">Archivées</div>
+        <div class="stat-value" id="archivedVideos">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="videoList" class="video-list"></div>
+  <div id="statusMsg" class="message"></div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  doc,
+  updateDoc,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const container = document.getElementById("videoList");
+const statusMsg = document.getElementById("statusMsg");
+
+const totalVideosEl = document.getElementById("totalVideos");
+const activeVideosEl = document.getElementById("activeVideos");
+const archivedVideosEl = document.getElementById("archivedVideos");
+
+function formatDate(timestamp){
+  if (!timestamp?.toDate) return "Date inconnue";
+  return timestamp.toDate().toLocaleDateString();
+}
+
+function formatNumber(n){
+  if (!n) return "0";
+
+  if (n >= 1000000000) return (n / 1000000000).toFixed(1).replace(".0","") + "B";
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(".0","") + "M";
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(".0","") + "K";
+  return n.toString();
+}
+
+function showMessage(text, isError = false){
+  statusMsg.textContent = text;
+  statusMsg.style.color = isError ? "#ff4d4d" : "#9ca3af";
+}
+
+onAuthStateChanged(auth, (user)=>{
+  if(!user){
+    location.href = "login.html";
+    return;
+  }
+
+  const q = query(
+    collection(db,"videos"),
+    where("userId","==",user.uid),
+    orderBy("createdAt","desc")
+  );
+
+  onSnapshot(q, (snap)=>{
+    container.innerHTML = "";
+    showMessage("");
+
+    const total = snap.size;
+    let archivedCount = 0;
+    let activeCount = 0;
+
+    snap.forEach(docSnap=>{
+      const data = docSnap.data();
+      if(data.archived) archivedCount++;
+      else activeCount++;
+    });
+
+    totalVideosEl.textContent = total;
+    activeVideosEl.textContent = activeCount;
+    archivedVideosEl.textContent = archivedCount;
+
+    if(snap.empty){
+      container.innerHTML = `
+        <div class="empty-state">
+          <strong>Aucune vidéo</strong>
+          Tu n’as encore aucune publication à gérer.
+        </div>
+      `;
+      return;
+    }
+
+    snap.forEach(docSnap=>{
+      const v = docSnap.data();
+      const card = document.createElement("div");
+      card.className = "video-card";
+
+      const title = (v.description || "Publication sans description").trim();
+      const mediaUrl = v.mediaUrls?.[0] || "";
+      const isArchived = v.archived === true;
+
+      card.innerHTML = `
+        <div class="video-top">
+          <div class="preview-wrap">
+            <video src="${mediaUrl}" controls playsinline webkit-playsinline preload="metadata"></video>
+          </div>
+
+          <div class="video-info">
+            <div>
+              <div class="video-header">
+                <div class="video-title">${escapeHTML(title)}</div>
+                <div class="status-pill ${isArchived ? "status-archived" : "status-active"}">
+                  ${isArchived ? "ARCHIVÉE" : "ACTIVE"}
+                </div>
+              </div>
+
+              <div class="video-desc">
+                ${escapeHTML(v.description || "Aucune description")}
+              </div>
+
+              <div class="video-meta">
+                <div class="meta-item">
+                  <div class="meta-label">Publication</div>
+                  <div class="meta-value">${formatDate(v.createdAt)}</div>
+                </div>
+
+                <div class="meta-item">
+                  <div class="meta-label">Vues</div>
+                  <div class="meta-value">${formatNumber(v.viewsCount || 0)}</div>
+                </div>
+
+                <div class="meta-item">
+                  <div class="meta-label">Likes</div>
+                  <div class="meta-value">${formatNumber(v.likesCount || 0)}</div>
+                </div>
+
+                <div class="meta-item">
+                  <div class="meta-label">Commentaires</div>
+                  <div class="meta-value">${formatNumber(v.commentsCount || 0)}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="archive-btn">
+                ${isArchived ? "Désarchiver" : "Archiver"}
+              </button>
+              <button class="delete-btn">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const archiveBtn = card.querySelector(".archive-btn");
+      const deleteBtn = card.querySelector(".delete-btn");
+
+      archiveBtn.onclick = async ()=>{
+        archiveBtn.disabled = true;
+        deleteBtn.disabled = true;
+        showMessage(isArchived ? "Désarchivage..." : "Archivage...");
+
+        try{
+          await updateDoc(doc(db,"videos",docSnap.id),{
+            archived: !isArchived
+          });
+          showMessage(isArchived ? "Vidéo désarchivée." : "Vidéo archivée.");
+        }catch(err){
+          console.error(err);
+          showMessage("Erreur pendant l’archivage.", true);
+          archiveBtn.disabled = false;
+          deleteBtn.disabled = false;
+        }
+      };
+
+      deleteBtn.onclick = async ()=>{
+        const ok = confirm("Supprimer définitivement cette vidéo ?");
+        if(!ok) return;
+
+        archiveBtn.disabled = true;
+        deleteBtn.disabled = true;
+        showMessage("Suppression en cours...");
+
+        try{
+          await deleteDoc(doc(db,"videos",docSnap.id));
+          showMessage("Vidéo supprimée.");
+        }catch(err){
+          console.error(err);
+          showMessage("Erreur pendant la suppression.", true);
+          archiveBtn.disabled = false;
+          deleteBtn.disabled = false;
+        }
+      };
+
+      container.appendChild(card);
+    });
+  });
+});
+
+function escapeHTML(str = ""){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+</script>
+
+</body>
+</html>

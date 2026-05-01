@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vérification Email</title>
+
+<style>
+
+*{
+box-sizing:border-box;
+font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+}
+
+body{
+margin:0;
+height:100vh;
+background:#000;
+color:#fff;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.container{
+width:90%;
+max-width:420px;
+background:#111;
+padding:30px;
+border-radius:16px;
+border:1px solid #222;
+text-align:center;
+}
+
+.logo{
+display:flex;
+justify-content:center;
+align-items:center;
+margin-bottom:25px;
+}
+
+.logo img{
+width:140px;
+height:auto;
+object-fit:contain;
+filter: drop-shadow(0 0 10px rgba(255,0,80,0.6));
+}
+
+h2{
+margin-bottom:10px;
+}
+
+p{
+color:#aaa;
+font-size:14px;
+margin-bottom:25px;
+}
+
+.code-box{
+display:flex;
+justify-content:space-between;
+margin-bottom:25px;
+}
+
+.code-box input{
+width:50px;
+height:60px;
+font-size:24px;
+text-align:center;
+border-radius:10px;
+border:none;
+background:#000;
+color:#fff;
+border:1px solid #333;
+}
+
+.code-box input:focus{
+border-color:#ff0050;
+outline:none;
+}
+
+button{
+width:100%;
+padding:14px;
+border-radius:10px;
+border:none;
+background:#ff0050;
+color:#fff;
+font-size:16px;
+cursor:pointer;
+}
+
+button:active{
+transform:scale(.98);
+}
+
+.resend{
+margin-top:15px;
+font-size:14px;
+}
+
+.resend a{
+color:#ff0050;
+text-decoration:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="logo">
+<img src="ticlip.jpg">
+</div>
+
+<h2>Vérification email</h2>
+<p>Clique sur le lien envoyé à ton mail puis reviens ici pour Confirmer.</p>
+
+
+<button id="verifyBtn">Vérifier</button>
+
+
+
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+getAuth
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+authDomain:"tstx-58474.firebaseapp.com",
+projectId:"tstx-58474"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+document.getElementById("verifyBtn").onclick = async () => {
+
+const user = auth.currentUser;
+
+if(!user){
+alert("Reconnecte-toi.");
+window.location.href = "login.html";
+return;
+}
+
+await user.reload();
+
+if(user.emailVerified){
+
+window.location.href = "interest.html";
+
+}else{
+
+alert("Ton email n'est pas encore vérifié.");
+
+}
+
+};
+</script>
+
+</body>
+</html>

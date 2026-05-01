@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil – HaytiClips</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif}
+body{background:#000;color:#fff;overflow-x:hidden}
+
+/* HEADER */
+.header{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  border-bottom:1px solid #222;
+}
+.header-center{font-weight:700}
+.header-right{display:flex;gap:14px;align-items:center}
+.wallet{font-size:14px;background:#1a1a1a;padding:6px 10px;border-radius:6px}
+.settings{font-size:20px;cursor:pointer}
+
+/* PROFILE */
+.profile{padding:16px}
+.top{display:flex;gap:16px}
+.avatar{
+  width:90px;height:90px;border-radius:50%;
+  border:2px solid #333;object-fit:cover
+}
+.stats{flex:1;display:flex;justify-content:space-around}
+.stat{text-align:center}
+.stat strong{font-size:16px}
+.stat span{font-size:12px;color:#aaa}
+
+/* BIO */
+.bio{margin-top:12px;font-size:14px}
+.bio .username{font-weight:700}
+
+/* BUTTONS */
+.buttons{display:flex;gap:10px;margin-top:14px}
+.btn{
+  flex:1;background:#1a1a1a;border:1px solid #333;
+  border-radius:8px;padding:8px;text-align:center;font-size:14px
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:2px;
+  margin-top:20px;
+}
+.grid video{
+  width:100%;
+  aspect-ratio:9/16;
+  object-fit:cover;
+  background:#000;
+  cursor:pointer;
+}
+
+/* NAV */
+.nav{
+  position:fixed;bottom:0;left:0;width:100%;height:70px;
+  background:#000;border-top:1px solid #222;
+  display:flex;justify-content:space-around;align-items:center;
+}
+.nav div{font-size:22px;cursor:pointer}
+/* SETTINGS PANEL */
+.settings-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  z-index:1000;
+}
+
+.settings-panel{
+  position:fixed;
+  left:0;
+  bottom:0;
+  width:100%;
+  max-height:75dvh;
+  background:#111;
+  border-top-left-radius:20px;
+  border-top-right-radius:20px;
+  padding:20px;
+  padding-bottom:calc(90px + env(safe-area-inset-bottom));
+  transform:translateY(110%);
+  transition:transform 0.3s ease;
+  z-index:1001;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+.settings-panel.show{
+  transform:translateY(0);
+}
+
+.settings-header{
+  position:sticky;
+  top:0;
+  background:#111;
+  z-index:2;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding-bottom:14px;
+  margin-bottom:6px;
+  border-bottom:1px solid #222;
+}
+
+.settings-item{
+  padding:16px 14px;
+  border-bottom:1px solid #222;
+  cursor:pointer;
+  min-height:52px;
+}
+
+.settings-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.settings-item{
+  padding:14px;
+  border-bottom:1px solid #222;
+  cursor:pointer;
+}
+
+.settings-item:hover{
+  background:#1a1a1a;
+}
+
+.settings-item.danger{
+  color:#ff4d4d;
+}
+.username{
+  display:inline-flex;
+  align-items:center;
+  font-weight:700;
+  font-size:18px;
+}
+
+/* BADGE BASE */
+.badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  margin-left:4px;
+}
+
+.badge svg{
+  width:10px;
+  height:10px;
+}
+
+/* BLUE VERIFIED */
+.badge-blue{
+  background:linear-gradient(135deg,#1da1f2,#0d8ddb);
+  box-shadow:0 0 8px rgba(29,161,242,0.6);
+  animation:blueGlow 2s infinite alternate;
+}
+
+@keyframes blueGlow{
+  from{ box-shadow:0 0 6px rgba(29,161,242,0.5);}
+  to{ box-shadow:0 0 12px rgba(29,161,242,0.9);}
+}
+
+/* GOLD VERIFIED */
+.badge-gold{
+  background:linear-gradient(135deg,#ffd700,#ffb700,#ff8c00);
+  color:black;
+  box-shadow:0 0 10px rgba(255,215,0,0.7);
+  animation:goldPulse 2s infinite alternate;
+}
+
+@keyframes goldPulse{
+  from{ box-shadow:0 0 8px rgba(255,215,0,0.6);}
+  to{ box-shadow:0 0 16px rgba(255,200,0,1);}
+}
+
+
+
+.wallet{
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.wallet:hover{
+  background:#222;
+}
+
+.nav-btn{
+  width:40px;
+  height:40px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.nav-btn svg{
+  width:26px;
+  height:26px;
+  fill:white;
+}
+
+.upload{
+  background:white;
+  border-radius:8px;
+}
+
+.upload svg{
+  width:22px;
+  height:22px;
+}
+
+.verify-option{
+display:flex;
+align-items:center;
+gap:12px;
+padding:14px;
+background:#1a1a1a;
+border-radius:12px;
+margin-bottom:10px;
+cursor:pointer;
+border:1px solid #333;
+transition:0.2s;
+}
+
+.verify-option:hover{
+background:#222;
+border-color:#444;
+}
+
+.verify-desc{
+font-size:13px;
+color:#aaa;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div></div>
+<div class="header-center">
+  <span id="headerUsername"></span>
+  <span id="headerBadge"></span>
+</div>
+  <div class="header-right">
+<div id="reportFlag" style="
+display:none;
+cursor:pointer;
+width:32px;
+height:32px;
+align-items:center;
+justify-content:center;
+-webkit-tap-highlight-color:transparent;
+touch-action:manipulation;
+">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="#ff4d4d" style="pointer-events:none;">
+    <path d="M4 2v20M4 3c5-3 7 3 12 0v10c-5 3-7-3-12 0"/>
+  </svg>
+</div>
+    <div class="wallet" id="walletBox" style="display:none">
+      💰 <span id="walletAmount">0</span>
+    </div>
+    <div class="settings" id="settingsBtn" style="display:none;">⚙️</div>
+  </div>
+</div>
+
+<div class="profile">
+
+<div class="top">
+  <div style="display:flex;flex-direction:column;align-items:center;min-width:90px;">
+    <img class="avatar" id="avatarImg">
+
+  </div>
+
+   <div class="stats">
+  <div class="stat">
+    <strong id="totalLikes">0</strong>
+    <span>Likes</span>
+  </div>
+  <div class="stat">
+    <strong id="followersCount">0</strong>
+    <span>Abonnés</span>
+  </div>
+   <div class="stat">
+    <strong id="followingCount">0</strong>
+    <span>Suivis</span>
+  </div>
+</div>
+  </div>
+
+  <div class="bio">
+  <div id="bioText"></div>
+</div>
+  
+  <div id="verifyModal" style="
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.7);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:2000;
+">
+
+<div style="
+background:#111;
+padding:20px;
+border-radius:16px;
+width:90%;
+max-width:400px;">
+
+<h3 style="margin-bottom:15px;">Choisir votre badge officiel</h3>
+
+<div id="blueOption" class="verify-option">
+
+<span class="badge badge-blue">
+<svg viewBox="0 0 24 24" fill="white">
+<path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/>
+</svg>
+</span>
+
+<div>
+<strong>Blue</strong><br>
+<span class="verify-desc">2000 Gdes / 30 jours</span>
+</div>
+
+</div>
+
+
+<div id="goldOption" class="verify-option">
+
+<span class="badge badge-gold">
+<svg viewBox="0 0 24 24" fill="black">
+<path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/>
+</svg>
+</span>
+
+<div>
+<strong>Gold</strong><br>
+<span class="verify-desc">Vérification à vie</span>
+</div>
+
+</div>
+
+<br>
+<button onclick="closeVerifyModal()" style="
+width:100%;
+padding:10px;
+background:#333;
+border:none;
+border-radius:10px;
+color:white;">
+Annuler
+</button>
+
+</div>
+</div>
+
+  <div id="pinModal" style="
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.8);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:3000;
+">
+
+<div style="
+background:#111;
+padding:20px;
+border-radius:16px;
+width:90%;
+max-width:400px;
+">
+
+<h3>Créer code secret (6 chiffres)</h3>
+
+<input id="pinInput"
+type="password"
+maxlength="6"
+placeholder="••••••"
+style="
+width:100%;
+padding:12px;
+margin-top:15px;
+background:#1a1a1a;
+border:1px solid #333;
+color:white;
+border-radius:10px;
+text-align:center;
+font-size:20px;
+letter-spacing:5px;
+">
+
+<button id="savePinBtn"
+style="
+width:100%;
+padding:12px;
+margin-top:15px;
+background:#1da1f2;
+border:none;
+border-radius:10px;
+color:white;">
+Activer
+</button>
+
+</div>
+</div>
+
+
+<!-- DELETE ACCOUNT MODAL -->
+<div id="deleteModal" style="
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.8);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:4000;
+">
+
+<div style="
+background:#111;
+padding:20px;
+border-radius:16px;
+width:90%;
+max-width:400px;
+">
+
+<h3 style="margin-bottom:15px;color:#ff4d4d;">Supprimer le compte</h3>
+
+<select id="deleteReason" style="
+width:100%;
+padding:10px;
+margin-bottom:10px;
+background:#1a1a1a;
+color:white;
+border:1px solid #333;
+border-radius:8px;
+">
+<option value="">Choisir un motif *</option>
+<option value="privacy">Problème de confidentialité</option>
+<option value="security">Problème de sécurité</option>
+<option value="harassment">Harcèlement</option>
+<option value="fake_accounts">Trop de faux comptes</option>
+<option value="not_useful">Application inutile</option>
+<option value="bug">Trop de bugs</option>
+<option value="better_platform">Je préfère une autre plateforme</option>
+<option value="temporary_break">Pause temporaire</option>
+<option value="other">Autre</option>
+</select>
+
+<input type="password" id="deletePassword" placeholder="Mot de passe"
+style="
+width:100%;
+padding:10px;
+margin-bottom:10px;
+background:#1a1a1a;
+border:1px solid #333;
+color:white;
+border-radius:8px;
+">
+
+<input type="text" id="deletePin" placeholder="Code 2FA (*obligatoire*)"
+style="
+width:100%;
+padding:10px;
+margin-bottom:10px;
+background:#1a1a1a;
+border:1px solid #333;
+color:white;
+border-radius:8px;
+">
+
+<button id="confirmDeleteBtn" style="
+width:100%;
+padding:12px;
+background:#ff4d4d;
+border:none;
+border-radius:10px;
+color:white;
+margin-bottom:8px;
+">
+Supprimer définitivement
+</button>
+
+<button onclick="closeDeleteModal()" style="
+width:100%;
+padding:10px;
+background:#333;
+border:none;
+border-radius:10px;
+color:white;">
+Annuler
+</button>
+
+</div>
+</div>
+  
+  <!-- SETTINGS PANEL -->
+<div id="settingsOverlay" class="settings-overlay"></div>
+
+<div id="settingsPanel" class="settings-panel">
+  <div class="settings-header">
+    <strong>Paramètres</strong>
+    <span id="closeSettings" style="cursor:pointer">✖</span>
+  </div>
+<div class="settings-item" style="display:flex;justify-content:space-between;align-items:center;">
+  <span>Vérification en deux étapes</span>
+<input type="checkbox" id="twofaToggle" style="width:20px;height:20px;">
+</div>
+   <div class="settings-item" id="certifiedAccount">Demande verification</div>
+ <div class="settings-item" id="manageVideosBtn">Mes vidéos</div>
+<div class="settings-item" id="merchantRequestBtn">Espace marchand</div>
+<div class="settings-item" id="merchantManagerBtn" style="display:none;">Gestion des marchands</div>
+<div class="settings-item" id="gestionAccount">gestion des badges</div>
+<div class="settings-item" id="adminPanelBtn" style="display:none;"> 
+panel ADM 
+</div>
+<div class="settings-item" id="rolesManagerBtn" style="display:none;">
+  gestion des rôles
+</div>
+  <div class="settings-item" id="changePassword">Changer mot de passe</div>
+  <div class="settings-item" id="logoutBtn">Se déconnecter</div>
+  <div class="settings-item" id="helpCount">Règle,confidential & Aide</div>
+  <div class="settings-item danger" id="deleteAccount">❌ Supprimer le compte</div>
+</div>
+
+<div id="listModal" style="
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.9);
+display:none;
+overflow:auto;
+z-index:5000;
+padding:20px;
+">
+<h3 id="listTitle"></h3>
+<div id="listContainer"></div>
+</div>
+
+<!-- PROFILE REPORT MODAL -->
+<div id="profileReportModal" style="
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.8);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:9000;
+">
+
+<div style="
+background:#111;
+padding:20px;
+border-radius:16px;
+width:90%;
+max-width:400px;">
+
+<h3>Signaler ce profil</h3>
+
+<select id="profileReportReason" style="
+width:100%;
+padding:10px;
+margin:15px 0;
+background:#1a1a1a;
+color:white;
+border:1px solid #333;
+border-radius:8px;
+">
+<option value="">Choisir une raison *</option>
+<option value="fake">Faux compte</option>
+<option value="spam">Spam</option>
+<option value="harassment">Harcèlement</option>
+<option value="nudity">Contenu inapproprié</option>
+<option value="hate">Discours haineux</option>
+<option value="other">Autre</option>
+</select>
+
+<button id="confirmProfileReport"
+type="button"
+onclick="sendProfileReportNow()"
+style="
+width:100%;
+padding:12px;
+background:#ff0050;
+border:none;
+border-radius:10px;
+color:white;
+-webkit-tap-highlight-color:transparent;
+touch-action:manipulation;
+">
+Envoyer signalement
+</button>
+
+<button onclick="closeProfileReportModal()"
+style="
+width:100%;
+padding:10px;
+margin-top:10px;
+background:#333;
+border:none;
+border-radius:10px;
+color:white;">
+Annuler
+</button>
+
+</div>
+</div>
+
+
+  <!-- BOUTONS PROPRIÉTAIRE -->
+<div class="buttons" id="ownerButtons" style="display:none">
+  <div class="btn" id="uploadBtn">publier</div>
+  <div class="btn"> Modifier</div>
+  <div class="btn" id="ownerActionBtn">Partager</div>
+</div>
+
+  <!-- BOUTONS VISITEUR -->
+<div class="buttons" id="visitorButtons" style="display:none">
+  <div class="btn" id="followBtn">➕ Suivre</div>
+  <div class="btn" id="messageBtn">💬 Message</div>
+  <div class="btn" id="viewProductsBtn" style="display:none;">Produits</div>
+</div>
+
+<div class="tabs" style="display:flex;border-bottom:1px solid #222;margin-top:20px;">
+  <div id="tabVideos" style="flex:1;text-align:center;padding:10px;cursor:pointer;border-bottom:2px solid white;">
+    📹
+  </div>
+  <div id="tabReposts" style="flex:1;text-align:center;padding:10px;cursor:pointer;">
+    🔁
+  </div>
+</div>
+
+<div style="overflow:hidden;width:100%;">
+  <div id="tabContent" style="display:flex;width:200%;transition:0.3s;">
+  <div class="grid" id="videoGrid" style="width:50%;"></div>
+  <div class="grid" id="repostGrid" style="width:50%;"></div>
+  </div>
+</div>
+
+<div class="nav">
+
+  <div class="nav-btn" onclick="go('feed.html')">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3z"/>
+    </svg>
+  </div>
+
+  <div class="nav-btn" onclick="go('search.html')">
+    <svg viewBox="0 0 24 24">
+      <path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z"
+      stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="nav-btn upload" onclick="go('upload.html')">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12h14"
+      stroke="black" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="nav-btn" onclick="go('notif.html')" id="notifIcon">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 22a2 2 0 002-2H10a2 2 0 002 2zm6-6V11a6 6 0 10-12 0v5l-2 2h16l-2-2z"/>
+    </svg>
+  </div>
+
+  <div class="nav-btn" onclick="go('profil.html')">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5 0-9 2.5-9 6v2h18v-2c0-3.5-4-6-9-6z"/>
+    </svg>
+  </div>
+
+</div>
+
+<script type="module" src="profil.js?v=3"></script>
+
+     </body>
+       </html>

@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wallet – HaytiClips</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,Arial}
+body{background:#000;color:#fff}
+
+/* HEADER */
+.header{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-bottom:1px solid #222;
+  font-weight:700;
+}
+
+.header-left{
+position:absolute;
+left:15px;
+font-size:22px;
+cursor:pointer;
+}
+
+/* BALANCE CARD */
+.balance-card{
+  margin:20px;
+  padding:25px;
+  background:linear-gradient(135deg,black);
+  border-radius:16px;
+  text-align:center;
+}
+
+.balance-card h2{
+  font-size:14px;
+  opacity:0.8;
+}
+
+.balance-card .amount{
+  font-size:32px;
+  font-weight:700;
+  margin-top:10px;
+}
+
+/* WITHDRAW SECTION */
+.section{
+  padding:20px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:8px;
+  border:1px solid #333;
+  background:#111;
+  color:#fff;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  background:#ff0033;
+  border:none;
+  border-radius:8px;
+  color:white;
+  font-weight:600;
+}
+
+/* TRANSACTIONS */
+.transactions{
+  padding:20px;
+  border: 2px Solid; 
+  border-radius: 10px;
+  text-align: center;
+  margin:30px;
+  margin-top: 15px;
+  box-shadow:
+  0 0 8px rgba(255,0,80,0.6),
+  0 0 20px rgba(255,0,80,0.4),
+  0 0 40px rgba(255,0,80,0.2);
+  background:rgba(255,255,255,0.02);
+}
+
+.tx{
+  background:#111;
+  border:1px solid #222;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:10px;
+  display:flex;
+  justify-content:space-between;
+  cursor:pointer;
+}
+
+.tx .left{
+  font-size:14px;
+}
+
+.tx .right{
+  text-align:right;
+}
+
+.tx.deposit{border-left:4px solid #2ecc71;}
+.tx.withdraw{border-left:4px solid #ff0033;}
+
+.status{
+  font-size:12px;
+  opacity:0.7;
+}
+
+.recharge-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:10px;
+  margin-bottom:10px;
+}
+
+.recharge-item{
+  background:#111;
+  border:1px solid #333;
+  padding:12px;
+  text-align:center;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.recharge-item.selected{
+  border:2px solid #ff0033;
+  background:#1a1a1a;
+}
+/* MODE BÊTA : recharge/retrait désactivés */
+.beta-disabled{
+  opacity:.45;
+  pointer-events:none;
+}
+
+.beta-note{
+  margin-top:10px;
+  padding:12px;
+  border-radius:12px;
+  background:#111;
+  border:1px solid #333;
+  color:#aaa;
+  font-size:13px;
+  line-height:1.5;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="header-left" onclick="history.back()">←</div>
+  <div class="header-center">💰 Mon Wallet</div>
+  </div>
+
+<div class="balance-card">
+  <h2>Solde actuel</h2>
+  <div class="amount" id="balanceAmount">0 Gdes</div>
+
+  <div style="margin-top:14px;font-size:14px;opacity:0.85;">
+    <div>Montant bloqué : <strong id="lockedAmount">0 Gdes</strong></div>
+    <div style="margin-top:6px;">Disponible : <strong id="availableAmount">0 Gdes</strong></div>
+  </div>
+</div>
+
+<div class="section">
+<h3>Numéro de retrait</h3>
+
+<input type="text" id="savedNumber" placeholder="Numéro Digicel MonCash">
+
+<button id="saveNumberBtn">Enregistrer numéro</button>
+
+<div id="numberInfo" style="font-size:12px;opacity:0.7;margin-top:6px;"></div>
+
+</div>
+
+<div class="section">
+  <h3>Retirer via MonCash</h3>
+
+  <div id="withdrawQuotaBox" style="
+    background:#111;
+    border:1px solid #222;
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:12px;
+    font-size:13px;
+    line-height:1.5;
+    color:#ddd;
+  ">
+    <div>Limite du jour : <strong id="withdrawLimitText">0 Gdes</strong></div>
+    <div>Déjà retiré aujourd’hui : <strong id="withdrawUsedText">0 Gdes</strong></div>
+    <div>Reste disponible : <strong id="withdrawRemainingText">0 Gdes</strong></div>
+    <div style="opacity:0.7;margin-top:4px;">Réinitialisation à 12:00 AM</div>
+  </div>
+
+<input type="number" id="withdrawAmount" placeholder="Montant en Gdes" min="250" step="1">
+<button id="withdrawBtn" disabled class="beta-disabled">Demander retrait</button>
+<div class="beta-note">Retrait indisponible pendant la bêta.</div>
+</div>
+
+<div class="section">
+  <h3>Recharger le wallet</h3>
+
+  <div class="recharge-grid">
+
+    <div class="recharge-item" data-amount="50">50 Gdes</div>
+    <div class="recharge-item" data-amount="100">100 Gdes</div>
+    <div class="recharge-item" data-amount="250">250 Gdes</div>
+    <div class="recharge-item" data-amount="500">500 Gdes</div>
+    <div class="recharge-item" data-amount="1000">1000 Gdes</div>
+    <div class="recharge-item" data-amount="5000">5000 Gdes</div>
+    <div class="recharge-item" data-amount="10000">10000 Gdes</div>
+
+  </div>
+
+  <button id="buyBtn" disabled class="beta-disabled">Acheter</button>
+<div class="beta-note">Recharge indisponible pendant la bêta.</div>
+</div>
+
+<div class="transactions">
+  <h3 onclick="window.location.href='transaction.html'" style="cursor:pointer">Historique</h3>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const API_BASE = "https://hayticlip-server.onrender.com";
+const BETA_WALLET_LOCKED = true;
+
+
+const balanceAmount = document.getElementById("balanceAmount");
+const lockedAmount = document.getElementById("lockedAmount");
+const availableAmount = document.getElementById("availableAmount");
+const withdrawBtn = document.getElementById("withdrawBtn");
+const savedNumberInput = document.getElementById("savedNumber");
+const saveNumberBtn = document.getElementById("saveNumberBtn");
+const numberInfo = document.getElementById("numberInfo");
+
+const withdrawLimitText = document.getElementById("withdrawLimitText");
+const withdrawUsedText = document.getElementById("withdrawUsedText");
+const withdrawRemainingText = document.getElementById("withdrawRemainingText");
+
+function getLocalDateString(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function formatGdes(n){
+  return Number(n || 0) + " Gdes";
+}
+
+function updateWithdrawQuotaUI(userData){
+  const role = userData.role || "user";
+  const limit = role === "admin" ? 80000 : 20000;
+
+  const today = getLocalDateString();
+  const resetAt = userData.withdrawResetAt || "";
+  const used = resetAt === today ? Number(userData.withdrawDailyTotal || 0) : 0;
+  const remaining = Math.max(0, limit - used);
+
+  withdrawLimitText.textContent = formatGdes(limit);
+  withdrawUsedText.textContent = formatGdes(used);
+  withdrawRemainingText.textContent = formatGdes(remaining);
+}
+
+
+onAuthStateChanged(auth, async user => {
+  if(!user){
+    window.location.href = "login.html";
+    return;
+  }
+
+  try{
+    const userSnap = await getDoc(doc(db, "users", user.uid));
+
+    if(!userSnap.exists()){
+      alert("Profil introuvable");
+      return;
+    }
+
+    const userData = userSnap.data() || {};
+const wallet = Number(userData.wallet || 0);
+const locked = Number(userData.walletLocked || 0);
+const available = Math.max(0, wallet - locked);
+
+balanceAmount.textContent = wallet + " Gdes";
+lockedAmount.textContent = locked + " Gdes";
+availableAmount.textContent = available + " Gdes";
+updateWithdrawQuotaUI(userData);
+
+await loadWithdrawNumber(user.uid);
+
+  }catch(e){
+    console.error("LOAD WALLET ERROR:", e);
+    alert("Impossible de charger le wallet");
+  }
+});
+
+withdrawBtn.onclick = async () => {
+  if(withdrawBtn.disabled) return;
+  withdrawBtn.disabled = true;
+
+  try{
+    const user = auth.currentUser;
+
+    if(!user){
+      alert("Utilisateur non connecté");
+      return;
+    }
+
+    const amount = Number(document.getElementById("withdrawAmount").value);
+
+if(!Number.isInteger(amount) || amount <= 0){
+  alert("Montant invalide");
+  return;
+}
+
+if(amount < 250){
+  alert("Minimum retrait : 250 Gdes");
+  return;
+}
+
+const userSnap = await getDoc(doc(db, "users", user.uid));
+
+if(!userSnap.exists()){
+  alert("Utilisateur introuvable");
+  return;
+}
+
+const userData = userSnap.data() || {};
+const role = userData.role || "user";
+const dailyLimit = role === "admin" ? 80000 : 20000;
+
+const today = getLocalDateString();
+const usedToday = userData.withdrawResetAt === today
+  ? Number(userData.withdrawDailyTotal || 0)
+  : 0;
+
+const remainingToday = Math.max(0, dailyLimit - usedToday);
+
+if(amount > remainingToday){
+  alert("Limite journalière dépassée. Reste disponible : " + remainingToday + " Gdes");
+  return;
+}
+
+    const pin = prompt("Entrez votre code PIN");
+
+    if(!/^\d{6}$/.test(pin || "")){
+      alert("PIN invalide");
+      return;
+    }
+
+    const token = await user.getIdToken(true);
+
+    const res = await fetch(`${API_BASE}/api/requestWithdraw`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        amount,
+        pin
+      })
+    });
+
+    const result = await res.json();
+
+    console.log("REPONSE SERVEUR:", result);
+
+    if(result.success){
+  alert("Retrait effectué");
+  document.getElementById("withdrawAmount").value = "";
+
+  const freshSnap = await getDoc(doc(db, "users", user.uid));
+  if(freshSnap.exists()){
+    const freshData = freshSnap.data() || {};
+    const freshWallet = Number(freshData.wallet || 0);
+const freshLocked = Number(freshData.walletLocked || 0);
+const freshAvailable = Math.max(0, freshWallet - freshLocked);
+
+balanceAmount.textContent = freshWallet + " Gdes";
+lockedAmount.textContent = freshLocked + " Gdes";
+availableAmount.textContent = freshAvailable + " Gdes";
+
+updateWithdrawQuotaUI(freshData);
+  }
+}else{
+  alert(result.error || "Erreur serveur");
+}
+
+  }catch(e){
+    console.error("WITHDRAW ERROR:", e);
+    alert("Erreur lors du retrait");
+  }finally{
+    withdrawBtn.disabled = false;
+  }
+};
+
+let selectedRechargeAmount = null;
+
+document.querySelectorAll(".recharge-item").forEach(item => {
+
+  item.onclick = () => {
+
+    document.querySelectorAll(".recharge-item")
+      .forEach(i => i.classList.remove("selected"));
+
+    item.classList.add("selected");
+
+    selectedRechargeAmount = parseInt(item.dataset.amount);
+
+    document.getElementById("buyBtn").disabled = BETA_WALLET_LOCKED ? true : false;
+
+  };
+
+});
+
+
+document.getElementById("buyBtn").onclick = async () => {
+  const btn = document.getElementById("buyBtn");
+
+  if(btn.disabled) return;
+  btn.disabled = true;
+
+  try{
+    if(!selectedRechargeAmount){
+      alert("Choisissez un montant");
+      return;
+    }
+
+    const user = auth.currentUser;
+
+    if(!user){
+      alert("Utilisateur non connecté");
+      return;
+    }
+
+    const token = await user.getIdToken(true);
+
+    const res = await fetch(`${API_BASE}/api/requestRecharge`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        amount: selectedRechargeAmount
+      })
+    });
+
+    const result = await res.json();
+
+    console.log("RECHARGE:", result);
+
+    if(result.success && result.redirectUrl){
+      window.location.href = result.redirectUrl;
+      return;
+    }
+
+    alert(result.error || "Impossible de démarrer la recharge");
+
+  }catch(e){
+    console.error("RECHARGE ERROR:", e);
+    alert("Erreur lors de la recharge");
+  }finally{
+    btn.disabled = false;
+  }
+};
+
+async function loadWithdrawNumber(uid){
+
+const snap = await getDoc(doc(db,"users",uid));
+
+if(!snap.exists()) return;
+
+const data = snap.data();
+
+if(data.withdrawNumber){
+
+savedNumberInput.value = data.withdrawNumber;
+
+const last = data.withdrawNumberUpdatedAt?.toMillis?.() || 0;
+const now = Date.now();
+
+const days150 = 150 * 24 * 60 * 60 * 1000;
+
+const date = data.withdrawNumberUpdatedAt?.toDate()?.toLocaleDateString();
+
+numberInfo.textContent = "Dernière modification : " + date;
+
+if(now - last < days150){
+
+savedNumberInput.disabled = true;
+saveNumberBtn.disabled = true;
+
+}else{
+
+savedNumberInput.disabled = false;
+saveNumberBtn.disabled = false;
+
+numberInfo.textContent += " (vous pouvez modifier)";
+
+}
+
+}
+
+}
+
+
+saveNumberBtn.onclick = async ()=>{
+
+try{
+
+const user = auth.currentUser;
+
+if(!user){
+alert("Utilisateur non connecté");
+return;
+}
+
+let number = savedNumberInput.value.trim();
+
+let clean = number.replace(/\D/g,"");
+
+if(clean.length === 8){
+clean = "509" + clean;
+}
+
+const allowedPrefixes = [
+"31","34","36","37","38","39","44","46","47","49"
+];
+
+if(
+clean.length !== 11 ||
+!clean.startsWith("509") ||
+!allowedPrefixes.includes(clean.slice(3,5))
+){
+alert("Numéro Digicel invalide");
+return;
+}
+
+const userRef = doc(db,"users",user.uid);
+
+const snap = await getDoc(userRef);
+
+if(!snap.exists()){
+alert("Utilisateur introuvable");
+return;
+}
+
+const data = snap.data();
+
+const last = data.withdrawNumberUpdatedAt?.toMillis?.() || 0;
+
+const now = Date.now();
+
+const days150 = 150 * 24 * 60 * 60 * 1000;
+
+if(last && now - last < days150){
+
+alert("Vous pouvez modifier le numéro tous les 150 jours");
+
+return;
+
+}
+
+const token = await auth.currentUser.getIdToken(true);
+
+const res = await fetch(`${API_BASE}/api/saveWithdrawNumber`,{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Authorization":"Bearer " + token
+},
+body: JSON.stringify({
+number: clean
+})
+});
+
+const result = await res.json();
+
+if(result.success){
+
+savedNumberInput.value = clean;
+savedNumberInput.disabled = true;
+saveNumberBtn.disabled = true;
+
+numberInfo.textContent = "Numéro enregistré (modification possible dans 150 jours)";
+
+alert("Numéro enregistré");
+
+}else{
+
+alert(result.error || "Erreur serveur");
+
+}
+
+}catch(e){
+
+console.error("ERREUR ENREGISTREMENT NUMERO:", e);
+alert("Erreur: " + e.message);
+
+}
+
+};
+</script>
+
+</body>
+</html>

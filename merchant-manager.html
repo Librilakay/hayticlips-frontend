@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion des marchands – HaytiClips</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+html,body{background:#000;color:#fff;min-height:100%;overflow-x:hidden}
+body{min-height:100vh}
+
+.header{
+  height:60px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;border-bottom:1px solid #222;background:#000;
+  position:sticky;top:0;z-index:100;
+}
+.header-left{font-size:24px;cursor:pointer;width:40px}
+.header-center{font-weight:700;font-size:18px;text-align:center}
+.header-right{width:40px}
+
+.page{max-width:1100px;margin:0 auto;padding:20px 16px 50px}
+.topbar{display:none}
+
+.hero,.card,.stat-card,.request-card{
+  background:#000;border:1px solid #222;border-radius:16px;
+}
+.hero{padding:16px;margin-bottom:18px}
+.hero-title{font-size:24px;font-weight:800;margin-bottom:8px}
+.hero-sub{color:#aaa;font-size:14px;line-height:1.55}
+
+.search-box{margin-top:14px}
+.search-box input{
+  width:100%;padding:12px 16px;border-radius:12px;border:1px solid #333;
+  background:#111;color:#fff;outline:none;font-size:16px;
+}
+.search-box input:focus{border-color:#ff0050}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+.stat-card{padding:14px}
+.stat-label{font-size:12px;color:#aaa;margin-bottom:8px}
+.stat-value{font-size:24px;font-weight:800}
+
+.card{padding:16px;margin-bottom:14px}
+.section-title{font-size:18px;font-weight:700;margin-bottom:6px}
+.section-sub{color:#aaa;font-size:13px;margin-bottom:14px}
+
+.card-list{display:flex;flex-direction:column;gap:10px}
+.request-card{padding:12px}
+.request-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+
+.user-block{display:flex;gap:12px;align-items:flex-start;min-width:0;flex:1}
+.avatar{width:54px;height:54px;border-radius:50%;object-fit:cover;background:#111;border:1px solid #333;flex-shrink:0}
+.user-meta{min-width:0;flex:1}
+.username{font-size:16px;font-weight:700;word-break:break-word}
+.uid{font-size:12px;color:#aaa;word-break:break-all;margin-top:4px}
+.meta-line{font-size:13px;color:#ccc;margin-top:6px;line-height:1.5;word-break:break-word}
+
+.status-pill{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;
+}
+.status-pending{background:rgba(255,176,32,.12);color:#ffcf70;border:1px solid rgba(255,176,32,.22)}
+.status-active{background:rgba(25,195,125,.12);color:#6ff0b6;border:1px solid rgba(25,195,125,.22)}
+
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button{
+  border:none;border-radius:30px;padding:10px 14px;font-size:13px;
+  font-weight:700;cursor:pointer;
+}
+.btn-success{background:#19c37d;color:#fff}
+.btn-danger{background:#ff4d4d;color:#fff}
+.btn-dark{background:#1a1a1a;border:1px solid #333;color:#fff}
+.btn-blue{background:#1da1f2;color:#fff}
+
+.empty-state{
+  border:1px dashed #333;border-radius:16px;padding:24px 16px;
+  text-align:center;color:#aaa;background:#000;
+}
+
+.reject-box{margin-top:10px;display:none}
+.reject-box textarea{
+  width:100%;min-height:90px;padding:12px;border-radius:12px;
+  border:1px solid #333;outline:none;background:#111;color:#fff;
+  font-size:14px;resize:vertical;
+}
+.reject-box textarea:focus{border-color:#ff0050}
+.quick-note{margin-top:10px;font-size:12px;color:#aaa}
+
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:640px){
+  .page{padding:18px 14px 45px}
+  .stats-grid{grid-template-columns:1fr}
+  .hero-title{font-size:22px}
+  .actions button{flex:1}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+ <div class="header">
+  <div class="header-left" onclick="history.back()">←</div>
+  <div class="header-center">Gestion marchands</div>
+  <div class="header-right"></div>
+</div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Rechercher par username, UID, boutique, type de produit ou code parrain...">
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Demandes en attente</div>
+      <div class="stat-value" id="statPending">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Marchands actifs</div>
+      <div class="stat-value" id="statActiveMerchants">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Part admin future</div>
+      <div class="stat-value" id="statAdmin">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Part parrains future</div>
+      <div class="stat-value" id="statReferrer">0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Demandes marchands</div>
+    <div class="section-sub">Accepter ou refuser une demande en attente.</div>
+    <div class="card-list" id="requestsContainer"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Marchands actifs</div>
+    <div class="section-sub">Voir le profil d’un marchand actif ou lui retirer l’accès marchand.</div>
+    <div class="card-list" id="activeMerchantsContainer"></div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  query,
+  where
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474",
+  storageBucket:"tstx-58474.firebasestorage.app",
+  messagingSenderId:"1010020144942",
+  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const API_BASE = "https://hayticlip-server.onrender.com";
+
+const requestsContainer = document.getElementById("requestsContainer");
+const activeMerchantsContainer = document.getElementById("activeMerchantsContainer");
+const searchInput = document.getElementById("searchInput");
+
+const statPending = document.getElementById("statPending");
+const statActiveMerchants = document.getElementById("statActiveMerchants");
+const statAdmin = document.getElementById("statAdmin");
+const statReferrer = document.getElementById("statReferrer");
+
+let allRequests = [];
+let allActiveMerchants = [];
+let allUsersMap = {};
+let processingIds = new Set();
+
+function escapeHTML(str=""){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function renderEmpty(container, text){
+  container.innerHTML = `<div class="empty-state">${text}</div>`;
+}
+
+function getAvatar(user){
+  return user?.avatar || `https://i.pravatar.cc/150?u=${user?.id || Math.random()}`;
+}
+
+function updateStats(requestsList, activeList){
+  statPending.textContent = requestsList.length;
+  statActiveMerchants.textContent = activeList.length;
+  statAdmin.textContent = (requestsList.length * 250) + " G";
+statReferrer.textContent = (requestsList.length * 500) + " G";
+}
+
+async function preloadUsers(){
+  allUsersMap = {};
+  const snap = await getDocs(collection(db,"users"));
+  snap.forEach(d=>{
+    allUsersMap[d.id] = { id:d.id, ...d.data() };
+  });
+}
+
+async function loadRequests(){
+  allRequests = [];
+
+  const q = query(
+    collection(db,"merchantRequests"),
+    where("status","==","pending")
+  );
+
+  const snap = await getDocs(q);
+
+  snap.forEach(d=>{
+    allRequests.push({ id:d.id, ...d.data() });
+  });
+}
+
+async function loadActiveMerchants(){
+  allActiveMerchants = [];
+
+  const q = query(
+    collection(db,"users"),
+    where("merchantStatus","==","active")
+  );
+
+  const snap = await getDocs(q);
+
+  snap.forEach(d=>{
+    allActiveMerchants.push({ id:d.id, ...d.data() });
+  });
+}
+
+function renderRequests(list){
+  requestsContainer.innerHTML = "";
+
+  if(!list.length){
+    renderEmpty(requestsContainer, "Aucune demande marchand en attente.");
+    return;
+  }
+
+  list.forEach(data=>{
+    const user = allUsersMap[data.uid] || null;
+    const referrer = allUsersMap[data.referrerUid] || null;
+
+    const div = document.createElement("div");
+    div.className = "request-card";
+
+    div.innerHTML = `
+      <div class="request-top">
+        <div class="user-block">
+          <img src="${getAvatar(user)}" class="avatar">
+          <div class="user-meta">
+            <div class="username">${escapeHTML(user?.username || "Utilisateur")}</div>
+            <div class="uid">UID : ${escapeHTML(data.uid || "-")}</div>
+            <div class="meta-line">Boutique : ${escapeHTML(data.shopName || "-")}</div>
+            <div class="meta-line">Produits : ${escapeHTML(data.productType || "-")}</div>
+            <div class="meta-line">Code parrain : ${escapeHTML(data.referralCode || "-")}</div>
+            <div class="meta-line">Parrain : ${escapeHTML(referrer?.username || "Introuvable")}</div>
+            <div class="meta-line">Montant payé : ${Number(data.amountPaid || 0)} Gdes</div>
+          </div>
+        </div>
+
+        <div>
+          <span class="status-pill status-pending">EN ATTENTE</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-blue" onclick="openProfile('${data.uid}')">Voir profil</button>
+        <button class="btn-success" onclick="approveMerchant('${data.id}')">Accepter</button>
+        <button class="btn-danger" onclick="toggleRejectBox('${data.id}')">Refuser</button>
+      </div>
+
+      <div class="reject-box" id="rejectBox_${data.id}">
+        <textarea id="rejectReason_${data.id}" placeholder="Motif du refus (facultatif)"></textarea>
+        <div class="actions">
+          <button class="btn-danger" onclick="rejectMerchant('${data.id}')">Confirmer refus</button>
+          <button class="btn-dark" onclick="toggleRejectBox('${data.id}')">Annuler</button>
+        </div>
+        <div class="quick-note">Le refus remboursera automatiquement 1500 Gdes à l’utilisateur.</div>
+      </div>
+    `;
+
+    requestsContainer.appendChild(div);
+  });
+}
+
+function renderActiveMerchants(list){
+  activeMerchantsContainer.innerHTML = "";
+
+  if(!list.length){
+    renderEmpty(activeMerchantsContainer, "Aucun marchand actif.");
+    return;
+  }
+
+  list.forEach(user=>{
+    const referrer = allUsersMap[user.merchantReferrerUid] || null;
+
+    const div = document.createElement("div");
+    div.className = "request-card";
+
+    div.innerHTML = `
+      <div class="request-top">
+        <div class="user-block">
+          <img src="${getAvatar(user)}" class="avatar">
+          <div class="user-meta">
+            <div class="username">${escapeHTML(user.username || "Utilisateur")}</div>
+            <div class="uid">UID : ${escapeHTML(user.id || "-")}</div>
+            <div class="meta-line">Boutique : ${escapeHTML(user.merchantShopName || "-")}</div>
+            <div class="meta-line">Produits : ${escapeHTML(user.merchantProductType || "-")}</div>
+            <div class="meta-line">Parrain : ${escapeHTML(referrer?.username || "Introuvable")}</div>
+            <div class="meta-line">Code parrain : ${escapeHTML(referrer?.referralCode || "-")}</div>
+          </div>
+        </div>
+
+        <div>
+          <span class="status-pill status-active">ACTIF</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-blue" onclick="openProfile('${user.id}')">Voir profil</button>
+        <button class="btn-danger" onclick="removeMerchantAccess('${user.id}')">Retirer accès</button>
+      </div>
+    `;
+
+    activeMerchantsContainer.appendChild(div);
+  });
+}
+
+async function refreshAll(){
+  await preloadUsers();
+  await loadRequests();
+  await loadActiveMerchants();
+  applySearch();
+}
+
+window.openProfile = (uid)=>{
+  window.location.href = `profil.html?uid=${uid}`;
+};
+
+window.toggleRejectBox = (requestId)=>{
+  const box = document.getElementById(`rejectBox_${requestId}`);
+  if(!box) return;
+
+  box.style.display = box.style.display === "block" ? "none" : "block";
+};
+
+window.approveMerchant = async (requestId)=>{
+  if(processingIds.has(requestId)) return;
+
+  if(!confirm("Accepter cette demande marchand ?")) return;
+
+  processingIds.add(requestId);
+
+  try{
+    const user = auth.currentUser;
+    if(!user) throw new Error("Utilisateur non connecté");
+
+    const token = await user.getIdToken(true);
+
+    const res = await fetch(`${API_BASE}/api/approveMerchant`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({ requestId })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok || !result.success){
+      throw new Error(result.error || "Erreur serveur");
+    }
+
+    await refreshAll();
+    alert("Demande acceptée");
+
+  }catch(err){
+    alert(err.message || "Erreur");
+  }finally{
+    processingIds.delete(requestId);
+  }
+};
+
+window.rejectMerchant = async (requestId)=>{
+  if(processingIds.has(requestId)) return;
+
+  if(!confirm("Refuser cette demande marchand ?")) return;
+
+  processingIds.add(requestId);
+
+  try{
+    const user = auth.currentUser;
+    if(!user) throw new Error("Utilisateur non connecté");
+
+    const rejectReason = document.getElementById(`rejectReason_${requestId}`)?.value.trim() || "";
+    const token = await user.getIdToken(true);
+
+    const res = await fetch(`${API_BASE}/api/rejectMerchant`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({
+        requestId,
+        rejectReason
+      })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok || !result.success){
+      throw new Error(result.error || "Erreur serveur");
+    }
+
+    await refreshAll();
+    alert("Demande refusée");
+
+  }catch(err){
+    alert(err.message || "Erreur");
+  }finally{
+    processingIds.delete(requestId);
+  }
+};
+
+window.removeMerchantAccess = async (targetUid)=>{
+  if(processingIds.has(targetUid)) return;
+
+  if(!confirm("Retirer l’accès marchand à ce compte ?")) return;
+
+  processingIds.add(targetUid);
+
+  try{
+    const user = auth.currentUser;
+    if(!user) throw new Error("Utilisateur non connecté");
+
+    const token = await user.getIdToken(true);
+
+    const res = await fetch(`${API_BASE}/api/removeMerchantAccess`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({ targetUid })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok || !result.success){
+      throw new Error(result.error || "Erreur serveur");
+    }
+
+    await refreshAll();
+    alert("Accès marchand retiré");
+
+  }catch(err){
+    alert(err.message || "Erreur");
+  }finally{
+    processingIds.delete(targetUid);
+  }
+};
+
+function applySearch(){
+  const value = searchInput.value.toLowerCase().trim();
+
+  if(!value){
+    renderRequests(allRequests);
+    renderActiveMerchants(allActiveMerchants);
+    updateStats(allRequests, allActiveMerchants);
+    return;
+  }
+
+  const filteredRequests = allRequests.filter(r=>{
+    const user = allUsersMap[r.uid] || {};
+    const referrer = allUsersMap[r.referrerUid] || {};
+
+    return (r.uid || "").toLowerCase().includes(value) ||
+           (r.shopName || "").toLowerCase().includes(value) ||
+           (r.productType || "").toLowerCase().includes(value) ||
+           (r.referralCode || "").toLowerCase().includes(value) ||
+           (user.username || "").toLowerCase().includes(value) ||
+           (referrer.username || "").toLowerCase().includes(value);
+  });
+
+  const filteredActive = allActiveMerchants.filter(u=>{
+    const referrer = allUsersMap[u.merchantReferrerUid] || {};
+
+    return (u.id || "").toLowerCase().includes(value) ||
+           (u.username || "").toLowerCase().includes(value) ||
+           (u.merchantShopName || "").toLowerCase().includes(value) ||
+           (u.merchantProductType || "").toLowerCase().includes(value) ||
+           (referrer.username || "").toLowerCase().includes(value) ||
+           (referrer.referralCode || "").toLowerCase().includes(value);
+  });
+
+  renderRequests(filteredRequests);
+  renderActiveMerchants(filteredActive);
+  updateStats(filteredRequests, filteredActive);
+}
+
+searchInput.addEventListener("input", applySearch);
+
+onAuthStateChanged(auth, async(user)=>{
+  if(!user){
+    location.href = "login.html";
+    return;
+  }
+
+  const snap = await getDoc(doc(db,"users",user.uid));
+
+  if(!snap.exists()){
+    location.href = "feed.html";
+    return;
+  }
+
+  const role = snap.data().role || "";
+
+  if(role !== "admin" && role !== "merchant_manager"){
+    location.href = "feed.html";
+    return;
+  }
+
+  await refreshAll();
+});
+</script>
+
+</body>
+</html>

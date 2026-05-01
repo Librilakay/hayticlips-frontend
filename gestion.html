@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion HaytiClips</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+}
+
+html,body{
+  background:#000;
+  color:#fff;
+  min-height:100%;
+  overflow-x:hidden;
+}
+
+body{
+  min-height:100vh;
+}
+
+/* HEADER */
+.topbar{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  border-bottom:1px solid #222;
+  background:#000;
+  position:sticky;
+  top:0;
+  z-index:100;
+  margin-bottom:0;
+}
+
+.back-btn{
+  width:40px;
+  height:40px;
+  border:none;
+  background:transparent;
+  color:#fff;
+  font-size:24px;
+  cursor:pointer;
+}
+
+/* PAGE */
+.page{
+  width:100%;
+  max-width:1100px;
+  margin:0 auto;
+}
+
+.hero{
+  padding:20px 16px;
+  border-bottom:1px solid #111;
+}
+
+.hero-title{
+  font-size:22px;
+  font-weight:800;
+  text-align:center;
+  margin-bottom:8px;
+}
+
+.hero-sub{
+  color:#aaa;
+  font-size:14px;
+  line-height:1.5;
+  text-align:center;
+  margin-bottom:16px;
+}
+
+/* SEARCH */
+.search-box{
+  width:100%;
+  margin-top:14px;
+}
+
+.search-box input{
+  width:100%;
+  padding:14px 16px;
+  border-radius:12px;
+  border:1px solid #333;
+  background:#111;
+  color:#fff;
+  outline:none;
+  font-size:15px;
+}
+
+.search-box input:focus{
+  border-color:#ff0050;
+}
+
+/* TAGS */
+.quick-tags{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin-top:12px;
+}
+
+.quick-tag{
+  padding:8px 12px;
+  border-radius:999px;
+  background:#111;
+  border:1px solid #333;
+  color:#ddd;
+  font-size:12px;
+}
+
+/* STATS */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  padding:16px;
+}
+
+.stat-card{
+  background:#111;
+  border:1px solid #222;
+  border-radius:16px;
+  padding:16px;
+}
+
+.stat-label{
+  font-size:12px;
+  color:#aaa;
+  margin-bottom:8px;
+}
+
+.stat-value{
+  font-size:26px;
+  font-weight:800;
+}
+
+.stat-accent-gold{color:#ffd700;}
+.stat-accent-blue{color:#1da1f2;}
+.stat-accent-green{color:#19c37d;}
+.stat-accent-red{color:#ff4d4d;}
+
+/* SECTIONS */
+.section{
+  padding:0 16px 22px;
+}
+
+.section-head{
+  margin-bottom:10px;
+}
+
+.section-title{
+  font-size:18px;
+  font-weight:800;
+}
+
+.section-sub{
+  font-size:13px;
+  color:#888;
+  margin-top:4px;
+}
+
+.section-box{
+  background:#000;
+  border:1px solid #222;
+  border-radius:18px;
+  padding:12px;
+}
+
+.card-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* CARDS */
+.card{
+  background:#111;
+  border:1px solid #222;
+  border-radius:16px;
+  padding:14px;
+}
+
+.card-top{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+
+.user-block{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  min-width:0;
+  flex:1;
+  cursor:pointer;
+}
+
+.avatar{
+  width:54px;
+  height:54px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#000;
+  border:1px solid #333;
+  flex-shrink:0;
+}
+
+.user-meta{
+  min-width:0;
+  flex:1;
+}
+
+.user-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:6px;
+}
+
+.username{
+  font-size:16px;
+  font-weight:700;
+  word-break:break-word;
+}
+
+.uid{
+  font-size:12px;
+  color:#888;
+  word-break:break-all;
+}
+
+.meta-line{
+  font-size:13px;
+  color:#d4d4d8;
+  margin-top:5px;
+  line-height:1.45;
+  word-break:break-word;
+}
+
+.meta-box{
+  margin-top:8px;
+  padding:10px;
+  background:#0b0b0b;
+  border:1px solid #222;
+  border-radius:12px;
+  font-size:13px;
+  line-height:1.5;
+  max-height:120px;
+  overflow:auto;
+}
+
+/* LINKS */
+.links{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:8px;
+}
+
+.links a,
+.doc-link{
+  color:#1da1f2;
+  text-decoration:none;
+  font-size:13px;
+  word-break:break-all;
+}
+
+/* ACTIONS */
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+button{
+  border:none;
+  border-radius:12px;
+  padding:10px 14px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.btn-danger{background:#ff4d4d;color:#fff;}
+.btn-success{background:#19c37d;color:#fff;}
+.btn-dark{background:#2b2b2b;color:#fff;}
+.btn-blue{background:#1da1f2;color:#fff;}
+
+/* BADGES */
+.status-pill,
+.badge-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+}
+
+.status-pending{
+  background:rgba(255,176,32,0.12);
+  color:#ffcf70;
+  border:1px solid rgba(255,176,32,0.22);
+}
+
+.status-active{
+  background:rgba(25,195,125,0.12);
+  color:#6ff0b6;
+  border:1px solid rgba(25,195,125,0.22);
+}
+
+.badge-blue{
+  background:rgba(29,161,242,0.12);
+  color:#7fccff;
+  border:1px solid rgba(29,161,242,0.25);
+}
+
+.badge-gold{
+  background:rgba(255,196,0,0.12);
+  color:#ffd65f;
+  border:1px solid rgba(255,196,0,0.25);
+}
+
+.badge-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+}
+
+.badge-blue .badge-dot{background:#1da1f2;}
+.badge-gold .badge-dot{background:#ffd700;}
+
+.empty-state{
+  border:1px dashed #333;
+  border-radius:14px;
+  padding:22px 14px;
+  text-align:center;
+  color:#888;
+}
+
+/* MOBILE */
+@media(max-width:900px){
+  .stats-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:640px){
+  .stats-grid{
+    grid-template-columns:1fr;
+  }
+
+  .card-top{
+    flex-direction:column;
+  }
+
+  .actions{
+    width:100%;
+  }
+
+  .actions button{
+    flex:1;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">←</button>
+  </div>
+
+  <div class="hero">
+    <div class="hero-title">Gestion Officielle</div>
+    <div class="hero-sub">
+      Tableau de gestion des badges, demandes de vérification et paiements Blue.
+     
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Rechercher un username ou UID...">
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Badges actifs</div>
+      <div class="stat-value stat-accent-gold" id="statVerified">0</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Demandes Gold</div>
+      <div class="stat-value stat-accent-blue" id="statGoldRequests">0</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Paiements Blue</div>
+      <div class="stat-value stat-accent-green" id="statBluePayments">0</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Actions en attente</div>
+      <div class="stat-value stat-accent-red" id="statTotalPending">0</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Comptes vérifiés</div>
+        <div class="section-sub">Badges actifs actuellement sur la plateforme</div>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <div class="card-list" id="verifiedContainer"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Demandes Gold</div>
+        <div class="section-sub">Vérifications officielles en attente de décision</div>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <div class="card-list" id="requestsContainer"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Paiements Blue</div>
+        <div class="section-sub">Demandes Blue en attente de validation</div>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <div class="card-list" id="paymentsContainer"></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, query, where, getDocs,
+  updateDoc, doc, getDoc, runTransaction, addDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const verifiedContainer = document.getElementById("verifiedContainer");
+const requestsContainer = document.getElementById("requestsContainer");
+const paymentsContainer = document.getElementById("paymentsContainer");
+const searchInput = document.getElementById("searchInput");
+
+const statVerified = document.getElementById("statVerified");
+const statGoldRequests = document.getElementById("statGoldRequests");
+const statBluePayments = document.getElementById("statBluePayments");
+const statTotalPending = document.getElementById("statTotalPending");
+
+let verifiedUsersData = [];
+let requestsData = [];
+let paymentsData = [];
+let allUsersMap = {};
+
+/* ADMIN CHECK */
+onAuthStateChanged(auth, async(user)=>{
+  if(!user) return location.href="/";
+
+  const snap = await getDoc(doc(db,"users",user.uid));
+  const role = snap.exists() ? snap.data().role : null;
+
+  if(!snap.exists() || (role !== "admin" && role !== "badge_manager")){
+    location.href="/";
+    return;
+  }
+
+  await preloadUsers();
+  await loadVerifiedUsers();
+  await loadRequests();
+  await loadPayments();
+  updateStats();
+});
+
+async function preloadUsers(){
+  allUsersMap = {};
+  const snap = await getDocs(collection(db,"users"));
+  snap.forEach(d=>{
+    allUsersMap[d.id] = { id:d.id, ...d.data() };
+  });
+}
+
+function updateStats(){
+  statVerified.textContent = verifiedUsersData.length;
+  statGoldRequests.textContent = requestsData.length;
+  statBluePayments.textContent = paymentsData.length;
+  statTotalPending.textContent = requestsData.length + paymentsData.length;
+}
+
+function getAvatar(user){
+  return user?.avatar || `https://i.pravatar.cc/150?u=${user?.id || Math.random()}`;
+}
+
+function getBadgePill(verification){
+  if(!verification || verification.status !== "active") return "";
+
+  if(verification.type === "gold"){
+    return `
+      <span class="badge-pill badge-gold">
+        <span class="badge-dot"></span>
+        GOLD
+      </span>
+    `;
+  }
+
+  if(verification.type === "blue"){
+    return `
+      <span class="badge-pill badge-blue">
+        <span class="badge-dot"></span>
+        BLUE
+      </span>
+    `;
+  }
+
+  return "";
+}
+
+function escapeHTML(str=""){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function renderEmpty(container, text){
+  container.innerHTML = `<div class="empty-state">${text}</div>`;
+}
+
+window.openUserProfile = (uid) => {
+  if(!uid) return;
+  window.location.href = `profil.html?uid=${uid}`;
+};
+
+/* ================= VERIFIED USERS ================= */
+async function loadVerifiedUsers(){
+  verifiedUsersData = [];
+  verifiedContainer.innerHTML = "";
+
+  const usersRef = collection(db,"users");
+  const snap = await getDocs(usersRef);
+
+  snap.forEach(d=>{
+    const data = d.data();
+    if(data.verification && data.verification.status === "active"){
+      verifiedUsersData.push({ id:d.id, ...data });
+    }
+  });
+
+  renderVerifiedUsers(verifiedUsersData);
+  updateStats();
+}
+
+function renderVerifiedUsers(list){
+  verifiedContainer.innerHTML = "";
+
+  if(!list.length){
+    renderEmpty(verifiedContainer, "Aucun compte vérifié actif.");
+    return;
+  }
+
+  list.forEach(user=>{
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <div class="card-top">
+        <div class="user-block" onclick="openUserProfile('${user.id}')">
+          <img src="${getAvatar(user)}" class="avatar">
+          <div class="user-meta">
+            <div class="user-row">
+              <div class="username">${escapeHTML(user.username || "Sans nom")}</div>
+              ${getBadgePill(user.verification)}
+              <span class="status-pill status-active">ACTIF</span>
+            </div>
+            <div class="uid">${user.id}</div>
+            <div class="meta-line">Type : ${(user.verification?.type || "-").toUpperCase()}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-danger" onclick="removeBadge('${user.id}')">Retirer le badge</button>
+      </div>
+    `;
+
+    verifiedContainer.appendChild(div);
+  });
+}
+
+/* REMOVE BADGE */
+window.removeBadge = async(uid)=>{
+  await updateDoc(doc(db,"users",uid),{
+    verification:null
+  });
+
+  await preloadUsers();
+  await loadVerifiedUsers();
+};
+
+/* ================= GOLD REQUESTS ================= */
+async function loadRequests(){
+  requestsData = [];
+  requestsContainer.innerHTML = "";
+
+  const q = query(
+    collection(db,"verificationRequests"),
+    where("status","==","pending")
+  );
+
+  const snap = await getDocs(q);
+
+  snap.forEach(d=>{
+    requestsData.push({ id:d.id, ...d.data() });
+  });
+
+  renderRequests(requestsData);
+  updateStats();
+}
+
+function renderRequests(list){
+  requestsContainer.innerHTML = "";
+
+  if(!list.length){
+    renderEmpty(requestsContainer, "Aucune demande Gold en attente.");
+    return;
+  }
+
+  list.forEach(data=>{
+    const user = allUsersMap[data.uid] || null;
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    const linksHTML = data.links && data.links.length
+      ? `
+        <div class="links">
+          ${data.links.filter(l=>l).map(l=>`
+            <a href="${l}" target="_blank">${l}</a>
+          `).join("")}
+        </div>
+      `
+      : "";
+
+    div.innerHTML = `
+      <div class="card-top">
+<div class="user-block" onclick="openUserProfile('${data.uid}')">
+          <img src="${getAvatar(user)}" class="avatar">
+          <div class="user-meta">
+            <div class="user-row">
+              <div class="username">${escapeHTML(data.fullName || user?.username || "Sans nom")}</div>
+              <span class="status-pill status-pending">EN ATTENTE</span>
+            </div>
+
+            <div class="uid">UID : ${data.uid || "-"}</div>
+            <div class="meta-line">Profil : ${escapeHTML(data.profileName || "-")}</div>
+            <div class="meta-line">Document : ${escapeHTML(data.documentType || "-")}</div>
+            <div class="meta-line">Catégorie : ${escapeHTML(data.category || "-")}</div>
+            <div class="meta-line">Pays : ${escapeHTML(data.country || "-")}</div>
+           <div class="meta-line">Audience : ${escapeHTML(data.audience || "-")}</div>
+<div class="meta-line">Alias : ${escapeHTML(data.knownAs || "-")}</div>
+
+<div class="meta-line"> Email : ${escapeHTML(data.contactEmail || "-")}</div>
+
+<div class="meta-line">
+ Motivation :
+<div class="meta-box">
+  ${escapeHTML(data.whyGold || "Non renseigné")}
+</div>
+</div>
+
+${linksHTML}
+
+            ${
+              data.documentUrl
+              ? `<a href="${data.documentUrl}" target="_blank" class="doc-link">📎 Voir document</a>`
+              : `<div class="meta-line" style="color:var(--danger)">❌ Aucun document</div>`
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-success" onclick="approveGold('${data.id}')">Accepter</button>
+        <button class="btn-dark" onclick="rejectGold('${data.id}')">Refuser</button>
+      </div>
+    `;
+
+    requestsContainer.appendChild(div);
+  });
+}
+
+/* APPROVE */
+window.approveGold = async(requestId)=>{
+  const ref = doc(db,"verificationRequests",requestId);
+  const snap = await getDoc(ref);
+
+  if(!snap.exists()) return;
+
+  const data = snap.data();
+
+  await updateDoc(ref,{status:"approved"});
+
+  await updateDoc(doc(db,"users",data.uid),{
+    verification:{
+      type:"gold",
+      expiresAt:null,
+      status:"active"
+    }
+  });
+
+  await preloadUsers();
+  await loadRequests();
+  await loadVerifiedUsers();
+};
+
+/* REJECT */
+window.rejectGold = async(requestId)=>{
+  await updateDoc(doc(db,"verificationRequests",requestId),{
+    status:"rejected"
+  });
+
+  await loadRequests();
+};
+
+/* ================= PAYMENTS BLUE ================= */
+async function loadPayments(){
+  paymentsData = [];
+  paymentsContainer.innerHTML = "";
+
+  const q = query(
+    collection(db,"payments"),
+    where("status","==","pending")
+  );
+
+  const snap = await getDocs(q);
+
+  snap.forEach(d=>{
+    paymentsData.push({ id:d.id, ...d.data() });
+  });
+
+  renderPayments(paymentsData);
+  updateStats();
+}
+
+function renderPayments(list){
+  paymentsContainer.innerHTML = "";
+
+  if(!list.length){
+    renderEmpty(paymentsContainer, "Aucun paiement Blue en attente.");
+    return;
+  }
+
+  list.forEach(data=>{
+    const user = allUsersMap[data.userId] || null;
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <div class="card-top">
+<div class="user-block" onclick="openUserProfile('${data.userId}')">
+          <img src="${getAvatar(user)}" class="avatar">
+          <div class="user-meta">
+            <div class="user-row">
+              <div class="username">${escapeHTML(user?.username || "Utilisateur")}</div>
+              <span class="badge-pill badge-blue">
+                <span class="badge-dot"></span>
+                BLUE
+              </span>
+              <span class="status-pill status-pending">EN ATTENTE</span>
+            </div>
+            <div class="uid">UID : ${data.userId}</div>
+            <div class="meta-line">Montant : ${data.amount || 0} Gdes</div>
+            <div class="meta-line">Type : ${escapeHTML(data.type || "-")}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-success" onclick="approvePayment('${data.id}')">Valider</button>
+        <button class="btn-dark" onclick="rejectPayment('${data.id}')">Refuser</button>
+      </div>
+    `;
+
+    paymentsContainer.appendChild(div);
+  });
+}
+
+window.approvePayment = async (paymentId)=>{
+  try{
+    const user = auth.currentUser;
+    if(!user){
+      alert("Utilisateur non connecté");
+      return;
+    }
+
+    const token = await user.getIdToken(true);
+
+    const res = await fetch("https://hayticlip-server.onrender.com/api/blue/approve-payment",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({ paymentId })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok || !result.success){
+      throw new Error(result.error || "Erreur serveur");
+    }
+
+    await preloadUsers();
+    await loadPayments();
+    await loadVerifiedUsers();
+    updateStats();
+
+  }catch(e){
+    alert(e.message || "Erreur");
+  }
+};
+
+window.rejectPayment = async (paymentId)=>{
+  try{
+    const user = auth.currentUser;
+    if(!user){
+      alert("Utilisateur non connecté");
+      return;
+    }
+
+    const token = await user.getIdToken(true);
+
+    const res = await fetch("https://hayticlip-server.onrender.com/api/blue/reject-payment",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({ paymentId })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok || !result.success){
+      throw new Error(result.error || "Erreur serveur");
+    }
+
+    await loadPayments();
+    updateStats();
+
+  }catch(e){
+    alert(e.message || "Erreur");
+  }
+};
+
+/* ================= SEARCH ================= */
+searchInput.addEventListener("input", ()=>{
+  const value = searchInput.value.toLowerCase().trim();
+
+  if(!value){
+    renderVerifiedUsers(verifiedUsersData);
+    renderRequests(requestsData);
+    renderPayments(paymentsData);
+    return;
+  }
+
+  const filteredVerified = verifiedUsersData.filter(u =>
+    (u.username || "").toLowerCase().includes(value) ||
+    u.id.toLowerCase().includes(value)
+  );
+
+  const filteredRequests = requestsData.filter(r =>
+    (r.fullName || "").toLowerCase().includes(value) ||
+    (r.profileName || "").toLowerCase().includes(value) ||
+    (r.uid || "").toLowerCase().includes(value)
+  );
+
+  const filteredPayments = paymentsData.filter(p => {
+    const user = allUsersMap[p.userId];
+    return (p.userId || "").toLowerCase().includes(value) ||
+           ((user?.username || "").toLowerCase().includes(value));
+  });
+
+  renderVerifiedUsers(filteredVerified);
+  renderRequests(filteredRequests);
+  renderPayments(filteredPayments);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Centres d’intérêt</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: #000;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  width: 92%;
+  max-width: 450px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+p {
+  text-align: center;
+  font-size: 14px;
+  color: #bbb;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.item {
+  padding: 16px;
+  text-align: center;
+  border-radius: 12px;
+  background: #111;
+  border: 2px solid #222;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.item.active {
+  border-color: #ff0050;
+  background: #1a1a1a;
+}
+
+button {
+  margin-top: 25px;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #ff0050;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #444;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Choisis tes intérêts</h1>
+  <p>Sélectionne au moins 3 pour personnaliser ton feed</p>
+
+  <div class="grid" id="interests">
+    <div class="item">Art</div>
+    <div class="item">Musique</div>
+    <div class="item">Humour</div>
+    <div class="item">Cinéma</div>
+    <div class="item">Tech</div>
+    <div class="item">Business</div>
+    <div class="item">Sport</div>
+    <div class="item">Lifestyle</div>
+    <div class="item">Développement personnel</div>
+    <div class="item">Cuisine</div>
+  </div>
+
+  <button id="continueBtn" disabled>Continuer</button>
+</div>
+
+<!-- FIREBASE -->
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getAuth,
+    onAuthStateChanged,
+    setPersistence,
+    browserLocalPersistence
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  /* FIREBASE */
+  const firebaseConfig = {
+    apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+    authDomain: "tstx-58474.firebaseapp.com",
+    projectId: "tstx-58474",
+    storageBucket: "tstx-58474.firebasestorage.app",
+    messagingSenderId: "1010020144942",
+    appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+await setPersistence(auth, browserLocalPersistence);
+
+  // 🔒 PERSISTENCE (IMPORTANT)
+  
+
+  const selected = new Set();
+  const btn = document.getElementById("continueBtn");
+
+  // UI sélection
+  document.querySelectorAll(".item").forEach(item => {
+    item.addEventListener("click", () => {
+      item.classList.toggle("active");
+
+      if (selected.has(item.innerText)) {
+        selected.delete(item.innerText);
+      } else {
+        selected.add(item.innerText);
+      }
+
+      btn.disabled = selected.size < 3;
+    });
+  });
+
+  let currentUser = null;
+
+  // AUTH
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+    if(!user.emailVerified){
+     window.location.href = "verify.html";
+    return;
+    }
+    currentUser = user;
+    
+
+    // 🔍 Vérifier que le user existe bien dans Firestore
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
+        if(snap.data().profileCompleted){
+window.location.href = "feed.html";
+return;
+}
+        
+        
+    if (!snap.exists()) {
+      alert("Compte incomplet. Reconnecte-toi.");
+      window.location.href = "login.html";
+    }
+  });
+
+  // CLICK CONTINUER (UNE SEULE FOIS)
+  btn.addEventListener("click", async () => {
+    if (!currentUser) return;
+
+    try {
+await setDoc(
+  doc(db, "users", currentUser.uid),
+  {
+    interests: Array.from(selected),
+    profileCompleted:true
+  },
+  { merge: true }
+);
+
+      window.location.href = "feed.html";
+    } catch (e) {
+  alert("Erreur : " + e.code + " - " + e.message);
+  console.error("ERREUR FIRESTORE :", e);
+}
+  });
+  </script>
+</body>
+</html>

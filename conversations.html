@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Messages</title>
+
+<style>
+body{
+  background:#000;
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+  margin:0;
+}
+
+.header{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-bottom:1px solid #222;
+  font-weight:600;
+}
+
+.header-left{
+position:absolute;
+left:15px;
+font-size:22px;
+cursor:pointer;
+}
+
+.list{
+  padding:15px;
+}
+
+.item{
+  display:flex;
+  align-items:center;
+  padding:12px;
+  border-bottom:1px solid #222;
+  cursor:pointer;
+}
+
+.username{
+  font-weight:600;
+}
+
+.preview{
+  font-size:13px;
+  opacity:.6;
+  margin-top:5px;
+}
+
+.avatar{
+  width:45px;
+  height:45px;
+  border-radius:50%;
+  object-fit:cover;
+  margin-right:12px;
+}
+
+.info{
+  flex:1;
+}
+
+.top{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.badge{
+  font-size:12px;
+}
+
+.unreadDot{
+  width:8px;
+  height:8px;
+  background:#ff0050;
+  border-radius:50%;
+  margin-left:6px;
+}
+
+.chat-badge{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+width:16px;
+height:16px;
+border-radius:50%;
+margin-left:-3px;
+background:linear-gradient(135deg,#ffd700,#ffb700,#ff8c00);
+box-shadow:0 0 8px rgba(255,215,0,0.8);
+}
+
+.chat-badge svg{
+width:10px;
+height:10px;
+fill:black;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+   <div class="header-left" onclick="history.back()">←</div>
+  <div class="header-center">Messages</div>
+  </div>
+<div class="list" id="conversationList"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const list = document.getElementById("conversationList");
+
+onAuthStateChanged(auth,(user)=>{
+  if(!user){
+    location.href="login.html";
+    return;
+  }
+
+  const q = query(
+    collection(db,"conversations"),
+    where("participants","array-contains",user.uid),
+    orderBy("lastMessageAt","desc")
+  );
+
+  onSnapshot(q, async (snap)=>{
+
+    list.innerHTML="";
+
+    if(snap.empty){
+      list.innerHTML="<p style='color:#777'>Aucune conversation</p>";
+      return;
+    }
+
+    for(const docSnap of snap.docs){
+
+      const data = docSnap.data();
+
+      const otherUid = data.participants.find(p=>p!==user.uid);
+
+      const userSnap = await getDoc(doc(db,"users",otherUid));
+      if(!userSnap.exists()) continue;
+
+      const otherUser = userSnap.data();
+      const unread = data.unread && data.unread[user.uid];
+
+      const div = document.createElement("div");
+      div.className="item";
+
+div.innerHTML=`
+
+<img class="avatar" src="${otherUser.avatar || 'https://i.pravatar.cc/150'}">
+
+<div class="info">
+
+  <div class="top">
+
+    <div class="username">${otherUser.username}</div>
+
+    ${
+       otherUser.verification?.type === "blue"
+            ? `<span class="chat-badge" style="
+               background:linear-gradient(135deg,#1da1f2,#0d8ddb);
+                      box-shadow:0 0 8px rgba(29,161,242,0.8);
+                              ">
+                        <svg viewBox="0 0 24 24">
+                      <path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/>
+                         </svg>
+               </span>`
+               : ""
+          }
+
+                         ${
+                   otherUser.verification?.type === "gold" && otherUser.verification?.status === "active"
+               ? `<span class="chat-badge">
+                     <svg viewBox="0 0 24 24">
+                         <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/>
+                 </svg>
+            </span>`
+         : ""
+        }
+
+    ${unread ? `<div class="unreadDot"></div>` : ""}
+
+  </div>
+
+  <div class="preview">${data.lastMessage || ""}</div>
+
+</div>
+
+`;
+
+      div.onclick = ()=>{
+        location.href="chat.html?conv="+docSnap.id;
+      };
+
+      list.appendChild(div);
+    }
+
+  });
+
+});
+
+</script>
+
+</body>
+</html>
+
+

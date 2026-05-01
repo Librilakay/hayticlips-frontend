@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mot de passe oublié – HaytiClips</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+
+html,body{
+  min-height:100%;
+  background:#000;
+  color:#fff;
+  overflow-x:hidden;
+}
+
+body{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  padding:80px 16px 30px;
+}
+
+/* CONTAINER */
+.container{
+  width:100%;
+  max-width:420px;
+}
+
+/* CARD */
+.card{
+  background:#000;
+  border:1px solid #222;
+  border-radius:18px;
+  padding:26px 18px;
+}
+
+h1{
+  font-size:26px;
+  font-weight:800;
+  text-align:center;
+  margin-bottom:10px;
+}
+
+.subtitle{
+  color:#aaa;
+  text-align:center;
+  margin-bottom:24px;
+  font-size:14px;
+  line-height:1.5;
+}
+
+/* FORM */
+.input-group{
+  margin-bottom:16px;
+}
+
+label{
+  display:block;
+  margin-bottom:6px;
+  font-size:14px;
+  color:#aaa;
+}
+
+input{
+  width:100%;
+  padding:12px 16px;
+  border-radius:12px;
+  border:1px solid #333;
+  background:#111;
+  color:#fff;
+  font-size:16px;
+  outline:none;
+}
+
+input:focus{
+  border-color:#ff0050;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:15px 16px;
+  border:none;
+  border-radius:30px;
+  background:#ff0050;
+  color:#fff;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:8px;
+}
+
+button:disabled{
+  background:#444;
+  cursor:not-allowed;
+  opacity:.7;
+}
+
+button:active{
+  transform:scale(.98);
+}
+
+/* LINKS */
+.back-link{
+  text-align:center;
+  margin-top:22px;
+}
+
+.back-link a{
+  color:#ff0050;
+  text-decoration:none;
+  font-size:14px;
+  font-weight:600;
+}
+
+/* MESSAGES */
+.message{
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:18px;
+  text-align:center;
+  font-size:14px;
+  display:none;
+}
+
+.success{
+  background:#00a86b20;
+  border:1px solid #00a86b;
+  color:#00d084;
+}
+
+.error{
+  background:#ff4d4d20;
+  border:1px solid #ff4d4d;
+  color:#ff4d4d;
+}
+
+.loading{
+  display:none;
+  text-align:center;
+  margin:15px 0;
+  color:#ff0050;
+  font-size:14px;
+}
+
+/* FOOTER */
+.footer{
+  margin-top:24px;
+  text-align:center;
+  color:#666;
+  font-size:13px;
+}
+
+@media(max-width:480px){
+  body{
+    padding-top:70px;
+  }
+
+  .card{
+    padding:24px 16px;
+  }
+
+  h1{
+    font-size:24px;
+  }
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+  
+  <div class="card">
+    <h1>Mot de passe oublié</h1>
+    <p class="subtitle">
+      Entrez votre adresse email. Vous recevrez un lien pour réinitialiser votre mot de passe.
+    </p>
+    
+    <div id="message" class="message"></div>
+    <div id="loading" class="loading">Envoi en cours...</div>
+    
+    <form id="resetForm">
+      <div class="input-group">
+        <label for="email">Adresse email</label>
+        <input type="email" id="email" placeholder="votre@email.com" required>
+      </div>
+      
+      <button type="submit" id="submitBtn">Envoyer le lien de réinitialisation</button>
+    </form>
+    
+    <div class="back-link">
+      <a href="login.html">← Retour à la connexion</a>
+    </div>
+  </div>
+  
+  <div class="footer">
+    © 2026 HaytiClips. Tous droits réservés.
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+  getAuth, 
+  sendPasswordResetEmail 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
+
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const form = document.getElementById('resetForm');
+const emailInput = document.getElementById('email');
+const submitBtn = document.getElementById('submitBtn');
+const messageDiv = document.getElementById('message');
+const loadingDiv = document.getElementById('loading');
+let cooldown = false;
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const email = emailInput.value.trim().toLowerCase();
+  
+  if (cooldown) {
+  showMessage("Attendez quelques secondes avant de réessayer.", "error");
+  return;
+}
+
+  
+  if (!email) {
+    showMessage('Veuillez entrer votre adresse email.', 'error');
+    return;
+  }
+  
+  // Validation email simple
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showMessage('Veuillez entrer une adresse email valide.', 'error');
+    return;
+  }
+  
+  // Désactiver le bouton pendant l'envoi
+  submitBtn.disabled = true;
+  loadingDiv.style.display = 'block';
+  messageDiv.style.display = 'none';
+  
+try {
+
+const actionCodeSettings = {
+  url: window.location.origin + "/reset.html",
+  handleCodeInApp: false
+};
+
+await sendPasswordResetEmail(auth, email, actionCodeSettings);
+
+alert("Email envoyé. Vérifiez votre boîte de réception ou votre dossier SPAM.");
+
+window.location.href = "login.html";
+
+cooldown = true;
+setTimeout(() => {
+  cooldown = false;
+}, 30000);
+
+    } catch (error) {
+  console.error('Erreur:', error);
+
+  const errorMessage = "Si un compte existe avec cet email, un lien a été envoyé.";
+  showMessage(errorMessage, 'error');
+
+} 
+finally {
+
+    // Réactiver le bouton
+    submitBtn.textContent = "Envoyer le lien de réinitialisation";
+    submitBtn.disabled = false;
+    loadingDiv.style.display = 'none';
+  }
+});
+
+function showMessage(text, type) {
+  messageDiv.textContent = text;
+  messageDiv.className = `message ${type}`;
+  messageDiv.style.display = 'block';
+  
+  // Faire défiler jusqu'au message
+  messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Optionnel: Focus sur le champ email au chargement
+window.addEventListener('DOMContentLoaded', () => {
+  emailInput.focus();
+});
+</script>
+
+</body>
+</html>

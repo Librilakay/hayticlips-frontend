@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boutique – HaytiClips</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+
+html,body{
+  background:#000;
+  color:#fff;
+  min-height:100%;
+  overflow-x:hidden;
+}
+
+body{min-height:100vh}
+
+/* HEADER */
+.header{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  border-bottom:1px solid #222;
+  background:#000;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+
+.header-left{
+  font-size:24px;
+  cursor:pointer;
+  width:40px;
+}
+
+.header-center{
+  font-size:18px;
+  font-weight:700;
+}
+
+.header-right{
+  min-width:40px;
+  display:flex;
+  justify-content:flex-end;
+}
+
+/* PAGE */
+.page{
+  max-width:980px;
+  margin:0 auto;
+  padding:20px 16px 40px;
+}
+
+.topbar{display:none}
+
+.hero,.card,.product-card{
+  background:#000;
+  border:1px solid #222;
+  border-radius:16px;
+}
+
+.hero{
+  padding:16px;
+  margin-bottom:18px;
+}
+
+.shop-head{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+
+.shop-logo{
+  width:72px;
+  height:72px;
+  border-radius:16px;
+  object-fit:cover;
+  background:#111;
+  border:1px solid #333;
+  flex-shrink:0;
+}
+
+.shop-name-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:4px;
+  flex-wrap:wrap;
+}
+
+.hero-title{
+  font-size:24px;
+  font-weight:800;
+}
+
+.hero-sub{
+  color:#aaa;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.merchant-badge-mini{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.merchant-badge-mini svg{
+  width:16px;
+  height:16px;
+  filter:drop-shadow(0 0 4px rgba(255,255,255,.4));
+}
+
+.merchant-badge-mini path,
+.merchant-badge-mini circle{fill:#fff}
+
+.meta-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+
+.pill{
+  display:inline-flex;
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  border:1px solid #333;
+  background:#111;
+  color:#ddd;
+}
+
+.controls{
+  display:grid;
+  grid-template-columns:1fr 170px;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.controls input,
+.controls select,
+#buyModal input,
+#buyModal select,
+#buyModal textarea{
+  width:100%!important;
+  padding:12px 16px!important;
+  border-radius:12px!important;
+  border:1px solid #333!important;
+  background:#111!important;
+  color:#fff!important;
+  outline:none!important;
+  font-size:16px!important;
+  margin-bottom:10px!important;
+}
+
+.controls input:focus,
+.controls select:focus,
+#buyModal input:focus,
+#buyModal select:focus,
+#buyModal textarea:focus{
+  border-color:#ff0050!important;
+}
+
+.card{
+  padding:16px;
+}
+
+.card h2{
+  font-size:18px;
+  margin-bottom:5px;
+}
+
+.card p{
+  color:#aaa;
+  font-size:14px;
+  margin-bottom:14px;
+}
+
+.products-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.product-card{
+  overflow:hidden;
+}
+
+.product-image{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  display:block;
+  background:#111;
+}
+
+.product-body{
+  padding:12px;
+}
+
+.product-title{
+  font-size:15px;
+  font-weight:700;
+  margin-bottom:6px;
+  word-break:break-word;
+}
+
+.product-desc{
+  color:#aaa;
+  font-size:13px;
+  line-height:1.45;
+  min-height:36px;
+  margin-bottom:10px;
+}
+
+.product-meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.price{
+  font-size:17px;
+  font-weight:800;
+}
+
+.stock{
+  font-size:12px;
+  color:#aaa;
+}
+
+.actions{
+  display:flex;
+  gap:8px;
+}
+
+button{
+  border:none;
+  border-radius:30px;
+  padding:11px 14px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.btn-buy{
+  background:#ff0050;
+  color:#fff;
+  flex:1;
+}
+
+.btn-contact{
+  background:#1a1a1a;
+  border:1px solid #333;
+  color:#fff;
+}
+
+.top-btn{
+  background:#ff0050;
+  color:#fff;
+  border:none;
+  border-radius:20px;
+  padding:8px 12px;
+  font-size:13px;
+  font-weight:700;
+}
+
+button:disabled{
+  background:#444;
+  opacity:.7;
+  cursor:not-allowed;
+}
+
+.empty-state{
+  border:1px dashed #333;
+  border-radius:16px;
+  padding:24px 16px;
+  text-align:center;
+  color:#aaa;
+}
+
+#buyModal > div{
+  background:#000!important;
+  border:1px solid #222!important;
+  border-radius:16px!important;
+}
+
+@media(max-width:900px){
+  .products-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(max-width:640px){
+  .page{padding:18px 14px 40px}
+  .controls{grid-template-columns:1fr}
+  .products-grid{grid-template-columns:1fr}
+  .hero-title{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="header">
+  <div class="header-left" onclick="history.back()">←</div>
+  <div class="header-center">Boutique</div>
+  <div class="header-right">
+    <button id="merchantDashboardBtn" class="top-btn" style="display:none;">Dashboard</button>
+  </div>
+</div>
+
+  <div class="hero">
+    <div class="shop-head">
+      <img id="shopLogo" class="shop-logo" src="https://placehold.co/200x200/png?text=Shop" alt="Shop logo">
+      <div style="min-width:0;flex:1;">
+        <div class="shop-name-row">
+  <div class="hero-title" id="shopName">Boutique</div>
+
+ <span class="merchant-badge-mini" title="Marchand">
+  <svg viewBox="0 0 24 24">
+    <path d="M7 7h13l-1.4 5.2a2 2 0 0 1-1.9 1.5H10a2 2 0 0 1-1.9-1.4L6.3 5H3.5a1 1 0 1 1 0-2H7a1 1 0 0 1 .97.76L8.4 5H21a1 1 0 0 1 .97 1.25l-1.83 6.8A4 4 0 0 1 16.27 16H10a4 4 0 0 1-3.86-2.92L4.7 7.5A1 1 0 0 1 4.68 7H7Z"/>
+    <circle cx="10" cy="19" r="1.8"/>
+    <circle cx="17" cy="19" r="1.8"/>
+  </svg>
+</span>
+</div>
+
+<div class="hero-sub" id="shopBio">Chargement...</div>
+
+<div class="meta-row">
+  <span class="pill pill-muted" id="productCountPill">0 produit</span>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="Rechercher un produit">
+    <select id="sortSelect">
+      <option value="recent">Plus récents</option>
+      <option value="price_asc">Prix croissant</option>
+      <option value="price_desc">Prix décroissant</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>Produits</h2>
+    <p>Produits disponibles dans cette boutique.</p>
+    <div class="products-grid" id="productsGrid"></div>
+  </div>
+
+</div>
+
+<div id="buyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:14px;">
+  <div style="width:100%;max-width:420px;background:#111;border:1px solid #242424;border-radius:18px;padding:16px;">
+    <h3 style="margin-bottom:12px;">Finaliser l'achat</h3>
+
+    <input id="buyNom" placeholder="Nom" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
+    <input id="buyPrenom" placeholder="Prénom" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
+    <input id="buyEmail" placeholder="Email" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
+<input type="text" id="buyPhone" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Contact appel" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
+
+<input type="text" id="buyWhatsapp" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Contact WhatsApp" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
+
+    <select id="buySexe" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
+      <option value="">Sexe</option>
+      <option value="M">M</option>
+      <option value="F">F</option>
+    </select>
+
+    <textarea id="buyDetails" placeholder="Autres détails importants" style="width:100%;min-height:90px;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;"></textarea>
+
+    <div style="display:flex;gap:8px;">
+      <button id="confirmBuyBtn" class="btn-buy" style="flex:1;">Confirmer</button>
+      <button id="closeBuyBtn" class="btn-contact">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  query,
+  where
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474",
+  storageBucket:"tstx-58474.firebasestorage.app",
+  messagingSenderId:"1010020144942",
+  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const shopLogo = document.getElementById("shopLogo");
+const shopName = document.getElementById("shopName");
+const shopBio = document.getElementById("shopBio");
+const productCountPill = document.getElementById("productCountPill");
+const productsGrid = document.getElementById("productsGrid");
+const searchInput = document.getElementById("searchInput");
+const sortSelect = document.getElementById("sortSelect");
+const merchantDashboardBtn = document.getElementById("merchantDashboardBtn");
+const buyModal = document.getElementById("buyModal");
+const buyNom = document.getElementById("buyNom");
+const buyPrenom = document.getElementById("buyPrenom");
+const buyEmail = document.getElementById("buyEmail");
+const buyPhone = document.getElementById("buyPhone");
+const buyWhatsapp = document.getElementById("buyWhatsapp");
+const buySexe = document.getElementById("buySexe");
+const buyDetails = document.getElementById("buyDetails");
+const confirmBuyBtn = document.getElementById("confirmBuyBtn");
+const closeBuyBtn = document.getElementById("closeBuyBtn");
+
+let merchantUid = null;
+let allProducts = [];
+let merchantData = null;
+let selectedProduct = null;
+
+function escapeHTML(str=""){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function renderEmpty(text){
+  productsGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${text}</div>`;
+}
+
+function getProductMainImage(product){
+  if(Array.isArray(product.images) && product.images.length){
+    return product.images[0];
+  }
+  return product.imageUrl || "https://placehold.co/600x600/png?text=Produit";
+}
+
+function normalizeHaitiPhone(value=""){
+  let digits = String(value).replace(/\D/g, "");
+
+  if(digits.length === 8){
+    digits = "509" + digits;
+  }
+
+  if(digits.startsWith("509") && digits.length === 11){
+    return digits;
+  }
+
+  return null;
+}
+
+function renderProducts(list){
+  productsGrid.innerHTML = "";
+
+  if(!list.length){
+    renderEmpty("Aucun produit disponible.");
+    return;
+  }
+
+  list.forEach(product=>{
+    const stock = Number(product.stock || 0);
+    const canBuy = product.isActive === true && stock > 0;
+
+    const card = document.createElement("div");
+    card.className = "product-card";
+
+    card.innerHTML = `
+      <img class="product-image" src="${getProductMainImage(product)}" alt="Produit">
+      <div class="product-body">
+        <div class="product-title">${escapeHTML(product.name || "Produit")}</div>
+        <div class="product-desc">${escapeHTML(product.description || "")}</div>
+
+        <div class="product-meta">
+          <div class="price">${Number(product.price || 0)} Gdes</div>
+          <div class="stock">${stock > 0 ? stock + " en stock" : "Rupture"}</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-buy" ${canBuy ? "" : "disabled"} onclick="buyProduct('${product.id}')">
+            ${canBuy ? "Acheter" : "Indisponible"}
+          </button>
+          <button class="btn-contact" onclick="contactMerchant('${merchantUid}')">Contacter</button>
+        </div>
+      </div>
+    `;
+
+    productsGrid.appendChild(card);
+  });
+}
+
+function applyFilters(){
+  let filtered = [...allProducts];
+  const search = searchInput.value.toLowerCase().trim();
+  const sort = sortSelect.value;
+
+  if(search){
+    filtered = filtered.filter(product =>
+      (product.name || "").toLowerCase().includes(search) ||
+      (product.description || "").toLowerCase().includes(search)
+    );
+  }
+
+  if(sort === "price_asc"){
+    filtered.sort((a,b) => Number(a.price || 0) - Number(b.price || 0));
+  }else if(sort === "price_desc"){
+    filtered.sort((a,b) => Number(b.price || 0) - Number(a.price || 0));
+  }else{
+    filtered.sort((a,b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0));
+  }
+
+  renderProducts(filtered);
+}
+
+async function loadMerchant(){
+  const params = new URLSearchParams(window.location.search);
+  merchantUid = params.get("uid");
+
+  if(!merchantUid && auth.currentUser){
+    merchantUid = auth.currentUser.uid;
+  }
+
+  if(!merchantUid){
+    renderEmpty("Boutique introuvable.");
+    return false;
+  }
+
+  const snap = await getDoc(doc(db,"users",merchantUid));
+
+  if(!snap.exists()){
+    renderEmpty("Boutique introuvable.");
+    return false;
+  }
+
+  merchantData = snap.data();
+
+  const expireDate = merchantData.merchantExpiresAt?.toDate?.() || null;
+const expired = !expireDate || expireDate.getTime() <= Date.now();
+const blocked = merchantData.merchantRenewalBlocked === true;
+
+if(
+  !(
+    merchantData.merchantEnabled === true &&
+    merchantData.merchantStatus === "active" &&
+    !blocked &&
+    !expired
+  )
+){
+  renderEmpty("Cette boutique est temporairement indisponible.");
+  return false;
+}
+
+  shopName.textContent = merchantData.merchantShopName || merchantData.username || "Boutique";
+  shopBio.textContent = merchantData.merchantBio || merchantData.bio || "Aucune description.";
+  shopLogo.src = merchantData.merchantLogo || merchantData.avatar || "https://placehold.co/200x200/png?text=Shop";
+
+  return true;
+}
+
+async function loadProducts(){
+  allProducts = [];
+
+  const q = query(
+    collection(db,"merchantProducts"),
+    where("merchantUid","==",merchantUid)
+  );
+
+  const snap = await getDocs(q);
+
+  snap.forEach(d=>{
+    const data = d.data();
+    allProducts.push({
+      id:d.id,
+      ...data,
+      createdAtMs:data.createdAt?.toMillis?.() || 0
+    });
+  });
+
+  allProducts = allProducts.filter(p => p.isActive === true);
+  productCountPill.textContent = `${allProducts.length} produit${allProducts.length > 1 ? "s" : ""}`;
+  applyFilters();
+}
+
+function resetBuyForm(){
+  buyNom.value = "";
+  buyPrenom.value = "";
+  buyEmail.value = "";
+  buyPhone.value = "";
+  buyWhatsapp.value = "";
+  buySexe.value = "";
+  buyDetails.value = "";
+  selectedProduct = null;
+}
+
+window.buyProduct = async (productId)=>{
+  selectedProduct = allProducts.find(p => p.id === productId);
+
+  if(!selectedProduct){
+    alert("Produit introuvable");
+    return;
+  }
+
+  buyModal.style.display = "flex";
+};
+
+closeBuyBtn.onclick = ()=>{
+  buyModal.style.display = "none";
+  resetBuyForm();
+};
+
+confirmBuyBtn.onclick = async ()=>{
+  try{
+    if(!selectedProduct){
+      alert("Produit introuvable");
+      return;
+    }
+
+    const nom = buyNom.value.trim();
+    const prenom = buyPrenom.value.trim();
+    const email = buyEmail.value.trim().toLowerCase();
+    const phone = buyPhone.value.trim();
+    const whatsapp = buyWhatsapp.value.trim();
+    const sexe = buySexe.value.trim();
+    const details = buyDetails.value.trim();
+
+    if(!nom || !prenom || !email || !phone || !whatsapp || !sexe){
+      alert("Remplis tous les champs obligatoires");
+      return;
+    }
+
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      alert("Email invalide");
+      return;
+    }
+
+    const cleanPhone = normalizeHaitiPhone(phone);
+const cleanWhatsapp = normalizeHaitiPhone(whatsapp);
+
+if(!cleanPhone){
+  alert("Contact appel invalide");
+  return;
+}
+
+if(!cleanWhatsapp){
+  alert("Contact WhatsApp invalide");
+  return;
+}
+
+    const token = await auth.currentUser.getIdToken();
+
+    const res = await fetch("https://hayticlip-server.onrender.com/api/merchant/buy-product",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({
+        productId: selectedProduct.id,
+        quantity: 1,
+        customerNom: nom,
+        customerPrenom: prenom,
+        customerEmail: email,
+        customerPhone: cleanPhone,
+        customerWhatsapp: cleanWhatsapp,
+        customerSexe: sexe,
+        customerDetails: details
+      })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok){
+      throw new Error(result.error || "Erreur achat");
+    }
+
+    buyModal.style.display = "none";
+
+    buyNom.value = "";
+    buyPrenom.value = "";
+    buyEmail.value = "";
+    buyPhone.value = "";
+    buyWhatsapp.value = "";
+    buySexe.value = "";
+    buyDetails.value = "";
+    selectedProduct = null;
+
+    alert("Commande envoyée");
+    await loadProducts();
+
+  }catch(e){
+    alert(e.message);
+  }
+};
+
+window.contactMerchant = async (uid)=>{
+  const user = auth.currentUser;
+  if(!user){
+    window.location.href = "login.html";
+    return;
+  }
+
+  if(uid === user.uid){
+    alert("C’est votre boutique.");
+    return;
+  }
+
+  const participants = [user.uid, uid].sort();
+  const convoId = participants.join("_");
+  window.location.href = `chat.html?conv=${convoId}`;
+};
+
+searchInput.addEventListener("input", applyFilters);
+sortSelect.addEventListener("change", applyFilters);
+
+
+function bindHaitiPhoneInput(input){
+  if(!input) return;
+
+  input.addEventListener("input", () => {
+    let digits = input.value.replace(/\D/g, "");
+
+    if(digits.length > 11){
+      digits = digits.slice(0, 11);
+    }
+
+    if(digits.length > 8 && !digits.startsWith("509")){
+      digits = "509" + digits.slice(-8);
+    }
+
+    if(digits.length === 8){
+      input.value = "509" + digits;
+      return;
+    }
+
+    input.value = digits;
+  });
+
+  input.addEventListener("blur", () => {
+    const normalized = normalizeHaitiPhone(input.value);
+    if(normalized){
+      input.value = normalized;
+    }
+  });
+}
+
+bindHaitiPhoneInput(buyPhone);
+bindHaitiPhoneInput(buyWhatsapp);
+
+onAuthStateChanged(auth, async(user)=>{
+  if(!user){
+    window.location.href = "login.html";
+    return;
+  }
+
+  const ok = await loadMerchant();
+  if(!ok) return;
+
+  if(
+    user.uid === merchantUid &&
+    merchantData.merchantEnabled === true &&
+    merchantData.merchantStatus === "active"
+  ){
+    merchantDashboardBtn.style.display = "inline-flex";
+    merchantDashboardBtn.onclick = () => {
+      window.location.href = `merchant-dashboard.html?uid=${merchantUid}`;
+    };
+  }else{
+    merchantDashboardBtn.style.display = "none";
+  }
+
+  await loadProducts();
+});
+</script>
+
+</body>
+</html>

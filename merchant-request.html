@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espace marchand – HaytiClips</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+
+html,body{
+  background:#000;
+  color:#fff;
+  min-height:100%;
+  overflow-x:hidden;
+}
+
+body{
+  min-height:100vh;
+}
+
+/* HEADER */
+.header{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  border-bottom:1px solid #222;
+  background:#000;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+
+.header-left{
+  font-size:24px;
+  cursor:pointer;
+  width:40px;
+}
+
+.header-center{
+  font-weight:700;
+  font-size:18px;
+}
+
+.header-right{
+  width:40px;
+}
+
+/* CONTENU */
+.page{
+  max-width:720px;
+  margin:0 auto;
+  padding:20px 16px 40px;
+}
+
+.topbar{
+  display:none;
+}
+
+.hero{
+  margin-bottom:22px;
+}
+
+.hero-title{
+  font-size:28px;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.card{
+  background:#000;
+  border:1px solid #222;
+  border-radius:16px;
+  padding:16px;
+  margin-bottom:18px;
+}
+
+.section-title{
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:8px;
+}
+
+.section-sub{
+  color:#aaa;
+  font-size:14px;
+  line-height:1.5;
+  margin-bottom:14px;
+}
+
+label{
+  display:block;
+  font-size:14px;
+  color:#aaa;
+  margin-bottom:6px;
+}
+
+input,textarea,select{
+  width:100%;
+  padding:12px 16px;
+  border-radius:12px;
+  border:1px solid #333;
+  background:#111;
+  color:#fff;
+  font-size:16px;
+  outline:none;
+  margin-bottom:16px;
+}
+
+input:focus,textarea:focus,select:focus{
+  border-color:#ff0050;
+}
+
+.info-box{
+  background:#111;
+  border:1px solid #222;
+  border-radius:14px;
+  padding:14px;
+  font-size:13px;
+  color:#aaa;
+  line-height:1.6;
+  margin-bottom:16px;
+}
+
+.info-box strong{
+  color:#fff;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.btn{
+  width:100%;
+  border:none;
+  border-radius:30px;
+  padding:15px 16px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.btn-primary{
+  background:#ff0050;
+  color:#fff;
+}
+
+.btn-dark{
+  background:#1a1a1a;
+  border:1px solid #333;
+  color:#fff;
+}
+
+.btn:disabled{
+  background:#444;
+  cursor:not-allowed;
+  opacity:.7;
+}
+
+.status-box{
+  border:1px solid #222;
+  border-radius:14px;
+  padding:14px;
+  background:#111;
+}
+
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.status-none{
+  background:#1a1a1a;
+  color:#aaa;
+  border:1px solid #333;
+}
+
+.status-pending{
+  background:#2a210c;
+  color:#ffcf70;
+  border:1px solid #5a4210;
+}
+
+.status-active{
+  background:#0f2a20;
+  color:#6ff0b6;
+  border:1px solid #1d6b4b;
+}
+
+.status-rejected{
+  background:#2a1111;
+  color:#ff8d8d;
+  border:1px solid #6b1d1d;
+}
+
+.meta-line{
+  font-size:13px;
+  color:#d4d4d8;
+  margin-top:8px;
+  line-height:1.5;
+  word-break:break-word;
+}
+
+.message{
+  margin-top:12px;
+  font-size:13px;
+  color:#d4d4d8;
+  min-height:18px;
+}
+
+.success{color:#19c37d}
+.error{color:#ff4d4d}
+
+@media(max-width:640px){
+  .row{
+    grid-template-columns:1fr;
+  }
+
+  .hero-title{
+    font-size:24px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left" onclick="history.back()">←</div>
+  <div class="header-center">Espace marchand</div>
+  <div class="header-right"></div>
+</div>
+
+<div class="page">
+
+ 
+
+  <div class="card">
+    <div class="section-title">Statut actuel</div>
+    <div class="section-sub">Vérifie d’abord l’état de ton accès marchand.</div>
+
+    <div class="status-box">
+      <span class="status-pill status-none" id="merchantStatusPill">AUCUN</span>
+      <div class="meta-line" id="merchantStatusText">Chargement...</div>
+      <div class="meta-line" id="walletText">Wallet : 0 Gdes</div>
+      <div class="meta-line" id="expireText">Expiration marchand : -</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Demande</div>
+    <div class="section-sub">
+      Toute Nouvelle demande coûte <strong>1500 Gdes</strong>. Un code parrain valide est obligatoire.
+      Puis renouvellement de l'espace: <strong>750Gdes</strong> tous les 30 jours.
+    </div>
+
+    <form id="merchantForm">
+      <label for="shopName">Nom de la boutique</label>
+      <input type="text" id="shopName" maxlength="60" placeholder="Ex: Vava creation" required>
+
+      <label for="productType">Type de produits à vendre</label>
+      <input type="text" id="productType" maxlength="60" placeholder="Ex: vêtements, chaussures, accessoires..." required>
+
+      <label for="referralCode">Code parrain</label>
+      <input type="text" id="referralCode" maxlength="20" placeholder="Ex: RUG123456" required>
+
+      <div class="row">
+        <button type="submit" class="btn btn-primary" id="submitBtn">Envoyer la demande</button>
+        <button type="button" class="btn btn-dark" onclick="history.back()">Annuler</button>
+      </div>
+
+      <div class="message" id="statusMsg"></div>
+      <button type="button" class="btn btn-primary" id="renewBtn" style="display:none;margin-top:12px;">
+  Renouveler l’accès marchand (750 Gdes)
+</button>
+      
+    </form>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474",
+  storageBucket:"tstx-58474.firebasestorage.app",
+  messagingSenderId:"1010020144942",
+  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const API_BASE = "https://hayticlip-server.onrender.com";
+
+const merchantForm = document.getElementById("merchantForm");
+const submitBtn = document.getElementById("submitBtn");
+const statusMsg = document.getElementById("statusMsg");
+const expireText = document.getElementById("expireText");
+const renewBtn = document.getElementById("renewBtn");
+const merchantStatusPill = document.getElementById("merchantStatusPill");
+const merchantStatusText = document.getElementById("merchantStatusText");
+const walletText = document.getElementById("walletText");
+
+
+let currentUser = null;
+let currentUserData = null;
+let processing = false;
+
+function setStatusClass(status){
+  merchantStatusPill.className = "status-pill";
+
+  if(status === "pending"){
+    merchantStatusPill.classList.add("status-pending");
+    merchantStatusPill.textContent = "EN ATTENTE";
+  } else if(status === "active"){
+    merchantStatusPill.classList.add("status-active");
+    merchantStatusPill.textContent = "ACTIF";
+  } else if(status === "rejected"){
+    merchantStatusPill.classList.add("status-rejected");
+    merchantStatusPill.textContent = "REFUSÉ";
+  } else {
+    merchantStatusPill.classList.add("status-none");
+    merchantStatusPill.textContent = "AUCUN";
+  }
+}
+
+function updateUI(userData){
+  currentUserData = userData || {};
+
+  const merchantStatus = currentUserData.merchantStatus || "none";
+  const wallet = Number(currentUserData.wallet || 0);
+  const blocked = currentUserData.merchantRenewalBlocked === true;
+  const expireDate = currentUserData.merchantExpiresAt?.toDate?.() || null;
+  const expired = !expireDate || expireDate.getTime() <= Date.now();
+
+  setStatusClass(merchantStatus);
+  walletText.textContent = "Wallet : " + wallet + " Gdes";
+  expireText.textContent = "Expiration marchand : " + (expireDate ? expireDate.toLocaleDateString() : "-");
+
+  renewBtn.style.display = "none";
+
+  if(merchantStatus === "pending"){
+    merchantStatusText.textContent = "Votre demande marchand est en cours d’analyse.";
+    submitBtn.disabled = true;
+  } else if(merchantStatus === "active" && !blocked && !expired){
+    merchantStatusText.textContent = "Votre espace marchand est actif.";
+    submitBtn.disabled = true;
+  } else if(merchantStatus === "active" && (blocked || expired)){
+    merchantStatusText.textContent = "Votre accès marchand est bloqué jusqu’au renouvellement.";
+    submitBtn.disabled = true;
+    renewBtn.style.display = "block";
+  } else if(merchantStatus === "rejected"){
+    merchantStatusText.textContent = "Votre dernière demande a été refusée. Vous pouvez en renvoyer une nouvelle.";
+    submitBtn.disabled = false;
+  } else {
+    merchantStatusText.textContent = "Aucune demande marchand active pour le moment.";
+    submitBtn.disabled = false;
+  }
+}
+
+onAuthStateChanged(auth, async(user)=>{
+  if(!user){
+    window.location.href = "login.html";
+    return;
+  }
+
+  currentUser = user;
+
+  const snap = await getDoc(doc(db,"users",user.uid));
+
+  if(!snap.exists()){
+    alert("Profil introuvable");
+    window.location.href = "profil.html";
+    return;
+  }
+
+  updateUI(snap.data());
+});
+
+merchantForm.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+
+  if(processing) return;
+  processing = true;
+
+  statusMsg.textContent = "";
+  statusMsg.className = "message";
+
+  try{
+    if(!currentUser){
+      throw new Error("Utilisateur non connecté");
+    }
+
+    if(!currentUserData){
+      throw new Error("Profil introuvable");
+    }
+
+    const merchantStatus = currentUserData.merchantStatus || "none";
+
+    if(merchantStatus === "pending"){
+      throw new Error("Une demande est déjà en attente");
+    }
+
+    if(merchantStatus === "active"){
+      throw new Error("Votre espace marchand est déjà actif");
+    }
+
+    const shopName = document.getElementById("shopName").value.trim();
+    const productType = document.getElementById("productType").value.trim();
+    const referralCode = document.getElementById("referralCode").value.trim().toUpperCase();
+
+    if(shopName.length < 2){
+      throw new Error("Nom de boutique invalide");
+    }
+
+    if(productType.length < 2){
+      throw new Error("Type de produits invalide");
+    }
+
+    if(!referralCode){
+      throw new Error("Code parrain obligatoire");
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Envoi...";
+
+    const token = await currentUser.getIdToken(true);
+
+    const res = await fetch(`${API_BASE}/api/requestMerchantAccess`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body: JSON.stringify({
+        shopName,
+        productType,
+        referralCode
+      })
+    });
+
+    const result = await res.json();
+
+    if(!res.ok || !result.success){
+      throw new Error(result.error || "Erreur serveur");
+    }
+
+    statusMsg.textContent = "Demande envoyée avec succès.";
+    statusMsg.classList.add("success");
+    merchantForm.reset();
+
+    const snap = await getDoc(doc(db,"users",currentUser.uid));
+    if(snap.exists()){
+      updateUI(snap.data());
+    }
+
+  }catch(err){
+    statusMsg.textContent = err.message || "Erreur";
+    statusMsg.classList.add("error");
+  }finally{
+    processing = false;
+    submitBtn.textContent = "Envoyer la demande";
+
+    if(currentUser){
+      const snap = await getDoc(doc(db,"users",currentUser.uid));
+      if(snap.exists()){
+        updateUI(snap.data());
+      }
+    }
+  }
+});
+
+renewBtn.onclick = async ()=>{
+  try{
+    if(!currentUser) throw new Error("Utilisateur non connecté");
+
+    const token = await currentUser.getIdToken(true);
+
+    const res = await fetch(`${API_BASE}/api/merchant/renew-access`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      }
+    });
+
+    const result = await res.json();
+
+    if(!res.ok || !result.success){
+      throw new Error(result.error || "Erreur serveur");
+    }
+
+    statusMsg.textContent = "Renouvellement effectué avec succès.";
+    statusMsg.className = "message success";
+
+    const snap = await getDoc(doc(db,"users",currentUser.uid));
+    if(snap.exists()){
+      updateUI(snap.data());
+    }
+
+  }catch(err){
+    statusMsg.textContent = err.message || "Erreur";
+    statusMsg.className = "message error";
+  }
+};
+
+</script>
+
+</body>
+</html>
