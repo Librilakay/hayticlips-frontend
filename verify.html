@@ -125,40 +125,51 @@ text-decoration:none;
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
-getAuth
+  getAuth,
+  applyActionCode
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
-apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-authDomain:"tstx-58474.firebaseapp.com",
-projectId:"tstx-58474"
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// 🔥 récupérer le code du lien email
+const params = new URLSearchParams(window.location.search);
+const oobCode = params.get("oobCode");
+
+// 🔥 Si on arrive depuis le mail → valider automatiquement
+if (oobCode) {
+  try {
+    await applyActionCode(auth, oobCode);
+    alert("✅ Email vérifié avec succès !");
+  } catch (err) {
+    console.error(err);
+    alert("Lien invalide ou expiré.");
+  }
+}
+
 document.getElementById("verifyBtn").onclick = async () => {
 
-const user = auth.currentUser;
+  const user = auth.currentUser;
 
-if(!user){
-alert("Reconnecte-toi.");
-window.location.href = "login.html";
-return;
-}
+  if(!user){
+    alert("Reconnecte-toi.");
+    window.location.href = "login.html";
+    return;
+  }
 
-await user.reload();
+  await user.reload();
 
-if(user.emailVerified){
-
-window.location.href = "interest.html";
-
-}else{
-
-alert("Ton email n'est pas encore vérifié.");
-
-}
-
+  if(user.emailVerified){
+    window.location.href = "interest.html";
+  } else {
+    alert("Ton email n'est pas encore vérifié.");
+  }
 };
 </script>
 
