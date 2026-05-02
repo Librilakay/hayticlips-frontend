@@ -3,7 +3,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 
 import {
   getAuth, onAuthStateChanged,
-  signInAnonymously,
   setPersistence,
   browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -81,13 +80,22 @@ const userCache = {};
 // 🔑 AUTH
 
 onAuthStateChanged(auth, async user => {
-  console.log(await user.getIdToken());
-console.log("auth state:", user);
-  if (!user) {
-    console.log("aucun user > redirection");
-    window.location.href = "login.html";
+  console.log("auth state:", user);
+
+  const currentPage = window.location.pathname.split("/").pop();
+  const params = new URLSearchParams(window.location.search);
+  const sharedVideoId = params.get("videoId");
+
+  if (!user || user.isAnonymous) {
+    const redirectUrl = sharedVideoId
+      ? `login.html?redirect=feed.html&videoId=${encodeURIComponent(sharedVideoId)}`
+      : "login.html";
+
+    window.location.href = redirectUrl;
     return;
   }
+
+  console.log(await user.getIdToken());
   if (!user.emailVerified) {
   window.location.href = "verify.html";
   return;
