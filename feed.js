@@ -206,7 +206,7 @@ async function registerView(videoId, uid) {
     const views = videoSnap.data().viewsCount || 0;
     await updateDoc(videoRef, {
   viewsCount: increment(1),
-  score: increment(0.8)
+  score: increment(1)
 });
 
   } catch (err) {
