@@ -290,10 +290,11 @@ signupBtn.addEventListener("click", async () => {
       throw new Error(data.error || "Impossible d'initialiser le profil");
     }
 
-    await sendEmailVerification(user);
+    await sendEmailVerification(user, {
+  url: "https://hayticlips.com/verify.html"
+});
 
-    alert("Un email de vérification a été envoyé.");
-    window.location.href = "verify.html";
+alert("Vérifie ton email puis clique sur le lien envoyé.");
 
   } catch (error) {
     console.error("SIGNUP ERROR:", error);
