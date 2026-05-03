@@ -193,21 +193,20 @@ async function registerView(videoId, uid) {
   const viewRef = doc(db, "videos", videoId, "views", uid);
 
   try {
-    const viewSnap = await getDoc(viewRef);
-    if (viewSnap.exists()) return;
+    await runTransaction(db, async (t) => {
+      const viewSnap = await t.get(viewRef);
 
-    await setDoc(viewRef, {
-      uid,
-      createdAt: serverTimestamp(),
-      ua: navigator.userAgent
+      if (viewSnap.exists()) return;
+
+      t.set(viewRef, {
+        uid,
+        createdAt: serverTimestamp()
+      });
+
+      t.update(videoRef, {
+        viewsCount: increment(1)
+      });
     });
-
-    const videoSnap = await getDoc(videoRef);
-    const views = videoSnap.data().viewsCount || 0;
-    await updateDoc(videoRef, {
-  viewsCount: increment(1),
-  score: increment(1)
-});
 
   } catch (err) {
     console.error("❌ ERREUR VIEW:", err);
