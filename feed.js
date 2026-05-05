@@ -219,16 +219,43 @@ async function registerView(videoId, uid) {
 
 
 /* ================= LOAD FEED ================= */
+function escapeHTML(text) {
+  return String(text || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function formatCaption(text) {
   if (!text) return "";
 
-  // hashtags
-  text = text.replace(/#(\w+)/g, '<span style="color:#ff0050">#$1</span>');
+  text = escapeHTML(text);
 
-  // mentions
+  text = text.replace(/#(\w+)/g, '<span style="color:#ff0050">#$1</span>');
   text = text.replace(/@(\w+)/g, '<span class="mention" data-user="$1" style="color:#00acee;cursor:pointer;">@$1</span>');
 
   return text;
+}
+
+function buildCaption(text) {
+  const cleanText = String(text || "").trim();
+
+  if (cleanText.length <= 90) {
+    return `<div class="caption">${formatCaption(cleanText)}</div>`;
+  }
+
+  const shortText = cleanText.slice(0, 90);
+
+  return `
+    <div class="caption caption-collapsed"
+      data-full="${escapeHTML(cleanText)}"
+      data-short="${escapeHTML(shortText)}">
+      ${formatCaption(shortText)}...
+      <span class="caption-toggle">Voir plus</span>
+    </div>
+  `;
 }
 
 async function loadFeed() {
