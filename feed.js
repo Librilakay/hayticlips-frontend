@@ -386,7 +386,7 @@ userCache[v.userId] = snap.data();
           </div>
           <div class="info">
         <div class="username" data-uid="${v.userId}">...</div>
-            <div class="caption">${formatCaption(v.caption || "")}</div>
+                  ${buildCaption(v.caption || "")}
 
           </div>
           <div class="actions">
@@ -1560,6 +1560,37 @@ window.addEventListener("scroll", () => {
 
   }
 
+});
+
+document.addEventListener("click", (e) => {
+  const toggle = e.target.closest(".caption-toggle");
+  if (!toggle) return;
+
+  e.stopPropagation();
+
+  const caption = toggle.closest(".caption");
+  if (!caption) return;
+
+  const full = caption.dataset.full || "";
+  const short = caption.dataset.short || "";
+
+  if (caption.classList.contains("caption-expanded")) {
+    caption.classList.remove("caption-expanded");
+    caption.classList.add("caption-collapsed");
+
+    caption.innerHTML = `
+      ${formatCaption(short)}...
+      <span class="caption-toggle">Voir plus</span>
+    `;
+  } else {
+    caption.classList.remove("caption-collapsed");
+    caption.classList.add("caption-expanded");
+
+    caption.innerHTML = `
+      ${formatCaption(full)}
+      <span class="caption-toggle"> Voir moins</span>
+    `;
+  }
 });
 
 console.log("feed js loaded");
