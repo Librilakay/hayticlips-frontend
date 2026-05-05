@@ -138,12 +138,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// 🔥 récupérer le code du lien email
 const params = new URLSearchParams(window.location.search);
+const mode = params.get("mode");
 const oobCode = params.get("oobCode");
 
-// 🔥 Si on arrive depuis le mail → valider automatiquement
-if (oobCode) {
+// 🔐 Mot de passe oublié → envoyer vers reset.html
+if (mode === "resetPassword" && oobCode) {
+  window.location.href = `reset.html?mode=resetPassword&oobCode=${encodeURIComponent(oobCode)}`;
+}
+
+// ✅ Vérification email
+if (mode === "verifyEmail" && oobCode) {
   try {
     await applyActionCode(auth, oobCode);
     alert("✅ Email vérifié avec succès !");
@@ -154,7 +159,6 @@ if (oobCode) {
 }
 
 document.getElementById("verifyBtn").onclick = async () => {
-
   const user = auth.currentUser;
 
   if(!user){
