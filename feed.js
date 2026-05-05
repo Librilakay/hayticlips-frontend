@@ -242,7 +242,7 @@ function formatCaption(text) {
 function buildCaption(text) {
   const cleanText = String(text || "").trim();
 
-  if (cleanText.length <= 90) {
+  if (cleanText.length <= 50) {
     return `<div class="caption">${formatCaption(cleanText)}</div>`;
   }
 
