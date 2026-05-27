@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+ <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff0050"> 
 <meta charset="UTF-8">
 <title>hayticlips</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -74,6 +76,21 @@ html, body{
         }
       });
     }, 5000);
+    
+    
+    
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js")
+      .then(registration => {
+        console.log("Service Worker enregistré");
+      })
+      .catch(error => {
+        console.log("Erreur Service Worker:", error);
+      });
+  });
+}
+
   </script>
 
 </body>
