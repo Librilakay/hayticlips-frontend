@@ -21,7 +21,7 @@ html, body {
 .video-box {
   position: relative;
   width: 102%;
-  height: 110dvh;
+  height: 100dvh;
   scroll-snap-align: start;
   background: black;
   display: flex;
@@ -32,7 +32,7 @@ html, body {
 .video-container {
   position:absolute;
   width: 100%;
-  height: calc(83vh - 140px); /* hauteur écran moins nav */
+  height: calc(93vh - 60px); /* hauteur écran moins nav */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -65,19 +65,19 @@ html, body {
 .info {
   position: absolute;
   left: -50px;
-  bottom: -160px;
+  bottom: -215px;
   width: 65%;
   z-index: 5;
   color:white;
 }
-.username{font-weight:700}
-.caption{font-size:14px;margin-top:6px}
+.username{font-weight:700;margin-bottom:-40px}
+.caption{font-size:15px;margin-top:55px}
 
 /* ACTIONS */
 .actions{
-  position:absolute;right:1px;bottom:175px;
+  position:absolute;right:1px;bottom:210px;
   display:flex;flex-direction:column;gap:15px;
-  align-items:center; gap:9px;
+  align-items:center; gap:11px;
 }
   .actions,
   .actions *{
