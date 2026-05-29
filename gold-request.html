@@ -56,9 +56,9 @@ html,body{
 /* CONTAINER STABLE */
 .container{
   width:100%;
-  max-width:520px;
+  max-width:100%;
   margin:0 auto;
-  padding:20px 16px 40px;
+  padding:12px 10px 30px;
 }
 
 /* CARD */
@@ -66,7 +66,8 @@ html,body{
   background:#000;
   border:1px solid #222;
   border-radius:18px;
-  padding:18px;
+  padding:14px;
+  overflow:hidden;
 }
 
 /* TITRE */
@@ -130,6 +131,44 @@ textarea{
   font-size:14px;
 }
 
+.gold-alert{
+  background:#111;
+  border:1px solid #2d2d2d;
+  border-left:4px solid #ff0050;
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:18px;
+}
+
+.gold-alert-title{
+  color:#ff0050;
+  font-weight:700;
+  font-size:14px;
+  margin-bottom:8px;
+}
+
+.gold-alert p{
+  color:#bbb;
+  font-size:13px;
+  line-height:1.5;
+}
+
+.gold-alert ul{
+  margin-top:10px;
+  padding-left:18px;
+}
+
+.gold-alert li{
+  color:#ddd;
+  font-size:13px;
+  margin-bottom:6px;
+  line-height:1.4;
+}
+.gold-alert span{
+  font-size: 12px;
+  line-height:1.4;
+  color:#777;
+}
 /* MOBILE */
 @media(max-width:520px){
   .container{
@@ -147,7 +186,28 @@ textarea{
   <div class="header-center">Demande Gold</div>
   <div class="header-right"></div>
 </div>
+<div class="gold-alert">
 
+  <div class="gold-alert-title">
+    Critères importants pour obtenir le badge Gold
+  </div>
+
+  <p>
+    Le badge Gold est réservé aux comptes authentiques, actifs et reconnus.
+  </p>
+
+  <ul>
+    <li>Utiliser une identité reconnue</li>
+    <li>Respecter les règles de la plaforme</li>
+    <li>Publier du contenu original</li>
+    <li>Avoir une audience réelle et active</li>
+    <li>Minimun <strong>20 000</strong> abonnés est obligatoire</li>
+    <li>Éviter les faux abonnés et contenus copiés</li>
+  </ul>
+  <span>
+    Remplir ces critères n'assure pas automatiquement l'obtention du badge.
+  </span>
+</div>
 <form id="goldForm">
 
 <div class="section-title">Étape 1 : Confirmez l'authenticité</div>
@@ -191,7 +251,7 @@ textarea{
 
 <textarea id="whyGold" placeholder="Pourquoi voudriez-vous ce badge ?" rows="4" required></textarea>
 <textarea id="audience" placeholder="Décrivez votre audience (facultatif)" rows="3"></textarea>
-<input type="text" id="knownAs" placeholder="Également connu sous le nom (facultatif)">
+<input type="text" id="knownAs" placeholder="Autre nom (facultatif)">
 
 <div class="section-title">Liens (facultatif)</div>
 
@@ -207,7 +267,7 @@ textarea{
 
 </div>
 </div>
-</div>
+
 
 <script type="module">
 
