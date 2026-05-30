@@ -740,7 +740,7 @@ if (shareBtn) {
 
         await navigator.share({
           title: "Regarde cette vidéo sur HaytiClips 🔥",
-          text: "Découvre cette vidéo",
+          text: "Découvre cette vidéo sur HaytiClips🔥🇭🇹",
           url: url
         });
 

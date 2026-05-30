@@ -182,7 +182,7 @@ function setupOwnerActionButton(isMerchantActive){
         try {
           await navigator.share({
             title: "Découvre mon profil sur HaytiClips",
-            text: "Regarde mes vidéos 🔥",
+            text: "Découvre mon profil sur HaytiClips🔥🇭🇹",
             url: profileUrl
           });
         } catch (err) {
