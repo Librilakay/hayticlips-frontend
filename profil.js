@@ -812,21 +812,7 @@ const snap = await getDoc(userRef);
 const data = snap.data();
 
 // 🔥 FIX anciens comptes cassés
-if(data.security?.pinHash && data.security.pinHash.length > 20){
-  console.log("Ancien PIN détecté → reset obligatoire");
 
-  await fetch("https://hayticlip-server.onrender.com/remove-pin",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "Authorization":"Bearer " + (await auth.currentUser.getIdToken())
-    }
-  });
-
-  alert("Sécurité mise à jour, veuillez recréer votre PIN");
-  twofaToggle.checked = false;
-  return;
-}
 
 const isEnabled = data.security?.enabled === true;
 
