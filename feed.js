@@ -278,13 +278,13 @@ async function loadFeed() {
       where("archived","==",false),
       orderBy("score","desc"),
       startAfter(lastDoc),
-      limit(30)
+      limit(5)
     )
   : query(
       collection(db,"videos"),
       where("archived","==",false),
       orderBy("score","desc"),
-      limit(30)
+      limit(5)
     );
 
     const snap = await getDocs(q);
@@ -326,6 +326,8 @@ if (targetVideoId) {
       // DEBUG: Vérifier les données
       console.log("📊 VIDÉO CHARGÉE:", v.id, "likesCount:", v.likesCount);
       
+/* ================= SMART SCORE ================= */
+
 /* ================= SMART SCORE ================= */
 
 function calculateSmartScore(v){
@@ -372,7 +374,11 @@ function calculateSmartScore(v){
   );
 }
 
+// On calcule le score en local uniquement pour l'interface de l'utilisateur
 const finalScore = calculateSmartScore(v);
+
+// 🔥 BOMBE DÉSAMORCÉE : J'ai supprimé ici le bloc updateDoc qui écrivait dans la DB
+// à chaque fois qu'un utilisateur scrollait sur une vidéo.
 
 if (Math.abs(Number(v.score || 0) - finalScore) >= 10) {
   updateDoc(doc(db, "videos", v.id), {
@@ -789,19 +795,25 @@ if(reportBtn){
   }
 }
 /* ================= COMMENTS ================= */
-function openComments(videoId) {
+/* ================= COMMENTS ================= */
+// 🔥 NOUVEAU : Un tableau global pour traquer TOUS les listeners imbriqués
+let commentsUnsubscribe = null;
+let activeCommentListeners = []; 
 
-  // 🔥 IMPORTANT : fermer ancien listener
+// Fonction pour couper toutes les écoutes Firestore et sauver ta base de données
+function closeAllCommentListeners() {
   if (commentsUnsubscribe) {
     commentsUnsubscribe();
     commentsUnsubscribe = null;
   }
-// 🔥 Fermer tous les listeners replies
-repliesUnsubscribes.forEach(unsub => unsub());
-repliesUnsubscribes = [];
+  activeCommentListeners.forEach(unsub => unsub());
+  activeCommentListeners = [];
+}
+
+function openComments(videoId) {
+  closeAllCommentListeners(); // On coupe tout avant d'ouvrir un nouveau panneau
 
   currentVideoId = videoId;
-
 
   const sendBtn = document.getElementById("sendComment");
   sendBtn.disabled = false;
@@ -814,30 +826,29 @@ repliesUnsubscribes = [];
   setTimeout(() => document.getElementById("commentText").focus(), 200);
 }
 
+// Nettoyage absolu lors de la fermeture du panneau
 document.getElementById("closeComments").onclick = () => {
   document.getElementById("commentsPanel").classList.remove("show");
   document.getElementById("feed").classList.remove("disabled");
   currentVideoId = null;
   document.getElementById("sendComment").disabled = true;
   document.getElementById("sendComment").style.opacity = "0.4";
+  
+  closeAllCommentListeners(); 
 };
-
-
-let commentsUnsubscribe = null;
-let repliesUnsubscribes = [];
 
 function loadComments(videoId) {
   const list = document.getElementById("commentsList");
-
-  if (commentsUnsubscribe) {
-    commentsUnsubscribe();
-    commentsUnsubscribe = null;
-  }
-
-  const q = query(collection(db, "videos", videoId, "comments"), orderBy("createdAt", "desc")
- );
+  
+  const q = query(collection(db, "videos", videoId, "comments"), orderBy("createdAt", "desc"));
+  
   commentsUnsubscribe = onSnapshot(q, snap => {
+    // 🔥 CORRECTION VITALE : Nettoyer les écoutes individuelles AVANT de vider la liste HTML
+    activeCommentListeners.forEach(unsub => unsub());
+    activeCommentListeners = [];
+
     list.innerHTML = "";
+
     snap.forEach(d => {
       const c = d.data();
       const isMine = c.uid === currentUser?.uid;
@@ -849,9 +860,9 @@ function loadComments(videoId) {
           <div style="flex:1;">
             <div style="display:flex;justify-content:space-between;">
               <div>
-              <div class="comment-username">
+                <div class="comment-username">
                    <strong>${c.username}</strong>
-                    </div>
+                </div>
                 <span class="date">${date}</span>
                 ${isMine ? `<span class="delete-comment" style="cursor:pointer;color:#ff4d4d;">✕</span>` : ''}
               </div>
@@ -865,171 +876,109 @@ function loadComments(videoId) {
               Voir les réponses
             </div>
            <div class="comment-like ${c.likes?.[currentUser?.uid] ? 'active' : ''}" data-comment="${d.id}">
-  ❤️ <span>${c.likesCount || 0}</span>
-</div>
+              ❤️ <span>${formatNumber(c.likesCount || 0)}</span>
+           </div>
           </div>
         </div>
       `);
       
+      // --- ÉCOUTE 1 : Données Utilisateur ---
       const userRef = doc(db, "users", c.uid);
+      const unsubUser = onSnapshot(userRef, userSnap => {
+        if (!userSnap.exists()) return;
+        const userData = userSnap.data();
+        let badgeHTML = "";
 
-onSnapshot(userRef, userSnap => {
-  if (!userSnap.exists()) return;
+        if (userData.verification?.type === "gold" && userData.verification?.status === "active") {
+          badgeHTML = `<span class="badge badge-gold"><svg viewBox="0 0 24 24" fill="black"><path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/></svg></span>`;
+        }
 
-  const userData = userSnap.data();
+        if (userData.verification?.type === "blue" && userData.verification?.expiresAt?.toDate() > new Date()) {
+          badgeHTML = `<span class="badge badge-blue"><svg viewBox="0 0 24 24" fill="white"><path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/></svg></span>`;
+        }
 
-  let badgeHTML = "";
-
-  if (
-    userData.verification?.type === "gold" &&
-    userData.verification?.status === "active"
-  ) {
-    badgeHTML = `
-  <span class="badge badge-gold">
-    <svg viewBox="0 0 24 24" fill="black">
-      <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 
-      1.402 8.177L12 18.896l-7.336 3.874 
-      1.402-8.177L.132 9.211l8.2-1.193z"/>
-    </svg>
-  </span>
-`;
-  }
-
-  if (
-    userData.verification?.type === "blue" &&
-    userData.verification?.expiresAt?.toDate() > new Date()
-  ) {
-    badgeHTML = `
-  <span class="badge badge-blue">
-    <svg viewBox="0 0 24 24" fill="white">
-      <path d="M20.285 6.709l-11.025 11.025-5.545-5.545 
-      1.414-1.414 4.131 4.131 9.611-9.611z"/>
-    </svg>
-  </span>
-`;
-  }
-
-  const nameContainer = document.querySelector(
-  `.comment[data-id="${d.id}"] .comment-username`
-);
-
+        const nameContainer = list.querySelector(`.comment[data-id="${d.id}"] .comment-username`);
         if (nameContainer) {
-            nameContainer.innerHTML = `
-           <strong>${userData.username}</strong>
-    ${badgeHTML}
-  `;
-  }
-});
+            nameContainer.innerHTML = `<strong>${userData.username}</strong>${badgeHTML}`;
+        }
+      });
+      activeCommentListeners.push(unsubUser);
+
+      // --- ÉCOUTE 2 : Statut du Like ---
+      const likeRef = doc(db, "videos", videoId, "comments", d.id, "likes", currentUser.uid);
+      const unsubLike = onSnapshot(likeRef, snapLike => {
+        const likeBtn = list.querySelector(`.comment-like[data-comment="${d.id}"]`);
+        if (!likeBtn) return;
+
+        if (snapLike.exists()) {
+          likeBtn.classList.add("active");
+        } else {
+          likeBtn.classList.remove("active");
+        }
+      });
+      activeCommentListeners.push(unsubLike);
       
-      const likeRef = doc(
-  db,
-  "videos",
-  videoId,
-  "comments",
-  d.id,
-  "likes",
-  currentUser.uid
-);
+      // --- ÉCOUTE 3 : Compteur de Likes (CORRIGÉE) ---
+      const unsubCommentCount = onSnapshot(doc(db,"videos",videoId,"comments",d.id), snapComment=>{
+        if(!snapComment.exists()) return;
+        const data = snapComment.data();
+        // 🎯 Modification ici : Ajout de la classe .comment-like pour cibler le bon élément
+        const likeBtn = list.querySelector(`.comment-like[data-comment="${d.id}"]`);
+        if(!likeBtn) return;
+        const spanCount = likeBtn.querySelector("span");
+        if(spanCount) {
+          spanCount.textContent = formatNumber(data.likesCount || 0);
+        }
+      });
+      activeCommentListeners.push(unsubCommentCount);
 
-onSnapshot(likeRef, snapLike => {
-  const likeBtn = list.querySelector(`.comment-like[data-comment="${d.id}"]`);
-  if (!likeBtn) return;
+      // --- ÉCOUTE 4 : Les réponses au commentaire ---
+      const repliesRef = collection(db, "videos", videoId, "comments", d.id, "replies");
+      const unsubReplies = onSnapshot(repliesRef, snapReplies => {
+        const repliesDiv = document.getElementById(`replies-${d.id}`);
+        if (!repliesDiv) return;
 
-  if (snapLike.exists()) {
-    likeBtn.classList.add("active");
-  } else {
-    likeBtn.classList.remove("active");
-  }
-});
+        repliesDiv.innerHTML = "";
+
+        snapReplies.forEach(r => {
+          const reply = r.data();
+          const replyUserRef = doc(db, "users", reply.uid);
+
+          const unsubReplyUser = onSnapshot(replyUserRef, userSnap => {
+            if (!userSnap.exists()) return;
+            const userData = userSnap.data();
+            let badgeHTML = "";
+
+            if (userData.verification?.type === "gold" && userData.verification?.status === "active") {
+              badgeHTML = `<span class="badge badge-gold"><svg viewBox="0 0 24 24" fill="black"><path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/></svg></span>`;
+            }
+
+            if (userData.verification?.type === "blue" && userData.verification?.expiresAt?.toDate() > new Date()) {
+              badgeHTML = `<span class="badge badge-blue"><svg viewBox="0 0 24 24" fill="white"><path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/></svg></span>`;
+            }
+
+            let existingReply = repliesDiv.querySelector(`[data-reply-id="${r.id}"]`);
+            
+            if (!existingReply) {
+              repliesDiv.insertAdjacentHTML("beforeend", `
+                <div class="reply-item" data-reply-id="${r.id}">
+                  <div class="reply-username">
+                       <strong>${userData.username}</strong>
+                      ${badgeHTML}
+                 </div> :
+                  ${reply.text}
+                </div>
+              `);
+            } else {
+              existingReply.querySelector('.reply-username').innerHTML = `<strong>${userData.username}</strong>${badgeHTML}`;
+            }
+          });
+          
+          activeCommentListeners.push(unsubReplyUser);
+        });
+      });
       
-      onSnapshot(doc(db,"videos",videoId,"comments",d.id), snap=>{
-  const data = snap.data();
-  const likeBtn = list.querySelector(`[data-comment="${d.id}"]`);
-  if(!likeBtn) return;
-
-  likeBtn.querySelector("span").textContent = formatNumber(data.likesCount || 0);
-});
-
-      // ===== CHARGER LES RÉPONSES (PLACEMENT CORRECT) =====
-const repliesRef = collection(
-  db,
-  "videos",
-  videoId,
-  "comments",
-  d.id,
-  "replies"
-);
-
-const unsubReplies = onSnapshot(repliesRef, snapReplies => {
-
-  const repliesDiv = document.getElementById(`replies-${d.id}`);
-  if (!repliesDiv) return;
-
-  repliesDiv.innerHTML = "";
-
-  snapReplies.forEach(r => {
-
-    const reply = r.data();
-
-    const userRef = doc(db, "users", reply.uid);
-
-    onSnapshot(userRef, userSnap => {
-
-      if (!userSnap.exists()) return;
-
-      const userData = userSnap.data();
-
-      let badgeHTML = "";
-
-      /* GOLD */
-      if (
-        userData.verification?.type === "gold" &&
-        userData.verification?.status === "active"
-      ) {
-      badgeHTML = `
-         <span class="badge badge-gold">
-         <svg viewBox="0 0 24 24" fill="black">
-      <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 
-      1.402 8.177L12 18.896l-7.336 3.874 
-      1.402-8.177L.132 9.211l8.2-1.193z"/>
-    </svg>
-  </span>
-`;
-      }
-
-      /* BLUE */
-      if (
-        userData.verification?.type === "blue" &&
-        userData.verification?.expiresAt?.toDate() > new Date()
-      ) {
-        badgeHTML = `
-  <span class="badge badge-blue">
-    <svg viewBox="0 0 24 24" fill="white">
-      <path d="M20.285 6.709l-11.025 11.025-5.545-5.545 
-      1.414-1.414 4.131 4.131 9.611-9.611z"/>
-    </svg>
-  </span>
-`;
-      }
-
-      repliesDiv.insertAdjacentHTML("beforeend", `
-        <div class="reply-item">
-          <div class="reply-username">
-               <strong>${userData.username}</strong>
-              ${badgeHTML}
-         </div> :
-          ${reply.text}
-        </div>
-      `);
-
-    });
-
-  });
-
-});
-
-repliesUnsubscribes.push(unsubReplies);
-
+      activeCommentListeners.push(unsubReplies);
     });
   });
 }
