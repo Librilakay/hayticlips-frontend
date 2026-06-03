@@ -197,6 +197,38 @@
     });
 
     // 💰 CALCUL AUTOMATIQUE DES BÉNÉFICES
+    // 💰 CALCUL AUTOMATIQUE DES BÉNÉFICES (NETS RÉELS)
+    
+    // 1. Fonction qui calcule ce que Digicel/Natcom te facture pour l'envoi
+    function getOperatorFee(amount, method) {
+      if (method === 'natcash') {
+        if (amount < 500) return 0;
+        if (amount <= 999) return 6;
+        if (amount <= 1999) return 18;
+        if (amount <= 3999) return 25;
+        if (amount <= 7999) return 35;
+        if (amount <= 11999) return 54;
+        if (amount <= 19999) return 63;
+        if (amount <= 39999) return 68;
+        if (amount <= 59999) return 90;
+        if (amount <= 74999) return 108;
+        return 115;
+      } else {
+        // MonCash par défaut
+        if (amount < 250) return 0;
+        if (amount <= 499) return 5;
+        if (amount <= 999) return 10;
+        if (amount <= 1999) return 25;
+        if (amount <= 3999) return 35;
+        if (amount <= 7999) return 50;
+        if (amount <= 11999) return 60;
+        if (amount <= 19999) return 70;
+        if (amount <= 39999) return 75;
+        return 100;
+      }
+    }
+
+    // 2. Fonction de mise à jour des statistiques
     function loadFinancialStats() {
       // On écoute uniquement les transferts approuvés
       const qStats = query(collection(db, "manualTransfers"), where("status", "==", "approved"));
@@ -213,10 +245,19 @@
             // L'argent reçu sur le compte bancaire de l'admin
             totalIn += Number(t.amount || 0);
           } else if (t.type === 'withdraw') {
-            // L'argent envoyé à l'utilisateur
-            totalOut += Number(t.amountToReceive || 0);
-            // Les frais gardés par l'admin (Bénéfices)
-            totalProfit += Number(t.feeApplied || 0);
+            const amountSent = Number(t.amountToReceive || 0);
+            const hayticlipsFee = Number(t.feeApplied || 0);
+            const operatorMethod = t.method || 'moncash'; 
+            
+            // Calcul des frais facturés par Digicel/Natcom à l'admin pour le P2P
+            const costToSend = getOperatorFee(amountSent, operatorMethod);
+
+            // L'argent qui sort de ta poche vers l'utilisateur
+            totalOut += amountSent;
+            
+            // Le bénéfice NET : Frais facturés au client - Frais payés à l'opérateur
+            const realProfit = hayticlipsFee - costToSend;
+            totalProfit += realProfit;
           }
         });
 
