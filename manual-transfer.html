@@ -217,8 +217,11 @@
       <label>Votre numéro de réception</label>
       <input type="text" id="withdrawPhone" placeholder="Le numéro où envoyer l'argent">
 
-      <label>Nom sur le compte (MonCash / NatCash)</label>
-      <input type="text" id="withdrawAccountName" placeholder="Ex: Jean Dupont">
+<label>Nom sur le compte (MonCash / NatCash)</label>
+<input type="text" id="withdrawAccountName" placeholder="Ex: Jean Dupont">
+
+<label>Code PIN de sécurité (6 chiffres)</label>
+<input type="password" id="withdrawPin" placeholder="******" maxlength="6" inputmode="numeric">
 
       <button class="submit-btn" id="btnSubmitWithdraw">Demander le Retrait</button>
     </div>
@@ -350,62 +353,66 @@
     };
 
     // --- SOUMISSION RETRAIT ---
-    document.getElementById("btnSubmitWithdraw").onclick = async () => {
-      const btn = document.getElementById("btnSubmitWithdraw");
-      const method = document.getElementById("withdrawMethod").value;
-      const amount = document.getElementById("withdrawAmount").value;
-      const phone = document.getElementById("withdrawPhone").value;
-      const accountName = document.getElementById("withdrawAccountName").value;
+// --- SOUMISSION RETRAIT ---
+ document.getElementById("btnSubmitWithdraw").onclick = async () => {
+   const btn = document.getElementById("btnSubmitWithdraw");
+   const method = document.getElementById("withdrawMethod").value;
+   const amount = document.getElementById("withdrawAmount").value;
+   const phone = document.getElementById("withdrawPhone").value;
+   const accountName = document.getElementById("withdrawAccountName").value;
+   const pin = document.getElementById("withdrawPin").value.trim(); // 👈 Récupération du PIN
 
-      if(!amount || amount < 250) return alert("Le montant minimum est de 250 HTG.");
-      if(!phone) return alert("Veuillez indiquer le numéro de réception.");
-      if(!accountName.trim()) return alert("Veuillez indiquer le nom exact sur le compte.");
+   if(!amount || amount < 250) return alert("Le montant minimum est de 250 HTG.");
+   if(!phone) return alert("Veuillez indiquer le numéro de réception.");
+   if(!accountName.trim()) return alert("Veuillez indiquer le nom exact sur le compte.");
+   if(!pin || pin.length !== 6) return alert("Veuillez entrer votre code PIN à 6 chiffres."); // 👈 Vérification basique
 
-      const parsedAmount = parseFloat(amount);
-      const fee = calculateFee(parsedAmount);
-      const finalToReceive = parsedAmount - fee;
+   const parsedAmount = parseFloat(amount);
+   const fee = calculateFee(parsedAmount);
+   const finalToReceive = parsedAmount - fee;
 
-      if(finalToReceive <= 0) return alert("Le montant est trop faible par rapport aux frais.");
+   if(finalToReceive <= 0) return alert("Le montant est trop faible par rapport aux frais.");
 
-      btn.disabled = true;
-      btn.textContent = "Envoi en cours...";
+   btn.disabled = true;
+   btn.textContent = "Vérification..."; // 👈 Petit changement de texte
 
-      try {
-        const token = await auth.currentUser.getIdToken(true);
-        
-        const res = await fetch(`${API_BASE}/api/manual-transfer`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
-          body: JSON.stringify({
-            type: "withdraw",
-            method: method,
-            amountRequested: parsedAmount,
-            feeApplied: fee,
-            amountToReceive: finalToReceive,
-            phone: phone,
-            accountName: accountName.trim()
-          })
-        });
+   try {
+     const token = await auth.currentUser.getIdToken(true);
 
-        const result = await res.json();
+     const res = await fetch(`${API_BASE}/api/manual-transfer`, {
+       method: "POST",
+       headers: {
+         "Content-Type": "application/json",
+         "Authorization": "Bearer " + token
+       },
+       body: JSON.stringify({
+         type: "withdraw",
+         method: method,
+         amountRequested: parsedAmount,
+         feeApplied: fee,
+         amountToReceive: finalToReceive,
+         phone: phone,
+         accountName: accountName.trim(),
+         pin: pin // 👈 Envoi du PIN au serveur
+       })
+     });
 
-        if(result.success) {
-          alert("Votre demande de retrait a été envoyée. Elle sera traitée sous peu.");
-          window.location.href = "profil.html";
-        } else {
-          alert(result.error || "Erreur serveur");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Erreur réseau ou serveur.");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Demander le Retrait";
-      }
-    };
+     const result = await res.json();
+
+     if(result.success) {
+       alert("Votre demande de retrait a été envoyée. Elle sera traitée sous peu.");
+       window.location.href = "profil.html";
+     } else {
+       alert(result.error || "Erreur serveur");
+     }
+   } catch (err) {
+     console.error(err);
+     alert("Erreur réseau ou serveur.");
+   } finally {
+     btn.disabled = false;
+     btn.textContent = "Demander le Retrait";
+   }
+ };
   </script>
 </body>
 </html>
