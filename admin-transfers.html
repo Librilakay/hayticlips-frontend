@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ff0050">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Tableau de Bord Financier</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; }
+    body { background: #000; color: #fff; overflow-x: hidden; }
+
+    /* HEADER */
+    .header {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #222;
+      position: sticky;
+      top: 0;
+      background: #000;
+      z-index: 100;
+    }
+    .header-left {
+      position: absolute;
+      left: 15px;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .header-center { font-weight: 700; font-size: 16px; }
+
+    /* CONTENEUR GLOBAL */
+    .container { padding: 15px; max-width: 800px; margin: 0 auto; }
+
+    /* --- TABLEAU DE BORD (STATS) --- */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    .stat-card {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 15px 10px;
+      text-align: center;
+    }
+    .stat-title { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .stat-value { font-size: 16px; font-weight: bold; }
+    .color-in { color: #2ecc71; } /* Vert */
+    .color-out { color: #e74c3c; } /* Rouge */
+    .color-profit { color: #f1c40f; } /* Or */
+
+    .section-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #ff0050;
+      display: inline-block;
+      padding-bottom: 4px;
+    }
+
+    /* --- CARTES DE DEMANDES --- */
+    .transfer-card {
+      background: #111;
+      border: 1px solid #222;
+      border-left: 4px solid #ff0050;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 15px;
+    }
+    .transfer-card.deposit-card { border-left-color: #2ecc71; }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #222;
+    }
+    .badge-deposit { background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid #2ecc71; }
+    .badge-withdraw { background: rgba(255, 0, 80, 0.2); color: #ff0050; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid #ff0050; }
+    .amount { font-size: 18px; font-weight: bold; }
+
+    .info-row { margin-bottom: 6px; font-size: 13px; color: #bbb; }
+    .info-row strong { color: #fff; }
+    .highlight-text { color: #2ecc71; font-weight: bold; font-size: 15px; }
+
+    img.receipt {
+      width: 100%;
+      max-height: 250px;
+      object-fit: cover;
+      border: 1px solid #333;
+      border-radius: 8px;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+
+    /* ACTIONS */
+    .action-area { margin-top: 12px; }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #000;
+      border: 1px solid #444;
+      color: white;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .btn-group { display: flex; gap: 10px; }
+    .btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+    .btn-approve { background: #2ecc71; color: #000; }
+    .btn-reject { background: #e74c3c; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .empty-state { text-align: center; color: #666; padding: 40px 20px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left" onclick="window.location.href='profil.html'">←</div>
+    <div class="header-center">💼 Gestion & Finances</div>
+  </div>
+
+  <div class="container">
+    
+    <div class="dashboard">
+      <div class="stat-card">
+        <div class="stat-title">Entrées</div>
+        <div class="stat-value color-in" id="statIn">0 HTG</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Sorties</div>
+        <div class="stat-value color-out" id="statOut">0 HTG</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Bénéfices</div>
+        <div class="stat-value color-profit" id="statProfit">0 HTG</div>
+      </div>
+    </div>
+
+    <div class="section-title">En attente de validation</div>
+
+    <div id="transfersList">
+      <div class="empty-state">Chargement des données...</div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+      authDomain: "tstx-58474.firebaseapp.com",
+      projectId: "tstx-58474",
+      storageBucket: "tstx-58474.firebasestorage.app",
+      messagingSenderId: "1010020144942",
+      appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const API_BASE = "https://hayticlip-server.onrender.com";
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return window.location.href = "login.html";
+      
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (!userSnap.exists() || userSnap.data().role !== "admin") {
+        alert("Accès refusé.");
+        return window.location.href = "profil.html";
+      }
+
+      // Lancer les deux requêtes en parallèle
+      loadFinancialStats();
+      loadPendingTransfers();
+    });
+
+    // 💰 CALCUL AUTOMATIQUE DES BÉNÉFICES
+    function loadFinancialStats() {
+      // On écoute uniquement les transferts approuvés
+      const qStats = query(collection(db, "manualTransfers"), where("status", "==", "approved"));
+      
+      onSnapshot(qStats, (snap) => {
+        let totalIn = 0;
+        let totalOut = 0;
+        let totalProfit = 0;
+
+        snap.forEach(d => {
+          const t = d.data();
+          
+          if (t.type === 'deposit') {
+            // L'argent reçu sur le compte bancaire de l'admin
+            totalIn += Number(t.amount || 0);
+          } else if (t.type === 'withdraw') {
+            // L'argent envoyé à l'utilisateur
+            totalOut += Number(t.amountToReceive || 0);
+            // Les frais gardés par l'admin (Bénéfices)
+            totalProfit += Number(t.feeApplied || 0);
+          }
+        });
+
+        // Formatage pour éviter les gros chiffres moches
+        const formatMoney = (n) => new Intl.NumberFormat('fr-FR').format(n);
+
+        document.getElementById("statIn").textContent = formatMoney(totalIn) + " HTG";
+        document.getElementById("statOut").textContent = formatMoney(totalOut) + " HTG";
+        document.getElementById("statProfit").textContent = formatMoney(totalProfit) + " HTG";
+      });
+    }
+
+    // 📋 LISTE DES DEMANDES
+    function loadPendingTransfers() {
+      const qPending = query(
+        collection(db, "manualTransfers"), 
+        where("status", "==", "pending"),
+        orderBy("createdAt", "desc")
+      );
+
+      onSnapshot(qPending, (snap) => {
+        const list = document.getElementById("transfersList");
+        list.innerHTML = "";
+
+        if (snap.empty) {
+          list.innerHTML = `<div class="empty-state">✅ Aucune demande en attente. Tout est à jour.</div>`;
+          return;
+        }
+
+        snap.forEach(d => {
+          const t = d.data();
+          const transferId = d.id;
+          const isDeposit = t.type === 'deposit';
+          const dateStr = t.createdAt ? t.createdAt.toDate().toLocaleString('fr-FR') : "Date inconnue";
+          
+          const card = document.createElement("div");
+          card.className = `transfer-card ${isDeposit ? 'deposit-card' : ''}`;
+          
+          let cardHTML = `
+            <div class="card-header">
+              <span class="${isDeposit ? 'badge-deposit' : 'badge-withdraw'}">
+                ${isDeposit ? '📥 RECHARGE' : '📤 RETRAIT'} (${t.method.toUpperCase()})
+              </span>
+              <span class="amount">${t.amountRequested || t.amount} HTG</span>
+            </div>
+            
+            <div class="info-row"><strong>ID :</strong> ${t.userId}</div>
+            <div class="info-row"><strong>Tél :</strong> ${t.phone}</div>
+          `;
+
+          if (!isDeposit) {
+            cardHTML += `
+              <div class="info-row"><strong>Bénéficiaire :</strong> ${t.accountName}</div>
+              <div class="info-row"><strong>Frais HaytiClips :</strong> ${t.feeApplied} HTG</div>
+              <div class="info-row"><strong>À ENVOYER :</strong> <span class="highlight-text">${t.amountToReceive} HTG</span></div>
+            `;
+          }
+
+          cardHTML += `<div class="info-row"><strong>Date :</strong> ${dateStr}</div>`;
+
+          if (isDeposit && t.receiptUrl) {
+            cardHTML += `<img src="${t.receiptUrl}" class="receipt" onclick="window.open('${t.receiptUrl}', '_blank')" alt="Reçu">`;
+          }
+
+          cardHTML += `
+            <div class="action-area">
+              <input type="text" id="reason-${transferId}" placeholder="Motif si refusé (facultatif)">
+              <div class="btn-group">
+                <button class="btn btn-approve" id="btn-approve-${transferId}" onclick="processTransfer('${transferId}', 'approved')">✓ Valider</button>
+                <button class="btn btn-reject" id="btn-reject-${transferId}" onclick="processTransfer('${transferId}', 'rejected')">✕ Refuser</button>
+              </div>
+            </div>
+          `;
+
+          card.innerHTML = cardHTML;
+          list.appendChild(card);
+        });
+      });
+    }
+
+    // ⚡ ACTION (VALIDER/REFUSER)
+    window.processTransfer = async (transferId, status) => {
+      const reasonInput = document.getElementById(`reason-${transferId}`);
+      const reason = reasonInput.value.trim();
+
+      if (status === 'rejected' && !reason) {
+        alert("Merci d'indiquer un motif pour le refus (le client le verra).");
+        reasonInput.focus();
+        return;
+      }
+
+      if (!confirm(status === 'approved' ? "Confirmer la VALIDATION ?" : "Confirmer le REFUS ?")) return;
+
+      const btnApprove = document.getElementById(`btn-approve-${transferId}`);
+      const btnReject = document.getElementById(`btn-reject-${transferId}`);
+      btnApprove.disabled = true;
+      btnReject.disabled = true;
+
+      try {
+        const token = await auth.currentUser.getIdToken(true);
+        const res = await fetch(`${API_BASE}/api/admin/process-manual-transfer`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({ transferId, status, reason })
+        });
+
+        const result = await res.json();
+        if (!result.success) alert(result.error || "Erreur serveur.");
+      } catch (err) {
+        alert("Erreur de connexion avec le serveur.");
+      } finally {
+        if(btnApprove) btnApprove.disabled = false;
+        if(btnReject) btnReject.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

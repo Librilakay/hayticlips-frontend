@@ -54,6 +54,10 @@ const rolesManagerBtn = document.getElementById("rolesManagerBtn");
 const merchantRequestBtn = document.getElementById("merchantRequestBtn");
 const merchantManagerBtn = document.getElementById("merchantManagerBtn");
 const helpCountBtn = document.getElementById("helpCount");
+const transfersManagerBtn = document.getElementById("transfersManagerBtn");
+if(transfersManagerBtn){
+  transfersManagerBtn.style.display = "none";
+}
 //cacher par default
 gestionAccountBtn.style.display = "none";
 if(adminPanelBtn){
@@ -288,26 +292,31 @@ if (myRole === "admin") {
   if(adminPanelBtn) adminPanelBtn.style.display = "block";
   if(rolesManagerBtn) rolesManagerBtn.style.display = "block";
   if(merchantManagerBtn) merchantManagerBtn.style.display = "block";
+  if(transfersManagerBtn) transfersManagerBtn.style.display = "block"; // <-- AJOUT
 } else if (myRole === "moderator") {
   gestionAccountBtn.style.display = "none";
   if(adminPanelBtn) adminPanelBtn.style.display = "block";
   if(rolesManagerBtn) rolesManagerBtn.style.display = "none";
   if(merchantManagerBtn) merchantManagerBtn.style.display = "none";
+  if(transfersManagerBtn) transfersManagerBtn.style.display = "none"; // <-- AJOUT
 } else if (myRole === "badge_manager") {
   gestionAccountBtn.style.display = "block";
   if(adminPanelBtn) adminPanelBtn.style.display = "none";
   if(rolesManagerBtn) rolesManagerBtn.style.display = "none";
   if(merchantManagerBtn) merchantManagerBtn.style.display = "none";
+  if(transfersManagerBtn) transfersManagerBtn.style.display = "none"; // <-- AJOUT
 } else if (myRole === "merchant_manager") {
   gestionAccountBtn.style.display = "none";
   if(adminPanelBtn) adminPanelBtn.style.display = "none";
   if(rolesManagerBtn) rolesManagerBtn.style.display = "none";
   if(merchantManagerBtn) merchantManagerBtn.style.display = "block";
+  if(transfersManagerBtn) transfersManagerBtn.style.display = "none"; // <-- AJOUT
 } else {
   gestionAccountBtn.style.display = "none";
   if(adminPanelBtn) adminPanelBtn.style.display = "none";
   if(rolesManagerBtn) rolesManagerBtn.style.display = "none";
   if(merchantManagerBtn) merchantManagerBtn.style.display = "none";
+  if(transfersManagerBtn) transfersManagerBtn.style.display = "none"; // <-- AJOUT
 }
 }
 }
@@ -772,6 +781,12 @@ if(merchantRequestBtn){
 if(merchantManagerBtn){
   merchantManagerBtn.onclick = () => {
     window.location.href = "merchant-manager.html";
+  };
+}
+
+if(transfersManagerBtn){
+  transfersManagerBtn.onclick = () => {
+    window.location.href = "admin-transfers.html";
   };
 }
 
