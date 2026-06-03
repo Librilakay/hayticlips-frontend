@@ -340,6 +340,11 @@ onAuthStateChanged(auth,(user)=>{
 
 
 function getNotificationAvatar(data){
+  // Si c'est un refus de transfert, on met un logo système/admin
+  if(data.type === "transfer_rejected"){
+    return "https://cdn-icons-png.flaticon.com/512/564/564619.png"; // Un petit logo d'erreur, tu peux le remplacer par ton logo !
+  }
+
   if(data.type === "blue_approved" || data.type === "blue_expired"){
     return data.userAvatar || data.toAvatar || "default-avatar.png";
   }
@@ -371,16 +376,21 @@ function buildMessage(data){
       return `<strong>${data.fromUsername}</strong> a commenté votre vidéo`;
     case "repost":
       return `<strong>${data.fromUsername}</strong> a reposté votre vidéo`;
-      case "blue_approved":
-  return `Badge Blue activé pour 30 jours<br><span style="color:#888;font-size:12px;">Expire le : ${formatExpireDate(data)}</span>`;
-      case "blue_expired":
-             return `Votre badge Blue a expiré`;
-        case "gift":
-           return `<strong>${data.fromUsername}</strong> vous envoie ${data.amount} pour votre vidéo 🎁`;
-   case "mention":
-        return `<strong>${data.fromUsername}</strong> vous a mentionné`;
+    case "blue_approved":
+      return `Badge Blue activé pour 30 jours<br><span style="color:#888;font-size:12px;">Expire le : ${formatExpireDate(data)}</span>`;
+    case "blue_expired":
+      return `Votre badge Blue a expiré`;
+    case "gift":
+      return `<strong>${data.fromUsername}</strong> vous envoie ${data.amount} pour votre vidéo 🎁`;
+    case "mention":
+      return `<strong>${data.fromUsername}</strong> vous a mentionné`;
     case "message":
       return `<strong>${data.fromUsername}</strong> vous a envoyé un message`;
+      
+    // 👇 NOUVELLE NOTIFICATION DE REFUS 👇
+    case "transfer_rejected":
+      return `<strong style="color:#e74c3c;">Transaction Refusée</strong><br><span style="font-size:13px;opacity:0.9;">${data.message}</span>`;
+      
     default:
       return "Nouvelle notification";
   }
