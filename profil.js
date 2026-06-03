@@ -816,104 +816,103 @@ if(!twofaToggle){
 
 twofaToggle.addEventListener("change", async () => {
 
-const user = auth.currentUser;
-if(!user){
-alert("Utilisateur non connecté");
-return;
-}
-
-const userRef = doc(db,"users",user.uid);
-const snap = await getDoc(userRef);
-const data = snap.data();
-
-// 🔥 FIX anciens comptes cassés
-
-
-const isEnabled = data.security?.enabled === true;
-
-// 🔓 ACTIVER
-if(!isEnabled){
-
-const pin = prompt("Créer PIN 6 chiffres");
-
-if(!pin || pin.length !== 6 || isNaN(pin)){
-alert("PIN invalide");
-return;
-}
-
-const confirmPin = prompt("Confirmer PIN");
-
-if(pin !== confirmPin){
-alert("PIN différent");
-return;
-}
-
-try{
-
-
-await fetch("https://hayticlip-server.onrender.com/set-pin",{
-  method:"POST",
-  headers:{
-    "Content-Type":"application/json",
-    "Authorization":"Bearer " + (await auth.currentUser.getIdToken())
-  },
-  body: JSON.stringify({ pin })
-});
-
-twofaToggle.checked = true;
-
-alert("2FA activé 🔐");
-
-}catch(e){
-console.error(e);
-alert("Erreur: " + e.message);
-}
-
-}
-
-// 🔒 DESACTIVER
-else{
-
-const pin = prompt("Entrer PIN");
-
-if(!pin){
-return;
-}
-
-const res = await fetch("https://hayticlip-server.onrender.com/check-pin",{
-  method:"POST",
-  headers:{
-    "Content-Type":"application/json",
-    "Authorization":"Bearer " + (await auth.currentUser.getIdToken())
-  },
-  body: JSON.stringify({
-  pin: pin
-})
-});
-
-const result = await res.json();
-
-if(!result.success){
-  alert("PIN incorrect");
-  return;
-}
-
-
-
-await fetch("https://hayticlip-server.onrender.com/remove-pin",{
-  method:"POST",
-  headers:{
-    "Content-Type":"application/json",
-    "Authorization":"Bearer " + (await auth.currentUser.getIdToken())
+  const user = auth.currentUser;
+  if(!user){
+    alert("Utilisateur non connecté");
+    twofaToggle.checked = !twofaToggle.checked; // Remet le bouton dans son état d'origine
+    return;
   }
-});
 
-twofaToggle.checked = false;
+  const userRef = doc(db,"users",user.uid);
+  const snap = await getDoc(userRef);
+  const data = snap.data();
 
-alert("2FA désactivé");
+  const isEnabled = data.security?.enabled === true;
 
-}
+  // 🔓 ACTIVER
+  if(!isEnabled){
 
+    const pin = prompt("Créer PIN 6 chiffres");
+
+    if(!pin || pin.length !== 6 || isNaN(pin)){
+      alert("PIN invalide");
+      twofaToggle.checked = false; // Annule l'activation visuelle
+      return;
+    }
+
+    const confirmPin = prompt("Confirmer PIN");
+
+    if(pin !== confirmPin){
+      alert("PIN différent");
+      twofaToggle.checked = false; // Annule l'activation visuelle
+      return;
+    }
+
+    try{
+      const res = await fetch("https://hayticlip-server.onrender.com/set-pin",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":"Bearer " + (await auth.currentUser.getIdToken())
+        },
+        body: JSON.stringify({ pin })
+      });
+      
+      const result = await res.json();
+      
+      if(result.success) {
+        twofaToggle.checked = true;
+        alert("2FA activé 🔐");
+      } else {
+        alert(result.error || "Erreur lors de l'activation");
+        twofaToggle.checked = false;
+      }
+    }catch(e){
+      console.error(e);
+      alert("Erreur: " + e.message);
+      twofaToggle.checked = false;
+    }
+
+  }
+  // 🔒 DESACTIVER
+  else {
+
+    const pin = prompt("Entrer PIN pour désactiver la sécurité");
+
+    if(!pin){
+      twofaToggle.checked = true; // Remet le bouton sur "activé" si on annule
+      return;
+    }
+
+    try {
+      // On envoie directement la demande de désactivation AVEC le pin
+      const res = await fetch("https://hayticlip-server.onrender.com/remove-pin",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":"Bearer " + (await auth.currentUser.getIdToken())
+        },
+        body: JSON.stringify({ pin: pin }) // 👈 LA CORRECTION EST ICI
+      });
+
+      const result = await res.json();
+
+      if(!result.success){
+        alert(result.error || "PIN incorrect");
+        twofaToggle.checked = true; // Remet le bouton sur "activé" car ça a échoué
+        return;
+      }
+
+      // Si tout est bon, on confirme la désactivation
+      twofaToggle.checked = false;
+      alert("2FA désactivé 🔓");
+
+    } catch (e) {
+      console.error(e);
+      alert("Erreur serveur : " + e.message);
+      twofaToggle.checked = true; 
+    }
+  }
 });
 
 });
