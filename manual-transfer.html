@@ -272,12 +272,19 @@
     });
 
     // --- LOGIQUE DE CALCUL DES FRAIS ---
+    // --- LOGIQUE DE CALCUL DES FRAIS ---
     function calculateFee(amount) {
-      if (amount < 1000) return 15;
-      if (amount < 2500) return 30;
-      if (amount < 5000) return 40;
-      if (amount < 10000) return 60;
-      return 75; // Pour 10 000 et plus
+      if (amount < 250) return 0; // Au cas où, si un retrait de moins de 250 était forcé
+      if (amount <= 999) return 15;
+      if (amount <= 1999) return 30;
+      if (amount <= 3999) return 40;
+      if (amount <= 7999) return 60;
+      if (amount <= 11999) return 65;
+      if (amount <= 19999) return 75;
+      if (amount <= 39999) return 80;
+      if (amount <= 59999) return 115;
+      if (amount <= 74999) return 130;
+      return 150; // De 75000 à 100000+
     }
 
     const withdrawInput = document.getElementById("withdrawAmount");
