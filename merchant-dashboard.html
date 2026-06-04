@@ -599,9 +599,45 @@ window.toggleProductStatus = async (productId, currentState)=>{
 
 window.deleteProduct = async (productId)=>{
   try{
-    if(!confirm("Supprimer ce produit ?")) return;
+    if(!confirm("Supprimer ce produit définitivement ?")) return;
+    
+    // 1. Récupérer le produit depuis allProducts pour avoir ses images
+    const product = allProducts.find(p => p.id === productId);
+    
+    if (product) {
+      // 2. Préparer une liste contenant toutes les images du produit (tableau images + imageUrl)
+      let imagesToDelete = [];
+      if (Array.isArray(product.images)) {
+        imagesToDelete = [...product.images];
+      }
+      if (product.imageUrl && !imagesToDelete.includes(product.imageUrl)) {
+        imagesToDelete.push(product.imageUrl);
+      }
+
+      // 3. Boucler sur les images pour les supprimer de Supabase
+      for (const imgUrl of imagesToDelete) {
+        if (imgUrl && imgUrl.includes("supabase.co")) {
+          try {
+            const urlParts = imgUrl.split("/media/");
+            if (urlParts.length > 1) {
+              let fileName = urlParts[1].split('?')[0];
+              fileName = decodeURIComponent(fileName);
+              await supabase.storage.from("media").remove([fileName]);
+              console.log("✅ Image produit supprimée :", fileName);
+            }
+          } catch (supaErr) {
+            console.error("❌ Erreur Supabase :", supaErr);
+          }
+        }
+      }
+    }
+
+    // 4. Supprimer le produit de Firestore
     await deleteDoc(doc(db,"merchantProducts",productId));
     await loadProducts();
+    
+    alert("Produit supprimé !");
+    
   }catch(e){
     alert("Erreur : " + e.message);
   }
