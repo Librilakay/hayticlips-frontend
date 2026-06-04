@@ -368,14 +368,34 @@ from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
       return urlData.publicUrl;
     }
 
-    // Supprimer un avatar du storage
+   // Supprimer un avatar du storage de manière sécurisée
     async function deleteAvatar(avatarUrl) {
-      if (!avatarUrl) return;
-      // Extraire le chemin du fichier depuis l'URL
-      const urlParts = avatarUrl.split('/');
-      const fileName = urlParts.slice(urlParts.indexOf(BUCKET_NAME) + 1).join('/');
-      if (fileName) {
-        await supabase.storage.from(BUCKET_NAME).remove([fileName]);
+      // 1. On ignore si l'image n'est pas hébergée sur ton Supabase (ex: pravatar)
+      if (!avatarUrl || !avatarUrl.includes("supabase.co")) {
+        return; 
+      }
+
+      try {
+        // 2. On découpe l'URL proprement pour trouver le nom exact du fichier
+        const urlParts = avatarUrl.split(`/${BUCKET_NAME}/`);
+        if (urlParts.length > 1) {
+          let fileName = urlParts[1].split('?')[0]; // Enlève les paramètres éventuels
+          fileName = decodeURIComponent(fileName);  // Gère les espaces et caractères spéciaux
+
+          console.log("Tentative de suppression de :", fileName);
+
+          // 3. Demande de suppression à Supabase
+          const { error } = await supabase.storage.from(BUCKET_NAME).remove([fileName]);
+          
+          if (error) {
+            console.error("❌ Refus de Supabase :", error.message);
+            // On ne jette pas d'erreur pour ne pas bloquer la sauvegarde du frontend
+          } else {
+            console.log("✅ Ancienne image supprimée avec succès du stockage !");
+          }
+        }
+      } catch (e) {
+        console.error("Erreur de nettoyage d'image ignorée :", e);
       }
     }
 
