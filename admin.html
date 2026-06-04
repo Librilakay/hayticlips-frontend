@@ -222,6 +222,8 @@ import {
   where,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// 👇 IMPORT SUPABASE 👇
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
@@ -236,6 +238,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// 👇 CONFIGURATION SUPABASE 👇
+const supabaseUrl = "https://nxpifzslxoigcuuhslox.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cGlmenNseG9pZ2N1dWhzbG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTgwODgsImV4cCI6MjA4NTk5NDA4OH0.yYQ3nQn6Z0ZCC9ZjuHt_HGJbf1CQVPHlz-b6nnEhFqg";
+const supabase = createClient(supabaseUrl, supabaseKey);
+const BUCKET_NAME = "media";
+
 const totalUsersEl = document.getElementById("totalUsers");
 const onlineUsersEl = document.getElementById("onlineUsers");
 const userList = document.getElementById("userList");
@@ -243,6 +251,7 @@ const searchInput = document.getElementById("searchInput");
 
 let allUsers = [];
 let currentReportedVideoId = null;
+let currentReportedVideoUrl = null; // 👈 Pour garder en mémoire l'URL de la vidéo signalée
 
 onAuthStateChanged(auth, async user => {
 
@@ -260,7 +269,7 @@ onAuthStateChanged(auth, async user => {
 
   const me = users.find(u=>u.id===user.uid);
 
-if(!me || (me.role !== "admin" && me.role !== "moderator")){
+  if(!me || (me.role !== "admin" && me.role !== "moderator")){
     window.location.href = "feed.html";
     return;
   }
@@ -376,20 +385,57 @@ window.suspendUser = async (uid,days)=>{
   alert("Utilisateur suspendu");
 };
 
+// 👇 SUPPRESSION DU COMPTE ET DES VIDÉOS DE SUPABASE 👇
 window.deleteUserAccount = async (uid)=>{
 
   if(!confirm("Supprimer définitivement le compte ?")) return;
 
-  // 1️⃣ Supprimer toutes ses vidéos
+  // 1️⃣ Récupérer toutes ses vidéos
   const videosSnap = await getDocs(
     query(collection(db,"videos"), where("userId","==",uid))
   );
 
+  // 2️⃣ Boucler sur les vidéos pour les supprimer de Supabase puis de Firestore
   for(const v of videosSnap.docs){
+    const videoData = v.data();
+    const mediaUrl = videoData.mediaUrls?.[0];
+
+    // Nettoyage Supabase
+    if (mediaUrl && mediaUrl.includes("supabase.co")) {
+      try {
+        const urlParts = mediaUrl.split(`/${BUCKET_NAME}/`);
+        if (urlParts.length > 1) {
+          let fileName = urlParts[1].split('?')[0];
+          fileName = decodeURIComponent(fileName);
+          await supabase.storage.from(BUCKET_NAME).remove([fileName]);
+          console.log("✅ Vidéo de l'utilisateur supprimée de Supabase :", fileName);
+        }
+      } catch (supaErr) {
+        console.error("❌ Erreur Supabase :", supaErr);
+      }
+    }
+
+    // Suppression Firestore
     await deleteDoc(v.ref);
   }
 
-  // 2️⃣ Supprimer profil
+  // 3️⃣ Supprimer l'avatar de Supabase (Optionnel mais recommandé)
+  const userSnap = await getDoc(doc(db, "users", uid));
+  if (userSnap.exists()) {
+    const avatarUrl = userSnap.data().avatar;
+    if (avatarUrl && avatarUrl.includes("supabase.co")) {
+      try {
+        const urlParts = avatarUrl.split(`/${BUCKET_NAME}/`);
+        if (urlParts.length > 1) {
+          let fileName = urlParts[1].split('?')[0];
+          fileName = decodeURIComponent(fileName);
+          await supabase.storage.from(BUCKET_NAME).remove([fileName]);
+        }
+      } catch (e) {}
+    }
+  }
+
+  // 4️⃣ Supprimer le profil
   await deleteDoc(doc(db,"users",uid));
 
   alert("Compte et vidéos supprimés");
@@ -419,11 +465,15 @@ window.unsuspendUser = async (uid)=>{
 window.showUsers = ()=>{
   document.getElementById("userList").style.display="block";
   document.getElementById("reportsList").style.display="none";
+  document.getElementById("profileReportsList").style.display="none";
+  document.getElementById("moderationStats").style.display="none";
 };
 
 window.showReports = ()=>{
   document.getElementById("userList").style.display="none";
   document.getElementById("reportsList").style.display="block";
+  document.getElementById("profileReportsList").style.display="none";
+  document.getElementById("moderationStats").style.display="none";
   loadReports();
 };
 
@@ -473,6 +523,7 @@ async function loadReports(){
 
 window.openVideoModal = (videoId,src)=>{
   currentReportedVideoId = videoId;
+  currentReportedVideoUrl = src; // 👈 On sauvegarde l'URL pour la suppression !
 
   const modal = document.getElementById("videoModal");
   const video = document.getElementById("modalVideo");
@@ -486,10 +537,27 @@ window.closeVideoModal = ()=>{
   document.getElementById("modalVideo").pause();
 };
 
+// 👇 SUPPRESSION D'UNE VIDÉO SIGNALÉE (SUPABASE + FIRESTORE) 👇
 window.deleteReportedVideo = async ()=>{
 
   if(!confirm("Supprimer cette vidéo ?")) return;
 
+  // 1. Suppression Supabase
+  if (currentReportedVideoUrl && currentReportedVideoUrl.includes("supabase.co")) {
+    try {
+      const urlParts = currentReportedVideoUrl.split(`/${BUCKET_NAME}/`);
+      if (urlParts.length > 1) {
+        let fileName = urlParts[1].split('?')[0];
+        fileName = decodeURIComponent(fileName);
+        await supabase.storage.from(BUCKET_NAME).remove([fileName]);
+        console.log("✅ Vidéo signalée supprimée de Supabase :", fileName);
+      }
+    } catch (supaErr) {
+      console.error("❌ Erreur Supabase :", supaErr);
+    }
+  }
+
+  // 2. Suppression Firestore
   await deleteDoc(doc(db,"videos",currentReportedVideoId));
 
   alert("Vidéo supprimée");
@@ -525,6 +593,7 @@ window.showProfileReports = ()=>{
   document.getElementById("userList").style.display="none";
   document.getElementById("reportsList").style.display="none";
   document.getElementById("profileReportsList").style.display="block";
+  document.getElementById("moderationStats").style.display="none";
   loadProfileReports();
 };
 
@@ -534,11 +603,11 @@ async function loadProfileReports(){
   container.innerHTML = "Chargement...";
 
   const snap = await getDocs(
-  query(
-    collection(db,"profileReports"),
-    where("status","==","pending")
-  )
-);
+    query(
+      collection(db,"profileReports"),
+      where("status","==","pending")
+    )
+  );
 
   if(snap.empty){
     container.innerHTML = "Aucun profil signalé.";
@@ -549,61 +618,62 @@ async function loadProfileReports(){
 
   snap.forEach(d => {
 
-  const r = d.data();
-  const reportedUser = allUsers.find(u => u.id === r.reportedUser);
-  const avatar = reportedUser?.avatar || `https://i.pravatar.cc/150?u=${r.reportedUser}`;
-  const badgeHTML = getBadgeHTML(reportedUser);
+    const r = d.data();
+    const reportedUser = allUsers.find(u => u.id === r.reportedUser);
+    const avatar = reportedUser?.avatar || `https://i.pravatar.cc/150?u=${r.reportedUser}`;
+    const badgeHTML = getBadgeHTML(reportedUser);
 
-  container.innerHTML += `
-    <div class="user-card">
+    container.innerHTML += `
+      <div class="user-card">
 
-      <div class="user-head" onclick="openUserProfile('${r.reportedUser}')">
-        <img src="${avatar}" class="user-avatar">
+        <div class="user-head" onclick="openUserProfile('${r.reportedUser}')">
+          <img src="${avatar}" class="user-avatar">
 
-        <div class="user-meta">
-          <div class="user-name">
-            <span>${r.reportedUsername || "Sans nom"}</span>
-            ${badgeHTML}
+          <div class="user-meta">
+            <div class="user-name">
+              <span>${r.reportedUsername || "Sans nom"}</span>
+              ${badgeHTML}
+            </div>
+            <div class="user-bio">Raison: ${r.reason}</div>
           </div>
-          <div class="user-bio">Raison: ${r.reason}</div>
         </div>
+
+        <div>UID: ${r.reportedUser}</div>
+        <div>Followers: ${r.followersCount}</div>
+        <div>Status: ${r.status}</div>
+
+        <div style="margin-top:10px;">
+
+          <button class="suspend"
+            onclick="suspendUser('${r.reportedUser}',15)">
+            Suspendre 15j
+          </button>
+
+          <button class="delete"
+            onclick="deleteUserAccount('${r.reportedUser}')">
+            Supprimer compte
+          </button>
+
+          <button style="
+            background:#2ecc71;
+            color:white;
+            margin-top:6px;
+            padding:6px 10px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+          "
+          onclick="ignoreProfileReport('${d.id}')">
+            Ignorer signalement
+          </button>
+
+        </div>
+
       </div>
-
-      <div>UID: ${r.reportedUser}</div>
-      <div>Followers: ${r.followersCount}</div>
-      <div>Status: ${r.status}</div>
-
-      <div style="margin-top:10px;">
-
-        <button class="suspend"
-          onclick="suspendUser('${r.reportedUser}',15)">
-          Suspendre 15j
-        </button>
-
-        <button class="delete"
-          onclick="deleteUserAccount('${r.reportedUser}')">
-          Supprimer compte
-        </button>
-
-        <button style="
-          background:#2ecc71;
-          color:white;
-          margin-top:6px;
-          padding:6px 10px;
-          border:none;
-          border-radius:6px;
-          cursor:pointer;
-        "
-        onclick="ignoreProfileReport('${d.id}')">
-          Ignorer signalement
-        </button>
-
-      </div>
-
-    </div>
-  `;
-});
+    `;
+  });
 }
+
 window.ignoreProfileReport = async (reportId)=>{
 
   if(!confirm("Ignorer ce signalement ?")) return;
