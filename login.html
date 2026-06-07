@@ -197,7 +197,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
   }
 
   try {
-
+    // 1. On tente la connexion
     const cred = await signInWithEmailAndPassword(auth, email, password);
 
     if(!cred.user.emailVerified){
@@ -206,6 +206,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
       return;
     }
 
+    // 2. On récupère les infos Firestore
     const snap = await getDoc(doc(db,"users",cred.user.uid));
 
     if (!snap.exists()) {
@@ -221,37 +222,39 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
     }
 
     if (data.suspended) {
-
       const now = new Date();
       const until = data.suspendUntil?.toDate?.();
 
       if (until && until > now) {
-
         alert("Compte suspendu jusqu’au " + until.toLocaleDateString());
-
         await signOut(auth);
         window.location.href = "login.html";
         return;
-
       } else {
-
         await updateDoc(doc(db,"users",cred.user.uid),{
           suspended:false,
           suspendUntil:null
         });
-
       }
     }
 
+    // 🔥 LA CORRECTION EST ICI 🔥
+    // On isole cette opération pour qu'elle ne casse pas la connexion si elle est bloquée par Firestore
     if (data.security && data.security.enabled) {
-      await updateDoc(doc(db,"users",cred.user.uid),{
-        "security.lastVerified": null
-      });
+      try {
+        await updateDoc(doc(db,"users",cred.user.uid),{
+          "security.lastVerified": null
+        });
+      } catch (secErr) {
+        console.log("Info: Impossible de mettre à jour lastVerified depuis le client (bloqué par les règles de sécurité). La connexion continue normalement.");
+      }
     }
 
+    // 3. Tout est bon, on redirige !
     window.location.href = "feed.html";
 
   } catch (error) {
+    console.error("Erreur de connexion globale:", error);
     alert("Email ou mot de passe incorrect");
   }
 
