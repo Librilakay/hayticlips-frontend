@@ -1,95 +1,241 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
- <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#ff0050"> 
-<meta charset="UTF-8">
-<title>hayticlips</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ff0050"> 
+  <meta charset="UTF-8">
+  <title>HaytiClips</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-html, body{
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#000; /* vrai noir profond */
-}
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000; /* vrai noir profond */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
 
-.splash{
-  position:fixed;
-  inset:0;
-  background-color:#000;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
+  .splash {
+    position: fixed;
+    inset: 0;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
-.splash img{
-  width:100%;
-  height:100%;
-  object-fit:contain; /* PAS cover → évite la déformation */
-  image-rendering: -webkit-optimize-contrast;
-}
+  .splash img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* PAS cover → évite la déformation */
+    image-rendering: -webkit-optimize-contrast;
+  }
 
+  /* --- STYLES DE LA BELLE ALERTE --- */
+  .alert-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    display: none; /* Masqué par défaut */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .alert-box {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 340px;
+    padding: 25px 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .alert-icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+  }
+
+  .alert-title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .alert-text {
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .alert-checkbox-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    text-align: left;
+    background: #1a1a1a;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+
+  .alert-checkbox-group input {
+    width: 18px;
+    height: 18px;
+    accent-color: #ff0050;
+    cursor: pointer;
+  }
+
+  .alert-checkbox-group label {
+    color: #ccc;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .alert-btn {
+    width: 100%;
+    background: #ff0050;
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 30px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .alert-btn:hover {
+    background: #e60048;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
 </style>
 </head>
 
 <body>
   
-<div class="splash">
-  <img src="bon.PNG" alt="HaytiClips">
-</div>
+  <!-- SPLASH SCREEN -->
+  <div class="splash">
+    <img src="bon.PNG" alt="HaytiClips">
+  </div>
 
+  <!-- POPUP ALERTE -->
+  <div class="alert-overlay" id="pwaAlert">
+    <div class="alert-box">
+      <div class="alert-icon">📱</div>
+      <div class="alert-title">Installez l'application</div>
+      <div class="alert-text">
+        Avant toute utilisation, veuillez ajouter HaytiClips à votre écran d'accueil pour une meilleure expérience.
+      </div>
+      
+      <label class="alert-checkbox-group">
+        <input type="checkbox" id="hideAlertCheckbox">
+        <span>Déjà fait, ne plus afficher ce message</span>
+      </label>
 
+      <button class="alert-btn" id="closeAlertBtn">Fermer</button>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } 
-    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-  authDomain: "tstx-58474.firebaseapp.com",
-  projectId: "tstx-58474",
-  storageBucket: "tstx-58474.firebasestorage.app",
-  messagingSenderId: "1010020144942",
-  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
-};
+      apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+      authDomain: "tstx-58474.firebaseapp.com",
+      projectId: "tstx-58474",
+      storageBucket: "tstx-58474.firebasestorage.app",
+      messagingSenderId: "1010020144942",
+      appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // ⏳ Splash screen (3 secondes)
-    setTimeout(() => {
+    // ÉLÉMENTS DOM
+    const alertOverlay = document.getElementById("pwaAlert");
+    const closeAlertBtn = document.getElementById("closeAlertBtn");
+    const hideAlertCheckbox = document.getElementById("hideAlertCheckbox");
+
+    // FONCTION DE REDIRECTION (Authentification)
+    function checkAuthAndRedirect() {
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          // ✅ déjà connecté → feed
           window.location.replace("feed.html");
         } else {
-          // ❌ pas connecté → login
           window.location.replace("login.html");
         }
       });
-    }, 5000);
+    }
+
+    // LOGIQUE DE L'ALERTE
+    window.addEventListener("DOMContentLoaded", () => {
+      // On vérifie si l'utilisateur a déjà coché la case auparavant
+      const alertHidden = localStorage.getItem("hayticlips_hide_install_alert");
+
+      if (alertHidden === "true") {
+        // S'il a coché "Déjà fait", on laisse l'image Splash 5 secondes puis on redirige
+        setTimeout(() => {
+          checkAuthAndRedirect();
+        }, 5000);
+      } else {
+        // Sinon, on affiche l'alerte tout de suite par dessus l'image splash
+        alertOverlay.style.display = "flex";
+
+        // Quand il clique sur "Fermer"
+        closeAlertBtn.addEventListener("click", () => {
+          // On enregistre son choix s'il a coché la case
+          if (hideAlertCheckbox.checked) {
+            localStorage.setItem("hayticlips_hide_install_alert", "true");
+          }
+          
+          // On cache l'alerte et on redirige instantanément vers l'app
+          alertOverlay.style.display = "none";
+          checkAuthAndRedirect();
+        });
+      }
+    });
     
-    
-    
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/service-worker.js")
-      .then(registration => {
-        console.log("Service Worker enregistré");
-      })
-      .catch(error => {
-        console.log("Erreur Service Worker:", error);
+    // SERVICE WORKER
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/service-worker.js")
+          .then(registration => {
+            console.log("Service Worker enregistré");
+          })
+          .catch(error => {
+            console.log("Erreur Service Worker:", error);
+          });
       });
-  });
-}
+    }
 
   </script>
 
