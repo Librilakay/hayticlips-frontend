@@ -163,38 +163,109 @@ html, body {
   align-items:center;background:#000;border-top:1px solid #222;z-index: 1000;
 }
 
-/* COMMENTS PANEL */
-  .comments-panel{
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-    height:65%;
-    background:white;
-    border-radius:16px 16px 0 0;
-    transform:translateY(100%);
-    transition:.3s ease;
-    z-index:9999; /* ✅ une seule fois */
-    display:flex;
-    flex-direction:column;
-  }
-  /* Corriger le bouton commentaire */
+/* COMMENTS PANEL REVISITÉ POUR CLAVIER MOBILE */
+.comments-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  /* On limite la hauteur à 50% de l'écran pour ne JAMAIS cacher la vidéo en haut */
+  height: 50vh; 
+  max-height: 380px; 
+  background: white;
+  border-radius: 16px 16px 0 0;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -5px 25px rgba(0,0,0,0.5);
+}
+
+.comments-panel.show {
+  transform: translateY(0);
+}
+
+.comments-header {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: black;
+  font-weight: 700;
+  font-size: 16px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.comments-header button {
+  background: #f0f0f0;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: black;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.comments-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  /* Empêche la page entière de rebondir quand on défile les commentaires sur iOS */
+  overscroll-behavior: contain; 
+  -webkit-overflow-scrolling: touch;
+}
+
+/* BARRE DE SAISIE MOBILE ET ATTACHÉE */
+.comment-input {
+  position: sticky; /* Reste toujours collée en bas du panneau */
+  bottom: 0;
+  display: flex;
+  padding: 12px 16px;
+  gap: 10px;
+  background: white;
+  border-top: 1px solid #eee;
+  /* Marge de sécurité pour la barre d'accueil des iPhone récents */
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 10;
+}
+
+.comment-input input {
+  flex: 1;
+  border-radius: 20px;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  font-size: 15px;
+  outline: none;
+  color: black;
+}
+
+.comment-input input:focus {
+  border-color: #ff0050;
+  background: white;
+}
+
+.comment-input button {
+  border-radius: 20px;
+  padding: 0 16px;
+  color: white;
+  background: #ff0050;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Corriger le bouton commentaire sur la vidéo */
 .comment-btn {
   pointer-events: auto !important;
   z-index: 100 !important;
   position: relative;
   color: white;
 }
-
-  .comments-panel.show{
-    transform:translateY(0);
-  }
-.comments-header{padding:12px;display:flex;justify-content:space-between;color:black}
-.comments-list{flex:1;overflow-y:auto;padding:12px}
-.comment{margin-bottom:10px}
-.comment-input{display:flex;padding:10px;gap:10px;}
-.comment-input input{flex:1;border-radius:100px;padding:8px}
-.comment-input button{border-radius:100px;color:black;background:#ff0050;}
   .comment{
     display:flex;
     gap:10px;

@@ -882,11 +882,12 @@ function loadComments(videoId) {
         </div>
       `);
       
-      // --- ÉCOUTE 1 : Données Utilisateur ---
+// --- ÉCOUTE 1 : Données Utilisateur (Nom + Avatar + Badges) ---
       const userRef = doc(db, "users", c.uid);
       const unsubUser = onSnapshot(userRef, userSnap => {
         if (!userSnap.exists()) return;
         const userData = userSnap.data();
+        
         let badgeHTML = "";
 
         if (userData.verification?.type === "gold" && userData.verification?.status === "active") {
@@ -897,9 +898,17 @@ function loadComments(videoId) {
           badgeHTML = `<span class="badge badge-blue"><svg viewBox="0 0 24 24" fill="white"><path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/></svg></span>`;
         }
 
+        // 1. Mise à jour du nom et du badge
         const nameContainer = list.querySelector(`.comment[data-id="${d.id}"] .comment-username`);
         if (nameContainer) {
             nameContainer.innerHTML = `<strong>${userData.username}</strong>${badgeHTML}`;
+        }
+        
+        // 2. 🔥 MISE À JOUR DE LA PHOTO DE PROFIL EN TEMPS RÉEL 🔥
+        const avatarImg = list.querySelector(`.comment[data-id="${d.id}"] > img`);
+        if (avatarImg && userData.avatar) {
+          // Si l'utilisateur a un avatar, on l'affiche. Sinon on laisse pravatar.
+          avatarImg.src = userData.avatar;
         }
       });
       activeCommentListeners.push(unsubUser);

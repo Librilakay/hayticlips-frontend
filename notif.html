@@ -250,6 +250,14 @@ const db = getFirestore(app);
 const container = document.getElementById("notificationsContainer");
 const notifIcon = document.getElementById("notifIcon");
 
+// 🔥 TABLEAU POUR GARDER TRACE DES ÉCOUTES UTILISATEURS
+let activeNotifListeners = [];
+
+function closeAllNotifListeners() {
+  activeNotifListeners.forEach(unsub => unsub());
+  activeNotifListeners = [];
+}
+
 onAuthStateChanged(auth,(user)=>{
   if(!user){
     location.href="login.html";
@@ -263,8 +271,11 @@ onAuthStateChanged(auth,(user)=>{
   );
 
   onSnapshot(q,(snapshot)=>{
-
+    
+    // Nettoyer les écoutes précédentes avant de vider le conteneur
+    closeAllNotifListeners();
     container.innerHTML="";
+    
     let unreadCount = 0;
 
     if(snapshot.empty){
@@ -280,6 +291,7 @@ onAuthStateChanged(auth,(user)=>{
 
       const card = document.createElement("div");
       card.className="card";
+      card.dataset.id = docSnap.id; // Ajout d'un ID pour le cibler facilement
 
       if(data.type === "message"){
         card.classList.add("message");
@@ -289,9 +301,12 @@ onAuthStateChanged(auth,(user)=>{
       }
       if(!data.read) card.classList.add("unread");
 
+      // On affiche par défaut l'image de base (au cas où Firestore est lent)
+      let initialAvatar = getNotificationAvatar(data);
+
       card.innerHTML = `
         <div style="position:relative">
-         <img class="avatar" src="${getNotificationAvatar(data)}">
+         <img class="avatar" src="${initialAvatar}">
           ${data.fromOnline ? `<div class="online-dot"></div>` : ``}
         </div>
 
@@ -330,6 +345,34 @@ onAuthStateChanged(auth,(user)=>{
 
       container.appendChild(card);
 
+      // 🔥 ÉCOUTE EN TEMPS RÉEL SUR LE PROFIL DE L'EXPÉDITEUR 🔥
+      // On ne fait ça que si la notif a été envoyée par un utilisateur spécifique ("from")
+      if (data.from && data.type !== "transfer_rejected" && data.type !== "blue_approved" && data.type !== "blue_expired") {
+        
+        const userRef = doc(db, "users", data.from);
+        const unsubUser = onSnapshot(userRef, userSnap => {
+          if (!userSnap.exists()) return;
+          const userData = userSnap.data();
+          
+          // Mettre à jour l'avatar visuellement dans cette carte spécifique
+          const avatarImg = card.querySelector(".avatar");
+          if (avatarImg && userData.avatar) {
+            avatarImg.src = userData.avatar;
+          }
+
+          // Remplacer le nom d'utilisateur dans le texte (si tu as changé le nom)
+          // On reconstruit le message avec le NOUVEAU pseudo
+          const textContainer = card.querySelector(".text");
+          if (textContainer) {
+            // Petite astuce : on crée un "faux" objet data mis à jour
+            const updatedData = { ...data, fromUsername: userData.username };
+            textContainer.innerHTML = buildMessage(updatedData);
+          }
+        });
+        
+        activeNotifListeners.push(unsubUser);
+      }
+
     }); // ✅ ferme forEach
 
     updateBadge(unreadCount);
@@ -340,15 +383,12 @@ onAuthStateChanged(auth,(user)=>{
 
 
 function getNotificationAvatar(data){
-  // Si c'est un refus de transfert, on met un logo système/admin
   if(data.type === "transfer_rejected"){
-    return "https://cdn-icons-png.flaticon.com/512/564/564619.png"; // Un petit logo d'erreur, tu peux le remplacer par ton logo !
+    return "https://cdn-icons-png.flaticon.com/512/564/564619.png"; 
   }
-
   if(data.type === "blue_approved" || data.type === "blue_expired"){
     return data.userAvatar || data.toAvatar || "default-avatar.png";
   }
-
   return data.fromAvatar || "default-avatar.png";
 }
 
@@ -356,13 +396,11 @@ function formatExpireDate(data){
   if(data.expiresAt?.toDate){
     return data.expiresAt.toDate().toLocaleDateString("fr-FR");
   }
-
   if(data.createdAt?.toDate){
     const d = data.createdAt.toDate();
     d.setDate(d.getDate() + 30);
     return d.toLocaleDateString("fr-FR");
   }
-
   return "dans 30 jours";
 }
 
@@ -386,11 +424,8 @@ function buildMessage(data){
       return `<strong>${data.fromUsername}</strong> vous a mentionné`;
     case "message":
       return `<strong>${data.fromUsername}</strong> vous a envoyé un message`;
-      
-    // 👇 NOUVELLE NOTIFICATION DE REFUS 👇
     case "transfer_rejected":
       return `<strong style="color:#e74c3c;">Transaction Refusée</strong><br><span style="font-size:13px;opacity:0.9;">${data.message}</span>`;
-      
     default:
       return "Nouvelle notification";
   }
