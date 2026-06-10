@@ -288,37 +288,39 @@ async function loadFeed() {
     );
 
     const snap = await getDocs(q);
-      if (snap.docs.length > 0) {
-  lastDoc = snap.docs[snap.docs.length - 1];
-   }
-const docs = snap.docs;
+    const docs = snap.docs;
 
+    // 🔥 Vérifier si on arrive avec ?videoId=
+    const params = new URLSearchParams(window.location.search);
+    const targetVideoId = params.get("videoId");
 
+    let orderedDocs = docs;
 
-// 🔥 Vérifier si on arrive avec ?videoId=
-const params = new URLSearchParams(window.location.search);
-const targetVideoId = params.get("videoId");
-
-let orderedDocs = docs;
-
-if (targetVideoId) {
-  const index = docs.findIndex(d => d.id === targetVideoId);
-  if (index !== -1) {
-    const targetDoc = docs[index];
-    orderedDocs = [
-      targetDoc,
-      ...docs.slice(0, index),
-      ...docs.slice(index + 1)
-    ];
-  }
-}
-
-    if (docs.length === 0) {
-      feed.innerHTML = `<div style="color:#999;text-align:center;padding:50px">
-        Aucune vidéo. <a href="upload.html" style="color:#ff0050">Publiez la première !</a>
-      </div>`;
-      return;
+    if (targetVideoId) {
+      const index = docs.findIndex(d => d.id === targetVideoId);
+      if (index !== -1) {
+        const targetDoc = docs[index];
+        orderedDocs = [
+          targetDoc,
+          ...docs.slice(0, index),
+          ...docs.slice(index + 1)
+        ];
+      }
     }
+
+    // 🛑 GESTION DE LA FIN DES VIDÉOS
+    if (docs.length === 0) {
+      if (!lastDoc) {
+        // C'est le tout premier chargement et la base de données est vide
+        feed.innerHTML = `<div style="color:#999;text-align:center;padding:50px">
+          Aucune vidéo. <a href="upload.html" style="color:#ff0050">Publiez la première !</a>
+        </div>`;
+      }
+      return; // On arrête l'exécution car il n'y a plus de vidéos à charger
+    }
+
+    // On met à jour le lastDoc pour que le prochain scroll charge les suivantes
+    lastDoc = docs[docs.length - 1];
 
    for (const d of orderedDocs) {
       const v = { id: d.id, ...d.data() };
@@ -1531,20 +1533,19 @@ if (userId !== currentUser.uid) {
 
 });
 
-window.addEventListener("scroll", () => {
+const feedContainer = document.getElementById("feed");
 
-  if(loading) return;
+feedContainer.addEventListener("scroll", () => {
+  if (loading) return;
 
-  if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000){
-
+  // On surveille le scroll directement sur la div #feed, pas sur la fenêtre globale !
+  if (feedContainer.scrollTop + feedContainer.clientHeight >= feedContainer.scrollHeight - 1000) {
     loading = true;
-
-    loadFeed().then(()=>{
+    
+    loadFeed().then(() => {
       loading = false;
     });
-
   }
-
 });
 
 document.addEventListener("click", (e) => {
