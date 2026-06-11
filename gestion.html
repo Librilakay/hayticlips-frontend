@@ -584,8 +584,26 @@ async function loadVerifiedUsers(){
 
   snap.forEach(d=>{
     const data = d.data();
+    
+    // On vérifie d'abord si l'utilisateur a une vérification active
     if(data.verification && data.verification.status === "active"){
-      verifiedUsersData.push({ id:d.id, ...data });
+      
+      // 🔥 NOUVEAU : Vérifier l'expiration pour le badge BLUE
+      let isExpired = false;
+      if (data.verification.type === "blue" && data.verification.expiresAt) {
+        const now = Date.now();
+        // toMillis() permet de convertir le timestamp Firestore en millisecondes pour le comparer à Date.now()
+        const expirationTime = data.verification.expiresAt.toMillis ? data.verification.expiresAt.toMillis() : data.verification.expiresAt;
+        
+        if (expirationTime < now) {
+          isExpired = true;
+        }
+      }
+
+      // Si le badge n'est PAS expiré, on l'ajoute à la liste des "Comptes vérifiés"
+      if (!isExpired) {
+        verifiedUsersData.push({ id:d.id, ...data });
+      }
     }
   });
 
