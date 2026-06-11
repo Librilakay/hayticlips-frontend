@@ -525,7 +525,7 @@ function resetPreview(){
     <div class="preview-empty">
       <div class="icon">🎬</div>
       <div class="title">Aucune vidéo sélectionnée</div>
-      <div class="sub">Format vidéo uniquement • 20MB max • 120 secondes max</div>
+      <div class="sub">Format vidéo uniquement • 50MB max • 120 secondes max</div>
     </div>
   `;
 }
@@ -632,7 +632,7 @@ async function validateAndSetVideo(file){
 
   chooseFileBtn.disabled = true;
   publishBtn.disabled = true;
-  chooseFileBtn.textContent = "Compression...";
+  chooseFileBtn.textContent = "Veuillez patienter...";
   publishBtn.textContent = "Préparation...";
 
 try{
