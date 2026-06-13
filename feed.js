@@ -410,12 +410,10 @@ userCache[v.userId] = snap.data();
   src="${v.mediaUrls?.[0]}"
   playsinline
   webkit-playsinline
-  muted
   preload="metadata"
-  controls
-  controlsList="nodownload"
+  loop
   crossorigin="anonymous"
-  style="width:100%;height:100%;object-fit:contain;background:#000;"
+  style="width:100%;height:100%;object-fit:contain;background:#000;cursor:pointer;"
 ></video>
 
           </div>
@@ -1427,25 +1425,35 @@ document.getElementById("sendReport").onclick = async ()=>{
   alert(err.message);
 }
 };
+let globalMuted = false; // Mémorise le choix de l'utilisateur pour le son
 let videoObserver = null;
 
 function initVideoObserver() {
-
   if (videoObserver) {
     videoObserver.disconnect();
   }
 
   videoObserver = new IntersectionObserver(entries => {
-
     entries.forEach(entry => {
-
       const box = entry.target;
       const video = box.querySelector("video");
       if (!video) return;
 
       if (entry.isIntersecting) {
+        // On applique le choix global (avec le son par défaut)
+        video.muted = globalMuted; 
+        
+        let playPromise = video.play();
 
-        video.play().catch(()=>{});
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            // Le navigateur a bloqué le son ! On coupe le son et on relance la vidéo.
+            console.log("Autoplay avec son bloqué par le navigateur, passage en sourdine.");
+            video.muted = true;
+            globalMuted = true;
+            video.play().catch(()=>{});
+          });
+        }
 
         if (!box.dataset.viewed) {
           box.dataset.viewed = "true";
@@ -1454,10 +1462,9 @@ function initVideoObserver() {
 
       } else {
         video.pause();
+        video.currentTime = 0; // Remet la vidéo à zéro quand on passe à la suivante
       }
-
     });
-
   }, {
     threshold: 0.6
   });
@@ -1576,6 +1583,32 @@ document.addEventListener("click", (e) => {
       ${formatCaption(full)}
       <span class="caption-toggle"> Voir moins</span>
     `;
+  }
+});
+
+/* ================= GESTION PLAY/PAUSE ET SON (STYLE TIKTOK) ================= */
+document.getElementById("feed").addEventListener("click", (e) => {
+  // On s'assure qu'on clique bien sur la vidéo et pas sur un bouton "Like" ou "Commentaire"
+  const videoContainer = e.target.closest(".video-container");
+  if (!videoContainer) return;
+
+  const video = videoContainer.querySelector("video");
+  if (!video) return;
+
+  // 1. Si la vidéo est muette (parce que le navigateur a bloqué le son au chargement de la page)
+  // Le tout premier clic de l'utilisateur va simplement ACTIVER LE SON.
+  if (video.muted) {
+    video.muted = false;
+    globalMuted = false;
+    video.play(); // On force la lecture au cas où
+  } 
+  // 2. Si le son est déjà activé, alors cliquer sur l'écran fait Play ou Pause
+  else {
+    if (video.paused) {
+      video.play();
+    } else {
+      video.pause();
+    }
   }
 });
 
