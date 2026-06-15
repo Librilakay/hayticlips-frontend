@@ -785,6 +785,7 @@ async function deleteSupabaseImage(publicUrl) {
         "apikey": SUPABASE_ANON_KEY,
         "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
       }
+    
     });
 
     if (response.ok) {
@@ -798,7 +799,7 @@ async function deleteSupabaseImage(publicUrl) {
   } catch (err) {
     console.error("Erreur réseau lors de la suppression Supabase :", err);
   }
-
+}
 /* APPROVE */
 window.approveGold = async(requestId)=>{
   const ref = doc(db,"verificationRequests",requestId);
