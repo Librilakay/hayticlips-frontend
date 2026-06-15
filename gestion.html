@@ -750,6 +750,43 @@ ${linksHTML}
   });
 }
 
+/* ================= SUPPRESSION IMAGE SUPABASE ================= */
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cGlmenNseG9pZ2N1dWhzbG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTgwODgsImV4cCI6MjA4NTk5NDA4OH0.yYQ3nQn6Z0ZCC9ZjuHt_HGJbf1CQVPHlz-b6nnEhFqg"; 
+
+async function deleteSupabaseImage(publicUrl) {
+  if (!publicUrl || !publicUrl.includes("supabase.co")) return;
+
+  try {
+    // On découpe l'URL pour récupérer uniquement le chemin du fichier
+    // Exemple d'URL : https://[PROJET].supabase.co/storage/v1/object/public/dossier/image.jpg
+    const parts = publicUrl.split('/public/');
+    if (parts.length < 2) return;
+
+    const baseUrl = parts[0]; // https://[PROJET].supabase.co/storage/v1/object
+    const filePath = parts[1]; // dossier/image.jpg
+
+    const deleteUrl = `${baseUrl}/${filePath}`;
+
+    // On envoie la requête DELETE à Supabase
+    const response = await fetch(deleteUrl, {
+      method: "DELETE",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      }
+    });
+
+    if (response.ok) {
+      console.log("✅ Document supprimé définitivement de Supabase !");
+    } else {
+      console.error("❌ Échec de la suppression sur Supabase");
+    }
+
+  } catch (err) {
+    console.error("Erreur réseau lors de la suppression Supabase :", err);
+  }
+}
+
 /* APPROVE */
 window.approveGold = async(requestId)=>{
   const ref = doc(db,"verificationRequests",requestId);
@@ -759,6 +796,7 @@ window.approveGold = async(requestId)=>{
 
   const data = snap.data();
 
+  // 1. Mettre à jour le statut dans Firebase
   await updateDoc(ref,{status:"approved"});
 
   await updateDoc(doc(db,"users",data.uid),{
@@ -769,6 +807,12 @@ window.approveGold = async(requestId)=>{
     }
   });
 
+  // 2. 🔥 Supprimer le document d'identité de Supabase
+  if (data.documentUrl) {
+    await deleteSupabaseImage(data.documentUrl);
+  }
+
+  // 3. Rafraîchir l'interface
   await preloadUsers();
   await loadRequests();
   await loadVerifiedUsers();
@@ -776,10 +820,24 @@ window.approveGold = async(requestId)=>{
 
 /* REJECT */
 window.rejectGold = async(requestId)=>{
-  await updateDoc(doc(db,"verificationRequests",requestId),{
+  const ref = doc(db,"verificationRequests",requestId);
+  const snap = await getDoc(ref);
+
+  if(!snap.exists()) return;
+
+  const data = snap.data();
+
+  // 1. Mettre à jour le statut dans Firebase
+  await updateDoc(ref,{
     status:"rejected"
   });
 
+  // 2. 🔥 Supprimer le document d'identité de Supabase
+  if (data.documentUrl) {
+    await deleteSupabaseImage(data.documentUrl);
+  }
+
+  // 3. Rafraîchir l'interface
   await loadRequests();
 };
 
