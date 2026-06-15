@@ -20,10 +20,13 @@ html,body{
   color:#fff;
   min-height:100%;
   overflow-x:hidden;
+  /* Fluidité native pour les mobiles */
+  -webkit-overflow-scrolling: touch; 
 }
 
 body{
-  min-height:100vh;
+  /* Utilise 'dvh' au lieu de 'vh' pour s'adapter à la barre d'adresse qui monte/descend */
+  min-height:100dvh;
 }
 
 /* HEADER */
@@ -56,6 +59,8 @@ body{
   width:100%;
   max-width:1100px;
   margin:0 auto;
+  /* On force un grand espace vide en bas, en prenant en compte la barre d'accueil des iPhone (safe-area) */
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
 .hero{
@@ -751,23 +756,29 @@ ${linksHTML}
 }
 
 /* ================= SUPPRESSION IMAGE SUPABASE ================= */
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cGlmenNseG9pZ2N1dWhzbG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTgwODgsImV4cCI6MjA4NTk5NDA4OH0.yYQ3nQn6Z0ZCC9ZjuHt_HGJbf1CQVPHlz-b6nnEhFqg"; 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cGlmenNseG9pZ2N1dWhzbG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTgwODgsImV4cCI6MjA4NTk5NDA4OH0.yYQ3nQn6Z0ZCC9ZjuHt_HGJbf1CQVPHlz-b6nnEhFqg"; // ⚠️ Assure-toi d'utiliser ta vraie clé ici
 
 async function deleteSupabaseImage(publicUrl) {
   if (!publicUrl || !publicUrl.includes("supabase.co")) return;
 
   try {
-    // On découpe l'URL pour récupérer uniquement le chemin du fichier
-    // Exemple d'URL : https://[PROJET].supabase.co/storage/v1/object/public/dossier/image.jpg
-    const parts = publicUrl.split('/public/');
+    // 1. Découpage de l'URL pour extraire le projet, le bucket et le chemin du fichier.
+    // L'URL publique ressemble à : https://[projet].supabase.co/storage/v1/object/public/[bucket]/[chemin_du_fichier]
+    
+    const parts = publicUrl.split('/object/public/');
     if (parts.length < 2) return;
 
-    const baseUrl = parts[0]; // https://[PROJET].supabase.co/storage/v1/object
-    const filePath = parts[1]; // dossier/image.jpg
+    const baseUrl = parts[0]; // ex: https://[projet].supabase.co/storage/v1
+    
+    // filePathAndBucket contient : "[bucket]/[chemin_du_fichier]"
+    const filePathAndBucket = parts[1]; 
+    
+    // 2. Construction de l'URL de l'API de suppression.
+    // L'API attend : DELETE /storage/v1/object/[bucket]/[chemin_du_fichier]
+    // Note la suppression du mot "public" dans le chemin de l'API.
+    const deleteUrl = `${baseUrl}/object/${filePathAndBucket}`;
 
-    const deleteUrl = `${baseUrl}/${filePath}`;
-
-    // On envoie la requête DELETE à Supabase
+    // 3. Envoi de la requête de suppression.
     const response = await fetch(deleteUrl, {
       method: "DELETE",
       headers: {
@@ -779,13 +790,14 @@ async function deleteSupabaseImage(publicUrl) {
     if (response.ok) {
       console.log("✅ Document supprimé définitivement de Supabase !");
     } else {
-      console.error("❌ Échec de la suppression sur Supabase");
+      // Si une erreur survient (ex: RLS policies, clé invalide), on lit la réponse pour le debug.
+      const errText = await response.text();
+      console.error("❌ Échec de la suppression sur Supabase :", errText);
     }
 
   } catch (err) {
     console.error("Erreur réseau lors de la suppression Supabase :", err);
   }
-}
 
 /* APPROVE */
 window.approveGold = async(requestId)=>{
