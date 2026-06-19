@@ -42,13 +42,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-setPersistence(auth, browserLocalPersistence)
-  .then(() => {
-    console.log("PERSISTENCE OK");
-  })
-  .catch((err) => {
-    console.error("PERSISTENCE ERROR:", err);
-  });
   
   function formatNumber(num) {
   if (!num) return "0";
