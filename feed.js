@@ -233,8 +233,13 @@ function formatCaption(text) {
 
   text = escapeHTML(text);
 
+  // Hashtags (lettres, chiffres, et underscores)
   text = text.replace(/#(\w+)/g, '<span style="color:#ff0050">#$1</span>');
-  text = text.replace(/@(\w+)/g, '<span class="mention" data-user="$1" style="color:#00acee;cursor:pointer;">@$1</span>');
+  
+  // Mentions : on autorise les lettres, chiffres, underscores, points et tirets
+  // L'expression [\w.-]+ attrape tous ces caractères. 
+  // Le suffixe (?!\.) s'assure qu'on ne capture pas un point s'il est à la toute fin (ex: fin de phrase).
+  text = text.replace(/@([\w.-]+(?!\.))/g, '<span class="mention" data-user="$1" style="color:#00acee;cursor:pointer;">@$1</span>');
 
   return text;
 }

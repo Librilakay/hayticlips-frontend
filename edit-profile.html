@@ -410,9 +410,19 @@ from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         const updates = {};
         
 // Username (si modifié)
-const newUsername = usernameInput.value.trim();
+        const newUsername = usernameInput.value.trim();
 
-if (newUsername && newUsername !== currentUserData.username) {
+        if (newUsername && newUsername !== currentUserData.username) {
+
+          // 🔥 SÉCURITÉ : Vérifie qu'il n'y a pas d'espaces et n'accepte que les caractères valides
+          const isValidFormat = /^[a-zA-Z0-9.-]+$/.test(newUsername);
+          
+          if (!isValidFormat) {
+            showMessage("Les espaces sont interdits. Utilisez uniquement des lettres, chiffres, points (.) ou tirets (-).", "error");
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Enregistrer";
+            return;
+          }
 
   const now = new Date();
 
@@ -510,7 +520,7 @@ updates.usernameLastChanged = new Date();
       }
     }
 
-    // ========== ÉVÉNEMENTS ==========
+// ========== ÉVÉNEMENTS ==========
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "login.html";
@@ -518,6 +528,14 @@ updates.usernameLastChanged = new Date();
       }
       currentUser = user;
       await loadUserData();
+    });
+
+    // 🔥 Bloquer les espaces en temps réel
+    usernameInput.addEventListener("input", (e) => {
+      if (e.target.value.includes(" ")) {
+        e.target.value = e.target.value.replace(/\s/g, "");
+      }
+      e.target.value = e.target.value.toLowerCase();
     });
 
     // Changer avatar
