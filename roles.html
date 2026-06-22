@@ -54,13 +54,15 @@ body{
   font-weight:700;
 }
 .topbar a{
-font-size : 20px;
-border: 2px solid;
-color: black;
-background: #ff0050;
-border-radius: 10px;
-width:90px
-  }
+  font-size: 20px;
+  border: 2px solid;
+  color: black;
+  background: #ff0050;
+  border-radius: 10px;
+  width:90px;
+  text-align:center;
+  text-decoration:none;
+}
 
 .topbar::after{
   content:"";
@@ -335,14 +337,12 @@ button:disabled{
   <div class="topbar">
     <button class="back-btn" onclick="history.back()">←</button>
     <p>Gestion des rôles</p>
-    <a href="admin-finance.html">finance</a> 
+    <a href="admin-finance.html">Finance</a> 
   </div>
 
   <div class="hero">
-   
-
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Rechercher par username ou UID...">
+      <input type="text" id="searchInput" placeholder="Rechercher par username ou UID pour assigner un rôle...">
     </div>
   </div>
 
@@ -399,7 +399,9 @@ onAuthStateChanged(auth, async (user)=>{
 
   currentAdminUid = user.uid;
   await loadUsers();
-  renderUsers(allUsers);
+  
+  // Affiche la liste filtrée par défaut au lieu de tous les utilisateurs
+  applySearch(); 
 });
 
 async function loadUsers(){
@@ -455,7 +457,6 @@ function escapeHTML(str=""){
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
 }
-
 
 function renderUsers(list){
   results.innerHTML = "";
@@ -682,11 +683,18 @@ window.removeParrain = async (uid)=>{
 function applySearch(){
   const value = searchInput.value.toLowerCase().trim();
 
+  // Si la barre de recherche est vide, on affiche UNIQUEMENT ceux qui ont un rôle spécial
   if(!value){
-    renderUsers(allUsers);
+    const filteredRoles = allUsers.filter(user => {
+      const hasSpecialRole = user.role && user.role !== "user";
+      const isParrain = user.canReferMerchant === true;
+      return hasSpecialRole || isParrain;
+    });
+    renderUsers(filteredRoles);
     return;
   }
 
+  // S'il y a une recherche, on affiche les résultats parmi TOUS les utilisateurs
   const filtered = allUsers.filter(user =>
     (user.username || "").toLowerCase().includes(value) ||
     user.id.toLowerCase().includes(value) ||
