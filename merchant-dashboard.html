@@ -50,6 +50,7 @@ input,textarea{
 }
 textarea{min-height:95px;resize:vertical}
 input:focus,textarea:focus{border-color:#ff0050}
+input:disabled{background:#1a1a1a;color:#888;cursor:not-allowed;border-color:#222;}
 
 button{
   border:none;border-radius:30px;padding:12px 15px;
@@ -142,16 +143,13 @@ button{
         <p class="small">Infos visibles dans ta page produits.</p>
 
         <label for="shopNameInput">Nom boutique</label>
-        <input type="text" id="shopNameInput" maxlength="60" placeholder="Nom de boutique">
+        <input type="text" id="shopNameInput" maxlength="60" disabled>
 
         <label for="shopBioInput">Bio boutique</label>
         <textarea id="shopBioInput" maxlength="300" placeholder="Décris ta boutique"></textarea>
 
-<label for="shopLogoFile">Photo / logo boutique</label>
-<input type="file" id="shopLogoFile" accept="image/*">
-
-<label for="shopLogoInput">Ou lien direct</label>
-<input type="text" id="shopLogoInput" placeholder="https://...">
+        <label for="shopLogoFile">Photo / logo boutique</label>
+        <input type="file" id="shopLogoFile" accept="image/*">
 
         <button class="btn-primary" id="saveShopBtn">Enregistrer</button>
         <div class="message" id="shopMsg"></div>
@@ -173,11 +171,8 @@ button{
         <label for="productStock">Stock</label>
         <input type="number" id="productStock" min="0" placeholder="10">
 
-<label for="productImagesFiles">Photos du produit</label>
-<input type="file" id="productImagesFiles" accept="image/*" multiple>
-
-<label for="productImages">Ou liens directs</label>
-<textarea id="productImages" placeholder="Une URL par ligne&#10;https://...&#10;https://..."></textarea>
+        <label for="productImagesFiles">Photos du produit</label>
+        <input type="file" id="productImagesFiles" accept="image/*" multiple>
 
         <button class="btn-primary" id="addProductBtn">Ajouter</button>
         <div class="message" id="productMsg"></div>
@@ -244,7 +239,6 @@ const statRevenue = document.getElementById("statRevenue");
 
 const shopNameInput = document.getElementById("shopNameInput");
 const shopBioInput = document.getElementById("shopBioInput");
-const shopLogoInput = document.getElementById("shopLogoInput");
 const shopLogoFile = document.getElementById("shopLogoFile");
 const saveShopBtn = document.getElementById("saveShopBtn");
 const shopMsg = document.getElementById("shopMsg");
@@ -253,7 +247,6 @@ const productName = document.getElementById("productName");
 const productDescription = document.getElementById("productDescription");
 const productPrice = document.getElementById("productPrice");
 const productStock = document.getElementById("productStock");
-const productImages = document.getElementById("productImages");
 const productImagesFiles = document.getElementById("productImagesFiles");
 const addProductBtn = document.getElementById("addProductBtn");
 const productMsg = document.getElementById("productMsg");
@@ -421,24 +414,23 @@ async function loadMerchant(){
   currentUserData = snap.data();
 
   const expireDate = currentUserData.merchantExpiresAt?.toDate?.() || null;
-const expired = !expireDate || expireDate.getTime() <= Date.now();
-const blocked = currentUserData.merchantRenewalBlocked === true;
+  const expired = !expireDate || expireDate.getTime() <= Date.now();
+  const blocked = currentUserData.merchantRenewalBlocked === true;
 
-if(!(currentUserData.merchantEnabled === true && currentUserData.merchantStatus === "active")){
-  alert("Votre espace marchand n'est pas actif");
-  location.href = "profil.html";
-  return false;
-}
+  if(!(currentUserData.merchantEnabled === true && currentUserData.merchantStatus === "active")){
+    alert("Votre espace marchand n'est pas actif");
+    location.href = "profil.html";
+    return false;
+  }
 
-if(blocked || expired){
-  alert("Votre accès marchand est bloqué. Veuillez renouveler.");
-  location.href = "merchant-request.html";
-  return false;
-}
+  if(blocked || expired){
+    alert("Votre accès marchand est bloqué. Veuillez renouveler.");
+    location.href = "merchant-request.html";
+    return false;
+  }
 
-  shopNameInput.value = currentUserData.merchantShopName || "";
+  shopNameInput.value = currentUserData.merchantShopName || "Boutique Sans Nom";
   shopBioInput.value = currentUserData.merchantBio || "";
-  shopLogoInput.value = currentUserData.merchantLogo || "";
 
   return true;
 }
@@ -485,30 +477,45 @@ async function loadOrders(){
 
 saveShopBtn.onclick = async ()=>{
   try{
-    const shopName = shopNameInput.value.trim();
     const shopBio = shopBioInput.value.trim();
-    let shopLogo = shopLogoInput.value.trim();
-
-    if(shopName.length < 2){
-      setMessage(shopMsg, "Nom invalide", "error");
-      return;
-    }
-
     const logoFile = shopLogoFile?.files?.[0];
+    
+    // On conserve l'ancien logo par défaut
+    let finalLogoUrl = currentUserData.merchantLogo || "";
 
     if(logoFile){
+      // 1. Suppression de l'ancien logo si c'est un lien Supabase
+      if (finalLogoUrl && finalLogoUrl.includes("supabase.co")) {
+        try {
+          const urlParts = finalLogoUrl.split("/media/");
+          if (urlParts.length > 1) {
+            let fileName = urlParts[1].split('?')[0];
+            fileName = decodeURIComponent(fileName);
+            await supabase.storage.from("media").remove([fileName]);
+            console.log("Ancien logo supprimé de Supabase :", fileName);
+          }
+        } catch (supaErr) {
+          console.error("Erreur suppression ancien logo :", supaErr);
+        }
+      }
+
+      // 2. Upload du nouveau logo
       const ext = logoFile.name.split(".").pop() || "jpg";
-      const path = `shops/${currentUser.uid}/logo.${ext}`;
-      shopLogo = await uploadImageToSupabase(logoFile, path);
+      const path = `shops/${currentUser.uid}/logo_${Date.now()}.${ext}`;
+      finalLogoUrl = await uploadImageToSupabase(logoFile, path);
     }
 
+    // Sauvegarde (On ne met PAS à jour le merchantShopName !)
     await updateDoc(doc(db,"users",currentUser.uid),{
-      merchantShopName: shopName,
       merchantBio: shopBio,
-      merchantLogo: shopLogo
+      merchantLogo: finalLogoUrl
     });
 
+    currentUserData.merchantBio = shopBio;
+    currentUserData.merchantLogo = finalLogoUrl;
+
     setMessage(shopMsg, "Boutique mise à jour", "success");
+    shopLogoFile.value = ""; // Vide l'input file
   }catch(e){
     setMessage(shopMsg, "Erreur : " + e.message, "error");
   }
@@ -520,12 +527,6 @@ addProductBtn.onclick = async ()=>{
     const description = productDescription.value.trim();
     const price = Number(productPrice.value);
     const stock = Number(productStock.value);
-
-    const urlImages = productImages.value
-      .split("\n")
-      .map(v => v.trim())
-      .filter(Boolean);
-
     const fileImages = [...(productImagesFiles?.files || [])];
 
     if(name.length < 2){
@@ -543,20 +544,18 @@ addProductBtn.onclick = async ()=>{
       return;
     }
 
-    let uploadedImages = [];
+    if(fileImages.length === 0){
+      setMessage(productMsg, "Ajoute au moins une photo", "error");
+      return;
+    }
 
+    // Upload des images vers Supabase
+    let uploadedImages = [];
     for(const file of fileImages){
       const ext = file.name.split(".").pop() || "jpg";
       const path = `products/${currentUser.uid}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
       const publicUrl = await uploadImageToSupabase(file, path);
       uploadedImages.push(publicUrl);
-    }
-
-    const images = [...uploadedImages, ...urlImages];
-
-    if(images.length === 0){
-      setMessage(productMsg, "Ajoute au moins une photo", "error");
-      return;
     }
 
     await addDoc(collection(db,"merchantProducts"),{
@@ -565,8 +564,8 @@ addProductBtn.onclick = async ()=>{
       description,
       price,
       stock,
-      images,
-      imageUrl: images[0],
+      images: uploadedImages,
+      imageUrl: uploadedImages[0],
       isActive: true,
       createdAt: serverTimestamp()
     });
@@ -575,7 +574,6 @@ addProductBtn.onclick = async ()=>{
     productDescription.value = "";
     productPrice.value = "";
     productStock.value = "";
-    productImages.value = "";
     if(productImagesFiles) productImagesFiles.value = "";
 
     setMessage(productMsg, "Produit ajouté", "success");
@@ -601,11 +599,9 @@ window.deleteProduct = async (productId)=>{
   try{
     if(!confirm("Supprimer ce produit définitivement ?")) return;
     
-    // 1. Récupérer le produit depuis allProducts pour avoir ses images
     const product = allProducts.find(p => p.id === productId);
     
     if (product) {
-      // 2. Préparer une liste contenant toutes les images du produit (tableau images + imageUrl)
       let imagesToDelete = [];
       if (Array.isArray(product.images)) {
         imagesToDelete = [...product.images];
@@ -614,7 +610,7 @@ window.deleteProduct = async (productId)=>{
         imagesToDelete.push(product.imageUrl);
       }
 
-      // 3. Boucler sur les images pour les supprimer de Supabase
+      // Boucle de suppression Supabase
       for (const imgUrl of imagesToDelete) {
         if (imgUrl && imgUrl.includes("supabase.co")) {
           try {
@@ -632,10 +628,8 @@ window.deleteProduct = async (productId)=>{
       }
     }
 
-    // 4. Supprimer le produit de Firestore
     await deleteDoc(doc(db,"merchantProducts",productId));
     await loadProducts();
-    
     alert("Produit supprimé !");
     
   }catch(e){
@@ -646,7 +640,6 @@ window.deleteProduct = async (productId)=>{
 window.completeOrder = async (orderId)=>{
   try{
     const token = await auth.currentUser.getIdToken();
-
     const res = await fetch(`${API_BASE}/api/merchant/complete-order`, {
       method:"POST",
       headers:{
@@ -655,13 +648,8 @@ window.completeOrder = async (orderId)=>{
       },
       body: JSON.stringify({ orderId })
     });
-
     const result = await res.json();
-
-    if(!res.ok){
-      throw new Error(result.error || "Erreur");
-    }
-
+    if(!res.ok) throw new Error(result.error || "Erreur");
     await loadOrders();
   }catch(e){
     alert(e.message || "Erreur réseau");
@@ -671,7 +659,6 @@ window.completeOrder = async (orderId)=>{
 window.acceptOrder = async (orderId)=>{
   try{
     const token = await auth.currentUser.getIdToken();
-
     const res = await fetch(`${API_BASE}/api/merchant/accept-order`, {
       method:"POST",
       headers:{
@@ -680,13 +667,8 @@ window.acceptOrder = async (orderId)=>{
       },
       body: JSON.stringify({ orderId })
     });
-
     const result = await res.json();
-
-    if(!res.ok){
-      throw new Error(result.error || "Erreur");
-    }
-
+    if(!res.ok) throw new Error(result.error || "Erreur");
     await loadOrders();
   }catch(e){
     alert(e.message || "Erreur réseau");
@@ -696,7 +678,6 @@ window.acceptOrder = async (orderId)=>{
 window.rejectOrder = async (orderId)=>{
   try{
     const token = await auth.currentUser.getIdToken();
-
     const res = await fetch(`${API_BASE}/api/merchant/reject-order`, {
       method:"POST",
       headers:{
@@ -705,13 +686,8 @@ window.rejectOrder = async (orderId)=>{
       },
       body: JSON.stringify({ orderId })
     });
-
     const result = await res.json();
-
-    if(!res.ok){
-      throw new Error(result.error || "Erreur");
-    }
-
+    if(!res.ok) throw new Error(result.error || "Erreur");
     await loadOrders();
   }catch(e){
     alert(e.message || "Erreur réseau");
@@ -723,9 +699,7 @@ onAuthStateChanged(auth, async(user)=>{
     location.href = "login.html";
     return;
   }
-
   currentUser = user;
-
   const ok = await loadMerchant();
   if(!ok) return;
 
