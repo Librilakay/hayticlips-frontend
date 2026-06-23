@@ -123,12 +123,14 @@ body{min-height:100vh}
 .meta-row{
   display:flex;
   flex-wrap:wrap;
+  align-items:center;
   gap:8px;
   margin-top:10px;
 }
 
 .pill{
   display:inline-flex;
+  align-items:center;
   padding:5px 10px;
   border-radius:999px;
   font-size:11px;
@@ -136,6 +138,26 @@ body{min-height:100vh}
   border:1px solid #333;
   background:#111;
   color:#ddd;
+}
+
+/* BOUTON PARTAGER */
+.btn-share{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  border:1px solid #333;
+  background:#1a1a1a;
+  color:#fff;
+  cursor:pointer;
+  transition:background 0.2s;
+}
+
+.btn-share:hover{
+  background:#333;
 }
 
 .controls{
@@ -339,6 +361,17 @@ button:disabled{
 
 <div class="meta-row">
   <span class="pill pill-muted" id="productCountPill">0 produit</span>
+  
+  <button id="shareShopBtn" class="btn-share" title="Partager la boutique">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="18" cy="5" r="3"></circle>
+      <circle cx="6" cy="12" r="3"></circle>
+      <circle cx="18" cy="19" r="3"></circle>
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+    </svg>
+    Partager
+  </button>
 </div>
       </div>
     </div>
@@ -431,6 +464,7 @@ const buySexe = document.getElementById("buySexe");
 const buyDetails = document.getElementById("buyDetails");
 const confirmBuyBtn = document.getElementById("confirmBuyBtn");
 const closeBuyBtn = document.getElementById("closeBuyBtn");
+const shareShopBtn = document.getElementById("shareShopBtn"); // Setup Partage
 
 let merchantUid = null;
 let allProducts = [];
@@ -479,9 +513,22 @@ function renderProducts(list){
     return;
   }
 
+  // Vérifier si l'utilisateur connecté est le propriétaire de la boutique
+  const currentUserUid = auth.currentUser ? auth.currentUser.uid : null;
+  const isOwner = currentUserUid === merchantUid;
+
   list.forEach(product=>{
     const stock = Number(product.stock || 0);
-    const canBuy = product.isActive === true && stock > 0;
+    // On empêche l'achat si c'est le propriétaire
+    const canBuy = product.isActive === true && stock > 0 && !isOwner;
+    
+    // Texte dynamique pour le bouton
+    let btnText = "Acheter";
+    if(isOwner) {
+      btnText = "Ton produit";
+    } else if(!canBuy) {
+      btnText = "Indisponible";
+    }
 
     const card = document.createElement("div");
     card.className = "product-card";
@@ -499,7 +546,7 @@ function renderProducts(list){
 
         <div class="actions">
           <button class="btn-buy" ${canBuy ? "" : "disabled"} onclick="buyProduct('${product.id}')">
-            ${canBuy ? "Acheter" : "Indisponible"}
+            ${btnText}
           </button>
           <button class="btn-contact" onclick="contactMerchant('${merchantUid}')">Contacter</button>
         </div>
@@ -614,6 +661,18 @@ function resetBuyForm(){
 }
 
 window.buyProduct = async (productId)=>{
+  const user = auth.currentUser;
+  if(!user){
+    window.location.href = "login.html";
+    return;
+  }
+
+  // Sécurité supplémentaire au clic
+  if(user.uid === merchantUid){
+    alert("Vous ne pouvez pas acheter vos propres produits.");
+    return;
+  }
+
   selectedProduct = allProducts.find(p => p.id === productId);
 
   if(!selectedProduct){
@@ -729,6 +788,36 @@ window.contactMerchant = async (uid)=>{
   const convoId = participants.join("_");
   window.location.href = `chat.html?conv=${convoId}`;
 };
+
+// Logique du bouton Partager
+shareShopBtn.addEventListener("click", async () => {
+  if (!merchantData) return;
+  
+  const shopOwner = merchantData.username || "Un marchand";
+  const shareText = `${shopOwner} vous invite à visiter sa boutique sur HaytiClips ! Découvrez ses produits.`;
+  // On construit l'URL exacte de la boutique
+  const shopUrl = window.location.origin + window.location.pathname + "?uid=" + merchantUid;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: "Boutique sur HaytiClips",
+        text: shareText,
+        url: shopUrl
+      });
+    } catch (err) {
+      console.log("Partage annulé ou échoué", err);
+    }
+  } else {
+    // Solution de secours pour les navigateurs PC non compatibles
+    try {
+      await navigator.clipboard.writeText(`${shareText}\n${shopUrl}`);
+      alert("Lien de la boutique copié dans le presse-papier !");
+    } catch (err) {
+      alert("Impossible de copier le lien automatiquement.");
+    }
+  }
+});
 
 searchInput.addEventListener("input", applyFilters);
 sortSelect.addEventListener("change", applyFilters);
