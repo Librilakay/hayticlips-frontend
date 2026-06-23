@@ -110,6 +110,9 @@ button{
   <div class="header-right"></div>
 </div>
 
+  <div class="hero">
+    <div class="hero-title">Administration</div>
+    <div class="hero-sub">Gérez les requêtes et les marchands actifs sur la plateforme.</div>
     <div class="search-box">
       <input type="text" id="searchInput" placeholder="Rechercher par username, UID, boutique, type de produit ou code parrain...">
     </div>
@@ -158,7 +161,8 @@ import {
   getDoc,
   doc,
   query,
-  where
+  where,
+  deleteDoc // NOUVEAU : Import nécessaire pour supprimer les produits
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -211,7 +215,7 @@ function updateStats(requestsList, activeList){
   statPending.textContent = requestsList.length;
   statActiveMerchants.textContent = activeList.length;
   statAdmin.textContent = (requestsList.length * 250) + " G";
-statReferrer.textContent = (requestsList.length * 500) + " G";
+  statReferrer.textContent = (requestsList.length * 500) + " G";
 }
 
 async function preloadUsers(){
@@ -451,7 +455,8 @@ window.rejectMerchant = async (requestId)=>{
 window.removeMerchantAccess = async (targetUid)=>{
   if(processingIds.has(targetUid)) return;
 
-  if(!confirm("Retirer l’accès marchand à ce compte ?")) return;
+  // NOUVEAU MESSAGE D'AVERTISSEMENT
+  if(!confirm("ATTENTION : Retirer l’accès marchand à ce compte supprimera tous ses produits et ses photos de la base de données. Continuer ?")) return;
 
   processingIds.add(targetUid);
 
@@ -459,15 +464,40 @@ window.removeMerchantAccess = async (targetUid)=>{
     const user = auth.currentUser;
     if(!user) throw new Error("Utilisateur non connecté");
 
+    // 1. Récupérer tous les produits pour trouver les liens des images à supprimer
+    const q = query(collection(db, "merchantProducts"), where("merchantUid", "==", targetUid));
+    const productsSnap = await getDocs(q);
+
+    let imageUrlsToDelete = [];
+    const deletePromises = [];
+
+    // 2. Supprimer les documents Firestore des produits et lister les images
+    productsSnap.forEach(d => {
+      const data = d.data();
+      if (data.imageUrl) imageUrlsToDelete.push(data.imageUrl);
+      if (data.images && Array.isArray(data.images)) {
+        imageUrlsToDelete.push(...data.images);
+      }
+      // On supprime le produit de la base de données
+      deletePromises.push(deleteDoc(d.ref)); 
+    });
+
+    // Attendre que tous les produits soient supprimés de Firestore
+    await Promise.all(deletePromises);
+
     const token = await user.getIdToken(true);
 
+    // 3. Envoyer la requête au backend avec la liste des images à supprimer dans Supabase
     const res = await fetch(`${API_BASE}/api/removeMerchantAccess`,{
       method:"POST",
       headers:{
         "Content-Type":"application/json",
         "Authorization":"Bearer " + token
       },
-      body: JSON.stringify({ targetUid })
+      body: JSON.stringify({ 
+        targetUid: targetUid,
+        imagesToDelete: imageUrlsToDelete // On transmet les URLs au backend
+      })
     });
 
     const result = await res.json();
@@ -477,7 +507,7 @@ window.removeMerchantAccess = async (targetUid)=>{
     }
 
     await refreshAll();
-    alert("Accès marchand retiré");
+    alert("Accès marchand retiré et produits supprimés");
 
   }catch(err){
     alert(err.message || "Erreur");
