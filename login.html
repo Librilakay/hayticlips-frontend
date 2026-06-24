@@ -31,6 +31,35 @@ body{
  
 }
 
+/* WARNING PWA (Écran bloquant) */
+.pwa-warning {
+  display: none; /* Caché par défaut, activé par le script */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.pwa-warning h2 {
+  color: #ff0050;
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.pwa-warning p {
+  color: #aaa;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
 /* CONTAINER */
 .container{
   background:#000;
@@ -38,7 +67,7 @@ body{
   border-radius:18px;
   width:900px;
   padding:30px;
- margin-top:105px;
+  margin-top:105px;
 }
 
 /* HEADER */
@@ -118,7 +147,6 @@ button:active{
     padding-top:80px;
   }
 
-
   .title{
     font-size:26px;
   }
@@ -128,7 +156,12 @@ button:active{
 
 <body>
 
-<div class="container">
+<div class="pwa-warning" id="pwaWarning">
+  <h2>⚠️ Action requise</h2>
+  <p>Utilise HaytiClips sur votre écran d'accueil.</p>
+</div>
+
+<div class="container" id="mainContent">
 
   <div class="title">Connexion</div>
 
@@ -152,7 +185,16 @@ button:active{
 
 </div>
 
-<!-- FIREBASE -->
+<script>
+  const isPwa = ('standalone' in window.navigator && window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
+  
+  if (!isPwa) {
+    // Si ce n'est pas dans l'écran d'accueil, on masque le formulaire et on affiche le message
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('pwaWarning').style.display = 'flex';
+  }
+</script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
