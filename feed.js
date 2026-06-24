@@ -439,9 +439,23 @@ userCache[v.userId] = snap.data();
     <path d="M20 7h-2.18C17.93 6.69 18 6.35 18 6c0-1.66-1.34-3-3-3-1.31 0-2.42.84-2.83 2H12c-.41-1.16-1.52-2-2.83-2-1.66 0-3 1.34-3 3 0 .35.07.69.18 1H4c-1.1 0-2 .9-2 2v2h20V9c0-1.1-.9-2-2-2zM9 6c0-.55.45-1 1-1s1 .45 1 1H9zm5 0c0-.55.45-1 1-1s1 .45 1 1h-2zM2 13v6c0 1.1.9 2 2 2h6v-8H2zm10 8h6c1.1 0 2-.9 2-2v-6h-8v8z"/>
   </svg>
 </div>
-            <div class="action favorite">🔁</div>
-            <div class="action share-btn">📤</div>
-            <div class="action report-btn">🚩</div>
+
+<div class="action favorite">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+                <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
+              </svg>
+            </div>
+            <div class="action share-btn">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+                <path d="M21 12l-7-7v4C7 10 4 15 3 20c2.5-3.5 6-5.1 11-5.1V19l7-7z"/>
+              </svg>
+            </div>
+            <div class="action report-btn">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+                <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6h-7.6z"/>
+              </svg>
+            </div>
+
           </div>
         </div>
       `);
