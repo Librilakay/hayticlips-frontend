@@ -659,7 +659,7 @@ function loadVideos(uid) {
             onclick="openVideo('${repost.videoId}')">
           </video>
 
-          <div style="
+<div style="
             position:absolute;
             bottom:0;
             left:0;
@@ -669,9 +669,11 @@ function loadVideos(uid) {
             font-size:13px;
             display:flex;
             align-items:center;
-            gap:6px;
+            gap:4px;
           ">
-            🔁 Republication
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="white">
+              <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
+            </svg> 
           </div>
 
         </div>
