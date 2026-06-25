@@ -5,7 +5,7 @@
   <meta name="theme-color" content="#ff0050">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Tableau de Bord Financier</title>
+  <title>Admin - Transferts Manuels</title>
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; }
@@ -32,14 +32,14 @@
     .header-center { font-weight: 700; font-size: 16px; }
 
     /* CONTENEUR GLOBAL */
-    .container { padding: 15px; max-width: 800px; margin: 0 auto; }
+    .container { padding: 15px; max-width: 900px; margin: 0 auto; }
 
     /* --- TABLEAU DE BORD (STATS) --- */
     .dashboard {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 10px;
-      margin-bottom: 25px;
+      margin-bottom: 30px;
     }
     .stat-card {
       background: #111;
@@ -47,32 +47,52 @@
       border-radius: 12px;
       padding: 15px 10px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
-    .stat-title { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-    .stat-value { font-size: 16px; font-weight: bold; }
-    .color-in { color: #2ecc71; } /* Vert */
-    .color-out { color: #e74c3c; } /* Rouge */
-    .color-profit { color: #f1c40f; } /* Or */
+    .stat-title { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-value { font-size: 18px; font-weight: bold; }
+    .stat-sub { font-size: 12px; color: #888; margin-top: 4px; }
+    
+    .color-in { color: #2ecc71; } 
+    .color-out { color: #e74c3c; } 
+    .color-neutral { color: #3498db; }
+    .color-warning { color: #f1c40f; }
 
     .section-title {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: bold;
+      margin-top: 20px;
       margin-bottom: 15px;
-      border-bottom: 2px solid #ff0050;
-      display: inline-block;
-      padding-bottom: 4px;
+      border-bottom: 2px solid #333;
+      display: flex;
+      align-items: center;
+      padding-bottom: 8px;
+      gap: 8px;
     }
 
     /* --- CARTES DE DEMANDES --- */
+    .lists-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    @media (min-width: 768px) {
+      .lists-container { grid-template-columns: 1fr 1fr; }
+    }
+
     .transfer-card {
       background: #111;
       border: 1px solid #222;
-      border-left: 4px solid #ff0050;
       border-radius: 10px;
       padding: 16px;
       margin-bottom: 15px;
+      position: relative;
+      overflow: hidden;
     }
-    .transfer-card.deposit-card { border-left-color: #2ecc71; }
+    .deposit-card { border-left: 4px solid #2ecc71; }
+    .withdraw-card { border-left: 4px solid #ff0050; }
 
     .card-header {
       display: flex;
@@ -82,18 +102,31 @@
       padding-bottom: 10px;
       border-bottom: 1px solid #222;
     }
-    .badge-deposit { background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid #2ecc71; }
-    .badge-withdraw { background: rgba(255, 0, 80, 0.2); color: #ff0050; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid #ff0050; }
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid transparent; }
+    .badge-deposit { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border-color: #2ecc71; }
+    .badge-withdraw { background: rgba(255, 0, 80, 0.2); color: #ff0050; border-color: #ff0050; }
     .amount { font-size: 18px; font-weight: bold; }
 
     .info-row { margin-bottom: 6px; font-size: 13px; color: #bbb; }
     .info-row strong { color: #fff; }
     .highlight-text { color: #2ecc71; font-weight: bold; font-size: 15px; }
+    
+    /* LIEN UTILISATEUR */
+    .user-link {
+      color: #00acee;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .user-link:hover { text-decoration: underline; }
 
     img.receipt {
       width: 100%;
       max-height: 250px;
-      object-fit: cover;
+      object-fit: contain;
+      background: #000;
       border: 1px solid #333;
       border-radius: 8px;
       margin: 10px 0;
@@ -123,42 +156,64 @@
       cursor: pointer;
       font-size: 13px;
       text-transform: uppercase;
+      transition: opacity 0.2s;
     }
+    .btn:active { transform: scale(0.98); }
     .btn-approve { background: #2ecc71; color: #000; }
     .btn-reject { background: #e74c3c; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .empty-state { text-align: center; color: #666; padding: 40px 20px; font-size: 14px; }
+    .empty-state { text-align: center; color: #666; padding: 40px 20px; font-size: 14px; background: #111; border-radius: 10px; border: 1px dashed #333; }
   </style>
 </head>
 <body>
 
   <div class="header">
     <div class="header-left" onclick="window.location.href='profil.html'">←</div>
-    <div class="header-center">💼 Gestion & Finances</div>
+    <div class="header-center">💼 Transferts Manuels</div>
   </div>
 
   <div class="container">
     
     <div class="dashboard">
       <div class="stat-card">
-        <div class="stat-title">Entrées</div>
-        <div class="stat-value color-in" id="statIn">0 HTG</div>
+        <div class="stat-title">⏳ Attente (Recharge)</div>
+        <div class="stat-value color-warning" id="statPendingDepCount">0</div>
+        <div class="stat-sub" id="statPendingDepVol">0 HTG</div>
       </div>
       <div class="stat-card">
-        <div class="stat-title">Sorties</div>
-        <div class="stat-value color-out" id="statOut">0 HTG</div>
+        <div class="stat-title">⏳ Attente (Retrait)</div>
+        <div class="stat-value color-warning" id="statPendingWitCount">0</div>
+        <div class="stat-sub" id="statPendingWitVol">0 HTG</div>
       </div>
       <div class="stat-card">
-        <div class="stat-title">Bénéfices</div>
-        <div class="stat-value color-profit" id="statProfit">0 HTG</div>
+        <div class="stat-title">✅ Approuvés (Auj.)</div>
+        <div class="stat-value color-in" id="statApprovedToday">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">❌ Rejetés (Auj.)</div>
+        <div class="stat-value color-out" id="statRejectedToday">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">📈 Volume (Auj.)</div>
+        <div class="stat-value color-neutral" id="statVolumeToday">0 HTG</div>
       </div>
     </div>
 
-    <div class="section-title">En attente de validation</div>
+    <div class="lists-container">
+      <div>
+        <div class="section-title" style="color: #2ecc71;">📥 Recharges en attente</div>
+        <div id="depositList">
+          <div class="empty-state">Chargement...</div>
+        </div>
+      </div>
 
-    <div id="transfersList">
-      <div class="empty-state">Chargement des données...</div>
+      <div>
+        <div class="section-title" style="color: #ff0050;">📤 Retraits en attente</div>
+        <div id="withdrawList">
+          <div class="empty-state">Chargement...</div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -166,7 +221,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, query, where, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, orderBy, onSnapshot, doc, getDoc, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
@@ -191,100 +246,67 @@
         return window.location.href = "profil.html";
       }
 
-      // Lancer les deux requêtes en parallèle
-      loadFinancialStats();
       loadPendingTransfers();
+      loadTodayStats();
     });
 
-    // 💰 CALCUL AUTOMATIQUE DES BÉNÉFICES
-    // 💰 CALCUL AUTOMATIQUE DES BÉNÉFICES (NETS RÉELS)
-    
-    // 1. Fonction qui calcule ce que Digicel/Natcom te facture pour l'envoi
-    function getOperatorFee(amount, method) {
-      if (method === 'natcash') {
-        if (amount < 500) return 0;
-        if (amount <= 999) return 6;
-        if (amount <= 1999) return 18;
-        if (amount <= 3999) return 25;
-        if (amount <= 7999) return 35;
-        if (amount <= 11999) return 54;
-        if (amount <= 19999) return 63;
-        if (amount <= 39999) return 68;
-        if (amount <= 59999) return 90;
-        if (amount <= 74999) return 108;
-        return 115;
-      } else {
-        // MonCash par défaut
-        if (amount < 250) return 0;
-        if (amount <= 499) return 5;
-        if (amount <= 999) return 10;
-        if (amount <= 1999) return 25;
-        if (amount <= 3999) return 35;
-        if (amount <= 7999) return 50;
-        if (amount <= 11999) return 60;
-        if (amount <= 19999) return 70;
-        if (amount <= 39999) return 75;
-        return 100;
-      }
-    }
+    const formatMoney = (n) => new Intl.NumberFormat('fr-FR').format(n);
 
-    // 2. Fonction de mise à jour des statistiques
-    function loadFinancialStats() {
-      // On écoute uniquement les transferts approuvés
-      const qStats = query(collection(db, "manualTransfers"), where("status", "==", "approved"));
+    // 📊 1. CHARGER LES STATS DU JOUR
+    function loadTodayStats() {
+      // Pour éviter les erreurs d'index, on prend les derniers transferts et on filtre par JavaScript
+      const qRecent = query(collection(db, "manualTransfers"), orderBy("createdAt", "desc"), limit(300));
       
-      onSnapshot(qStats, (snap) => {
-        let totalIn = 0;
-        let totalOut = 0;
-        let totalProfit = 0;
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      onSnapshot(qRecent, (snap) => {
+        let approvedCount = 0;
+        let rejectedCount = 0;
+        let volumeToday = 0;
 
         snap.forEach(d => {
           const t = d.data();
+          // On vérifie si ça a été traité aujourd'hui (ou créé aujourd'hui)
+          const dateToCheck = t.processedAt ? t.processedAt.toDate() : (t.createdAt ? t.createdAt.toDate() : new Date());
           
-          if (t.type === 'deposit') {
-            // L'argent reçu sur le compte bancaire de l'admin
-            totalIn += Number(t.amount || 0);
-          } else if (t.type === 'withdraw') {
-            const amountSent = Number(t.amountToReceive || 0);
-            const hayticlipsFee = Number(t.feeApplied || 0);
-            const operatorMethod = t.method || 'moncash'; 
-            
-            // Calcul des frais facturés par Digicel/Natcom à l'admin pour le P2P
-            const costToSend = getOperatorFee(amountSent, operatorMethod);
-
-            // L'argent qui sort de ta poche vers l'utilisateur
-            totalOut += amountSent;
-            
-            // Le bénéfice NET : Frais facturés au client - Frais payés à l'opérateur
-            const realProfit = hayticlipsFee - costToSend;
-            totalProfit += realProfit;
+          if (dateToCheck >= startOfDay) {
+            if (t.status === "approved") {
+              approvedCount++;
+              volumeToday += Number(t.type === 'deposit' ? t.amount : (t.amountRequested || 0));
+            } else if (t.status === "rejected") {
+              rejectedCount++;
+            }
           }
         });
 
-        // Formatage pour éviter les gros chiffres moches
-        const formatMoney = (n) => new Intl.NumberFormat('fr-FR').format(n);
-
-        document.getElementById("statIn").textContent = formatMoney(totalIn) + " HTG";
-        document.getElementById("statOut").textContent = formatMoney(totalOut) + " HTG";
-        document.getElementById("statProfit").textContent = formatMoney(totalProfit) + " HTG";
+        document.getElementById("statApprovedToday").textContent = formatMoney(approvedCount);
+        document.getElementById("statRejectedToday").textContent = formatMoney(rejectedCount);
+        document.getElementById("statVolumeToday").textContent = formatMoney(volumeToday) + " HTG";
       });
     }
 
-    // 📋 LISTE DES DEMANDES
+    // 📋 2. CHARGER LES LISTES EN ATTENTE
     function loadPendingTransfers() {
       const qPending = query(
         collection(db, "manualTransfers"), 
         where("status", "==", "pending"),
-        orderBy("createdAt", "desc")
+        orderBy("createdAt", "asc") // asc pour traiter les plus vieux en premier
       );
 
       onSnapshot(qPending, (snap) => {
-        const list = document.getElementById("transfersList");
-        list.innerHTML = "";
+        const depositList = document.getElementById("depositList");
+        const withdrawList = document.getElementById("withdrawList");
+        
+        depositList.innerHTML = "";
+        withdrawList.innerHTML = "";
+
+        let depCount = 0, depVol = 0;
+        let witCount = 0, witVol = 0;
 
         if (snap.empty) {
-          list.innerHTML = `<div class="empty-state">✅ Aucune demande en attente. Tout est à jour.</div>`;
-          return;
+          depositList.innerHTML = `<div class="empty-state">Aucune recharge en attente.</div>`;
+          withdrawList.innerHTML = `<div class="empty-state">Aucun retrait en attente.</div>`;
         }
 
         snap.forEach(d => {
@@ -293,18 +315,33 @@
           const isDeposit = t.type === 'deposit';
           const dateStr = t.createdAt ? t.createdAt.toDate().toLocaleString('fr-FR') : "Date inconnue";
           
+          // Mise à jour des compteurs
+          if (isDeposit) {
+            depCount++;
+            depVol += Number(t.amount || 0);
+          } else {
+            witCount++;
+            witVol += Number(t.amountRequested || t.amount || 0);
+          }
+          
           const card = document.createElement("div");
-          card.className = `transfer-card ${isDeposit ? 'deposit-card' : ''}`;
+          card.className = `transfer-card ${isDeposit ? 'deposit-card' : 'withdraw-card'}`;
           
           let cardHTML = `
             <div class="card-header">
-              <span class="${isDeposit ? 'badge-deposit' : 'badge-withdraw'}">
-                ${isDeposit ? '📥 RECHARGE' : '📤 RETRAIT'} (${t.method.toUpperCase()})
+              <span class="badge ${isDeposit ? 'badge-deposit' : 'badge-withdraw'}">
+                ${t.method.toUpperCase()}
               </span>
-              <span class="amount">${t.amountRequested || t.amount} HTG</span>
+              <span class="amount">${formatMoney(t.amountRequested || t.amount)} HTG</span>
             </div>
             
-            <div class="info-row"><strong>ID :</strong> ${t.userId}</div>
+            <div class="info-row">
+              <strong>Utilisateur :</strong> 
+              <a href="profil.html?uid=${t.userId}" class="user-link" id="userlink-${transferId}">
+                Chargement... 🔗
+              </a>
+            </div>
+            <div class="info-row" style="font-size:11px; color:#666;">UID: ${t.userId}</div>
             <div class="info-row"><strong>Tél :</strong> ${t.phone}</div>
           `;
 
@@ -312,7 +349,7 @@
             cardHTML += `
               <div class="info-row"><strong>Bénéficiaire :</strong> ${t.accountName}</div>
               <div class="info-row"><strong>Frais HaytiClips :</strong> ${t.feeApplied} HTG</div>
-              <div class="info-row"><strong>À ENVOYER :</strong> <span class="highlight-text">${t.amountToReceive} HTG</span></div>
+              <div class="info-row"><strong>À ENVOYER :</strong> <span class="highlight-text">${formatMoney(t.amountToReceive)} HTG</span></div>
             `;
           }
 
@@ -324,21 +361,49 @@
 
           cardHTML += `
             <div class="action-area">
-              <input type="text" id="reason-${transferId}" placeholder="Motif si refusé (facultatif)">
+              <input type="text" id="reason-${transferId}" placeholder="Motif (obligatoire si refusé)">
               <div class="btn-group">
-                <button class="btn btn-approve" id="btn-approve-${transferId}" onclick="processTransfer('${transferId}', 'approved')">✓ Valider</button>
+                <button class="btn btn-approve" id="btn-approve-${transferId}" onclick="processTransfer('${transferId}', 'approved')">✓ Accepter</button>
                 <button class="btn btn-reject" id="btn-reject-${transferId}" onclick="processTransfer('${transferId}', 'rejected')">✕ Refuser</button>
               </div>
             </div>
           `;
 
           card.innerHTML = cardHTML;
-          list.appendChild(card);
+          
+          // Ajouter à la bonne colonne
+          if (isDeposit) {
+            depositList.appendChild(card);
+          } else {
+            withdrawList.appendChild(card);
+          }
+
+          // 🔄 Récupération asynchrone du nom d'utilisateur
+          getDoc(doc(db, "users", t.userId)).then(uSnap => {
+            const linkEl = document.getElementById(`userlink-${transferId}`);
+            if (linkEl && uSnap.exists()) {
+              linkEl.innerHTML = `${uSnap.data().username} 🔗`;
+            } else if (linkEl) {
+              linkEl.innerHTML = `Utilisateur inconnu 🔗`;
+            }
+          }).catch(() => {});
+
         });
+
+        // Afficher Empty state si une des colonnes est vide malgré des données dans l'autre
+        if (depCount === 0) depositList.innerHTML = `<div class="empty-state">Aucune recharge en attente.</div>`;
+        if (witCount === 0) withdrawList.innerHTML = `<div class="empty-state">Aucun retrait en attente.</div>`;
+
+        // MAJ Stats Attente
+        document.getElementById("statPendingDepCount").textContent = formatMoney(depCount);
+        document.getElementById("statPendingDepVol").textContent = formatMoney(depVol) + " HTG";
+        
+        document.getElementById("statPendingWitCount").textContent = formatMoney(witCount);
+        document.getElementById("statPendingWitVol").textContent = formatMoney(witVol) + " HTG";
       });
     }
 
-    // ⚡ ACTION (VALIDER/REFUSER)
+    // ⚡ 3. ACTION (VALIDER/REFUSER)
     window.processTransfer = async (transferId, status) => {
       const reasonInput = document.getElementById(`reason-${transferId}`);
       const reason = reasonInput.value.trim();
@@ -349,7 +414,7 @@
         return;
       }
 
-      if (!confirm(status === 'approved' ? "Confirmer la VALIDATION ?" : "Confirmer le REFUS ?")) return;
+      if (!confirm(status === 'approved' ? "Confirmer la VALIDATION définitive ?" : "Confirmer le REFUS définitif ?")) return;
 
       const btnApprove = document.getElementById(`btn-approve-${transferId}`);
       const btnReject = document.getElementById(`btn-reject-${transferId}`);
@@ -369,8 +434,9 @@
       } catch (err) {
         alert("Erreur de connexion avec le serveur.");
       } finally {
-        if(btnApprove) btnApprove.disabled = false;
-        if(btnReject) btnReject.disabled = false;
+        // En cas d'erreur on réactive les boutons, sinon la carte disparaîtra d'elle-même (grâce au snapshot)
+        if (btnApprove) btnApprove.disabled = false;
+        if (btnReject) btnReject.disabled = false;
       }
     };
   </script>
