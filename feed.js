@@ -427,7 +427,13 @@ userCache[v.userId] = snap.data();
               </div>
               <div class="follow-plus">+</div>
             </div>
-            <div class="action like">❤️ <span class="like-count">${formatNumber(v.likesCount || 0)}</span></div>
+<div class="action like">
+  <svg viewBox="0 0 24 24" width="26" height="26" class="heart-icon" fill="white" style="transition: 0.2s;">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+  </svg>
+  <span class="like-count">${formatNumber(v.likesCount || 0)}</span>
+</div>
+
 <div class="action comment-btn" data-role="comment">
   <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
     <path d="M21 6a2 2 0 0 0-2-2H5C3.9 4 3 4.9 3 6v9c0 1.1.9 2 2 2h3v3l4-3h7c1.1 0 2-.9 2-2V6z"/>
@@ -887,8 +893,11 @@ function loadComments(videoId) {
             <div class="toggle-replies" data-comment="${d.id}" style="font-size:13px;color:black;cursor:pointer;margin-top:4px;">
               Voir les réponses
             </div>
-           <div class="comment-like ${c.likes?.[currentUser?.uid] ? 'active' : ''}" data-comment="${d.id}">
-              ❤️ <span>${formatNumber(c.likesCount || 0)}</span>
+<div class="comment-like ${c.likes?.[currentUser?.uid] ? 'active' : ''}" data-comment="${d.id}" style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <svg viewBox="0 0 24 24" width="14" height="14" class="heart-icon" fill="#888" style="transition: 0.2s;">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+              <span>${formatNumber(c.likesCount || 0)}</span>
            </div>
           </div>
         </div>
@@ -1598,30 +1607,44 @@ document.addEventListener("click", (e) => {
   }
 });
 
-/* ================= GESTION PLAY/PAUSE ET SON (STYLE TIKTOK) ================= */
+/* ================= GESTION PLAY/PAUSE, SON ET DOUBLE-TAP ================= */
+let lastClickTime = 0;
+
 document.getElementById("feed").addEventListener("click", (e) => {
-  // On s'assure qu'on clique bien sur la vidéo et pas sur un bouton "Like" ou "Commentaire"
   const videoContainer = e.target.closest(".video-container");
   if (!videoContainer) return;
 
   const video = videoContainer.querySelector("video");
   if (!video) return;
 
-  // 1. Si la vidéo est muette (parce que le navigateur a bloqué le son au chargement de la page)
-  // Le tout premier clic de l'utilisateur va simplement ACTIVER LE SON.
-  if (video.muted) {
-    video.muted = false;
-    globalMuted = false;
-    video.play(); // On force la lecture au cas où
-  } 
-  // 2. Si le son est déjà activé, alors cliquer sur l'écran fait Play ou Pause
-  else {
-    if (video.paused) {
+  const currentTime = new Date().getTime();
+  const tapLength = currentTime - lastClickTime;
+  
+  // DÉTECTION DU DOUBLE CLIC (< 300ms entre deux clics)
+  if (tapLength < 300 && tapLength > 0) {
+    e.preventDefault();
+    const box = videoContainer.closest(".video-box");
+    const likeBtn = box.querySelector(".like");
+    
+    // Déclenche le bouton Like s'il n'est pas déjà actif
+    if (likeBtn && !likeBtn.classList.contains("active")) {
+      likeBtn.click(); 
+    }
+  } else {
+    // SIMPLE CLIC : Gestion du Play/Pause/Son
+    if (video.muted) {
+      video.muted = false;
+      globalMuted = false;
       video.play();
     } else {
-      video.pause();
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
     }
   }
+  lastClickTime = currentTime;
 });
 
 console.log("feed js loaded");
