@@ -306,7 +306,7 @@ async function loadFeed() {
       }
     }
 
-    // 🛑 GESTION DE LA FIN DES VIDÉOS
+// 🛑 GESTION DE LA FIN DES VIDÉOS
     if (docs.length === 0) {
       if (!lastDoc) {
         // C'est le tout premier chargement et la base de données est vide
@@ -314,11 +314,16 @@ async function loadFeed() {
           Aucune vidéo. <a href="upload.html" style="color:#ff0050">Publiez la première !</a>
         </div>`;
       }
-      return; // On arrête l'exécution car il n'y a plus de vidéos à charger
+      return; 
     }
 
-    // On met à jour le lastDoc pour que le prochain scroll charge les suivantes
+    // On met à jour le lastDoc AVANT le mélange pour ne pas casser la pagination (CRUCIAL)
     lastDoc = docs[docs.length - 1];
+
+    // MÉLANGER LE FEED : Évite d'avoir toujours exactement le même ordre d'affichage
+    if (!targetVideoId) {
+      orderedDocs = orderedDocs.sort(() => Math.random() - 0.5);
+    }
 
    for (const d of orderedDocs) {
       const v = { id: d.id, ...d.data() };
@@ -405,10 +410,11 @@ userCache[v.userId] = snap.data();
         <div class="video-box" data-id="${v.id}" data-user="${v.userId}" data-score="${finalScore}">
           <div class="video-container">
 <video
+  data-src="${v.mediaUrls?.[0]}"
   src="${v.mediaUrls?.[0]}"
   playsinline
   webkit-playsinline
-  preload="metadata"
+  preload="none"
   loop
   crossorigin="anonymous"
   style="width:100%;height:100%;object-fit:contain;background:#000;cursor:pointer;"
@@ -1461,15 +1467,17 @@ function initVideoObserver() {
       if (!video) return;
 
       if (entry.isIntersecting) {
-        // On applique le choix global (avec le son par défaut)
+        // ANTI-LAG : Restaurer la vidéo si elle avait été déchargée de la RAM
+        if (!video.src && video.dataset.src) {
+          video.src = video.dataset.src;
+        }
+
         video.muted = globalMuted; 
         
         let playPromise = video.play();
-
         if (playPromise !== undefined) {
           playPromise.catch((error) => {
-            // Le navigateur a bloqué le son ! On coupe le son et on relance la vidéo.
-            console.log("Autoplay avec son bloqué par le navigateur, passage en sourdine.");
+            console.log("Autoplay bloqué, passage en sourdine.");
             video.muted = true;
             globalMuted = true;
             video.play().catch(()=>{});
@@ -1483,7 +1491,11 @@ function initVideoObserver() {
 
       } else {
         video.pause();
-        video.currentTime = 0; // Remet la vidéo à zéro quand on passe à la suivante
+        video.currentTime = 0; 
+
+        // ANTI-LAG EXTRÊME : Vider la source vidéo pour libérer la RAM (évite les crashs)
+        video.removeAttribute("src");
+        video.load();
       }
     });
   }, {
