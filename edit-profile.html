@@ -263,17 +263,15 @@
   <input type="file" id="avatarFile" accept="image/*">
 
   <!-- SCRIPTS -->
-  <script type="module">
+<script type="module">
     // ========== IMPORTS ==========
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { collection, query, where, getDocs } 
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
     // ========== CONFIGURATION ==========
-    // Firebase (identique à profil.html)
     const firebaseConfig = {
       apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
       authDomain: "tstx-58474.firebaseapp.com",
@@ -283,11 +281,10 @@ from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
       appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
     };
 
-    // Supabase (à remplacer par vos identifiants)
-    const supabaseUrl = "https://nxpifzslxoigcuuhslox.supabase.co";    // ← REMPLACEZ
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cGlmenNseG9pZ2N1dWhzbG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTgwODgsImV4cCI6MjA4NTk5NDA4OH0.yYQ3nQn6Z0ZCC9ZjuHt_HGJbf1CQVPHlz-b6nnEhFqg";                    // ← REMPLACEZ
+    const supabaseUrl = "https://nxpifzslxoigcuuhslox.supabase.co";    
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cGlmenNseG9pZ2N1dWhzbG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTgwODgsImV4cCI6MjA4NTk5NDA4OH0.yYQ3nQn6Z0ZCC9ZjuHt_HGJbf1CQVPHlz-b6nnEhFqg";                    
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const BUCKET_NAME = "media";                    // Nom du bucket (à créer)
+    const BUCKET_NAME = "media";                    
 
     // Initialisation Firebase
     const app = initializeApp(firebaseConfig);
@@ -316,12 +313,12 @@ from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     function showMessage(text, type) {
       messageEl.textContent = text;
       messageEl.className = `message ${type}`;
+      messageEl.style.display = 'block';
       setTimeout(() => {
         messageEl.style.display = 'none';
       }, 5000);
     }
 
-    // Charger les données utilisateur
     async function loadUserData() {
       if (!currentUser) return;
 
@@ -333,7 +330,6 @@ from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
           usernameInput.value = currentUserData.username || "";
           bioInput.value = currentUserData.bio || "";
 
-          // Afficher l'avatar
           if (currentUserData.avatar) {
             avatarImg.src = currentUserData.avatar;
             avatarImg.style.display = "block";
@@ -349,7 +345,6 @@ from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
       }
     }
 
-    // Upload d'un fichier vers Supabase
     async function uploadAvatar(file, userId) {
       const fileExt = file.name.split('.').pop();
       const fileName = `avatars/${userId}/${Date.now()}.${fileExt}`;
@@ -360,7 +355,6 @@ from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
       if (error) throw error;
 
-      // Récupérer l'URL publique
       const { data: urlData } = supabase.storage
         .from(BUCKET_NAME)
         .getPublicUrl(fileName);
@@ -368,150 +362,102 @@ from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
       return urlData.publicUrl;
     }
 
-   // Supprimer un avatar du storage de manière sécurisée
     async function deleteAvatar(avatarUrl) {
-      // 1. On ignore si l'image n'est pas hébergée sur ton Supabase (ex: pravatar)
-      if (!avatarUrl || !avatarUrl.includes("supabase.co")) {
-        return; 
-      }
+      if (!avatarUrl || !avatarUrl.includes("supabase.co")) return; 
 
       try {
-        // 2. On découpe l'URL proprement pour trouver le nom exact du fichier
         const urlParts = avatarUrl.split(`/${BUCKET_NAME}/`);
         if (urlParts.length > 1) {
-          let fileName = urlParts[1].split('?')[0]; // Enlève les paramètres éventuels
-          fileName = decodeURIComponent(fileName);  // Gère les espaces et caractères spéciaux
+          let fileName = urlParts[1].split('?')[0]; 
+          fileName = decodeURIComponent(fileName);  
 
-          console.log("Tentative de suppression de :", fileName);
-
-          // 3. Demande de suppression à Supabase
           const { error } = await supabase.storage.from(BUCKET_NAME).remove([fileName]);
-          
-          if (error) {
-            console.error("❌ Refus de Supabase :", error.message);
-            // On ne jette pas d'erreur pour ne pas bloquer la sauvegarde du frontend
-          } else {
-            console.log("✅ Ancienne image supprimée avec succès du stockage !");
-          }
+          if (error) console.error("❌ Refus de Supabase :", error.message);
         }
       } catch (e) {
         console.error("Erreur de nettoyage d'image ignorée :", e);
       }
     }
 
-    // Sauvegarder les modifications
     async function saveProfile() {
       if (!currentUser) return;
 
+      // Désactiver le bouton pour éviter les doubles clics
       saveBtn.disabled = true;
       saveBtn.textContent = "Enregistrement...";
 
       try {
         const updates = {};
         
-// Username (si modifié)
+        // --- GESTION DU USERNAME ---
         const newUsername = usernameInput.value.trim();
 
         if (newUsername && newUsername !== currentUserData.username) {
 
-          // 🔥 SÉCURITÉ : Vérifie qu'il n'y a pas d'espaces et n'accepte que les caractères valides
-          const isValidFormat = /^[a-zA-Z0-9.-]+$/.test(newUsername);
+          // Validation Regex : Lettres, chiffres, points et UNDERSCORES autorisés. Tirets interdits.
+          const isValidFormat = /^[a-zA-Z0-9._]+$/.test(newUsername);
           
           if (!isValidFormat) {
-            showMessage("Les espaces sont interdits. Utilisez uniquement des lettres, chiffres, points (.) ou tirets (-).", "error");
-            saveBtn.disabled = false;
-            saveBtn.textContent = "Enregistrer";
-            return;
+            throw new Error("Format invalide. Utilisez uniquement lettres, chiffres, points (.) ou underscores (_).");
           }
 
-  const now = new Date();
+          const now = new Date();
+          const lastChange = currentUserData.usernameLastChanged ? currentUserData.usernameLastChanged.toDate() : null;
 
-  const lastChange = currentUserData.usernameLastChanged
-    ? currentUserData.usernameLastChanged.toDate()
-    : null;
+          if (lastChange) {
+            const diffTime = now - lastChange;
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
 
-  if (lastChange) {
+            if (diffDays < 90) {
+              const remainingDays = Math.ceil(90 - diffDays);
+              throw new Error(`Modification impossible. Attendez encore ${remainingDays} jour(s).`);
+            }
+          }
+          
+          const usersRef = collection(db, "users");
+          const q = query(usersRef, where("usernameLower", "==", newUsername.toLowerCase()));
+          const snap = await getDocs(q);
 
-    const diffTime = now - lastChange;
-    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+          if (!snap.empty) {
+            throw new Error("Ce nom d'utilisateur est déjà utilisé.");
+          }
 
-    if (diffDays < 90) {
+          updates.username = newUsername;
+          updates.usernameLower = newUsername.toLowerCase();
+          updates.usernameLastChanged = new Date();
+        }
 
-      const remainingDays = Math.ceil(90 - diffDays);
-
-      showMessage(
-        `Vous pourrez modifier votre nom d'utilisateur dans ${remainingDays} jour(s)`,
-        "error"
-      );
-
-      saveBtn.disabled = false;
-      saveBtn.textContent = "Enregistrer";
-      return;
-    }
-  }
-  
-  // Vérifier si username déjà pris
-const usersRef = collection(db, "users");
-const q = query(usersRef, where("usernameLower", "==", newUsername.toLowerCase()));
-const snap = await getDocs(q);
-
-if (!snap.empty) {
-  showMessage("Ce nom d'utilisateur est déjà utilisé", "error");
-  saveBtn.disabled = false;
-  saveBtn.textContent = "Enregistrer";
-  return;
-}
-
-  // ✅ Autorisé → enregistrer nouveau username + date
-  updates.username = newUsername;
-updates.usernameLower = newUsername.toLowerCase();
-updates.usernameLastChanged = new Date();
-}
-
-        // Bio
+        // --- GESTION DE LA BIO ---
         const newBio = bioInput.value.trim();
         if (newBio !== (currentUserData.bio || "")) {
           updates.bio = newBio;
         }
 
-        // Avatar
+        // --- GESTION DE L'AVATAR ---
         if (avatarRemoved) {
-          // Supprimer l'ancien avatar
-          if (currentUserData.avatar) {
-            await deleteAvatar(currentUserData.avatar);
-          }
+          if (currentUserData.avatar) await deleteAvatar(currentUserData.avatar);
           updates.avatar = null;
         } else if (selectedAvatarFile) {
-          // Upload nouvel avatar
           const avatarUrl = await uploadAvatar(selectedAvatarFile, currentUser.uid);
-          // Supprimer l'ancien si existant
-          if (currentUserData.avatar) {
-            await deleteAvatar(currentUserData.avatar);
-          }
+          if (currentUserData.avatar) await deleteAvatar(currentUserData.avatar);
           updates.avatar = avatarUrl;
         }
 
-        // Si rien à modifier
         if (Object.keys(updates).length === 0) {
-          showMessage("Aucune modification", "error");
-          saveBtn.disabled = false;
-          saveBtn.textContent = "Enregistrer";
-          return;
+          throw new Error("Aucune modification détectée.");
         }
 
-        // Mise à jour Firestore
         const userRef = doc(db, "users", currentUser.uid);
         await updateDoc(userRef, updates);
 
         showMessage("Profil mis à jour avec succès !", "success");
-
-        // Recharger les données (pour afficher les changements dans la page)
         await loadUserData();
 
       } catch (error) {
         console.error("Erreur sauvegarde:", error);
-        showMessage("Erreur lors de la sauvegarde : " + error.message, "error");
+        showMessage(error.message, "error");
       } finally {
+        // 🔥 TRÈS IMPORTANT : On débloque toujours le bouton à la fin, même en cas d'erreur
         saveBtn.disabled = false;
         saveBtn.textContent = "Enregistrer";
         selectedAvatarFile = null;
@@ -520,7 +466,7 @@ updates.usernameLastChanged = new Date();
       }
     }
 
-// ========== ÉVÉNEMENTS ==========
+    // ========== ÉVÉNEMENTS ==========
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "login.html";
@@ -530,15 +476,12 @@ updates.usernameLastChanged = new Date();
       await loadUserData();
     });
 
-    // 🔥 Bloquer les espaces en temps réel
+    // Filtre de frappe en temps réel
     usernameInput.addEventListener("input", (e) => {
-      if (e.target.value.includes(" ")) {
-        e.target.value = e.target.value.replace(/\s/g, "");
-      }
-      e.target.value = e.target.value.toLowerCase();
+      // Remplace les espaces et les tirets par rien
+      e.target.value = e.target.value.replace(/[\s-]/g, "").toLowerCase();
     });
 
-    // Changer avatar
     changeAvatarBtn.addEventListener("click", () => {
       avatarFile.click();
     });
@@ -547,7 +490,6 @@ updates.usernameLastChanged = new Date();
       const file = e.target.files[0];
       if (!file) return;
 
-      // Prévisualisation
       const reader = new FileReader();
       reader.onload = (event) => {
         avatarImg.src = event.target.result;
@@ -561,7 +503,6 @@ updates.usernameLastChanged = new Date();
       avatarRemoved = false;
     });
 
-    // Supprimer avatar
     removeAvatarBtn.addEventListener("click", () => {
       avatarImg.src = "";
       avatarImg.style.display = "none";
@@ -571,10 +512,8 @@ updates.usernameLastChanged = new Date();
       avatarRemoved = true;
     });
 
-    // Sauvegarder
     saveBtn.addEventListener("click", saveProfile);
 
-    // Raccourci Ctrl+Enter (ou Cmd+Enter) pour sauvegarder
     document.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
         saveProfile();
