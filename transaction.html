@@ -129,6 +129,67 @@ max-width:80%;
   text-decoration:none;
   font-size:14px;
 }
+
+/* NOUVEAUX STYLES : RÉSUMÉ & FILTRES */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.summary-card {
+  background: #111;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  text-align: center;
+}
+.summary-title {
+  font-size: 11px;
+  color: #aaa;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.summary-val {
+  font-size: 15px;
+  font-weight: 700;
+}
+.summary-val.solde { color: #fff; }
+.summary-val.in { color: #2ecc71; }
+.summary-val.out { color: #ff0033; }
+.summary-val.gift { color: #f39c12; }
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  background: #111;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #222;
+}
+.filter-row {
+  display: flex;
+  gap: 10px;
+}
+.filter-input, .filter-select {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #000;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+}
+.filter-input:focus, .filter-select:focus {
+  border-color: #ff0050;
+}
+.filter-input::placeholder {
+  color: #777;
+}
+
 </style>
 
 </head>
@@ -142,33 +203,68 @@ max-width:80%;
 </div>
 
 
+<div class="summary-grid" id="summaryGrid">
+  <div class="summary-card">
+    <div class="summary-title">Solde actuel</div>
+    <div class="summary-val solde" id="sumBalance">0 Gdes</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-title">Total Recharges</div>
+    <div class="summary-val in" id="sumDeposits">0 Gdes</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-title">Total Retraits</div>
+    <div class="summary-val out" id="sumWithdrawals">0 Gdes</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-title">Cadeaux (Env/Reç)</div>
+    <div class="summary-val gift" id="sumGifts">0 Gdes</div>
+  </div>
+</div>
+
+<div class="filters">
+  <input type="text" id="searchInput" class="filter-input" placeholder="Rechercher (ID, Montant, Date...)">
+  <div class="filter-row">
+    <select id="typeFilter" class="filter-select">
+      <option value="all">Toutes</option>
+      <option value="deposit">Recharges</option>
+      <option value="withdraw">Retraits</option>
+      <option value="gift">Cadeaux</option>
+      <option value="pending">En attente</option>
+      <option value="completed">Réussies</option>
+      <option value="failed">Échouées</option>
+    </select>
+    <select id="dateFilter" class="filter-select">
+      <option value="all">Toutes les dates</option>
+      <option value="today">Aujourd'hui</option>
+      <option value="week">Cette semaine</option>
+      <option value="month">Ce mois-ci</option>
+      <option value="custom">Personnalisé</option>
+    </select>
+  </div>
+  <div class="filter-row" id="customDateRow" style="display:none;">
+    <input type="date" id="dateStart" class="filter-input">
+    <input type="date" id="dateEnd" class="filter-input">
+  </div>
+</div>
+
 <div class="list" id="txList"></div>
 
 
 
 <a href="profil.html" class="back">Retour</a>
 <script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import {
-getFirestore,
-collection,
-query,
-where,
-orderBy,
-getDocs
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-
-apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-authDomain:"tstx-58474.firebaseapp.com",
-projectId:"tstx-58474",
-storageBucket:"tstx-58474.firebasestorage.app",
-messagingSenderId:"1010020144942",
-appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
-
+  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain:"tstx-58474.firebaseapp.com",
+  projectId:"tstx-58474",
+  storageBucket:"tstx-58474.firebasestorage.app",
+  messagingSenderId:"1010020144942",
+  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -176,6 +272,14 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const txList = document.getElementById("txList");
+const searchInput = document.getElementById("searchInput");
+const typeFilter = document.getElementById("typeFilter");
+const dateFilter = document.getElementById("dateFilter");
+const customDateRow = document.getElementById("customDateRow");
+const dateStart = document.getElementById("dateStart");
+const dateEnd = document.getElementById("dateEnd");
+
+let allTransactions = []; // Stockage local des transactions
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -184,243 +288,187 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
+    // 1. Récupérer le solde actuel de l'utilisateur
+    const userSnap = await getDoc(doc(db, "users", user.uid));
+    if (userSnap.exists()) {
+      document.getElementById("sumBalance").textContent = `${userSnap.data().wallet || 0} Gdes`;
+    }
+
+    // 2. Récupérer toutes ses transactions
     const q = query(
       collection(db, "walletTransactions"),
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
-
     const snap = await getDocs(q);
 
-    txList.innerHTML = "";
+    allTransactions = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    if (snap.empty) {
-      txList.innerHTML = `
-        <div style="padding:20px;text-align:center;opacity:0.7;">
-          Aucune transaction pour le moment
-        </div>
-      `;
-      return;
-    }
+    // 3. Calculer les totaux pour le résumé
+    calculateSummary(allTransactions);
 
-    let html = "";
-
-    snap.forEach(doc => {
-      const tx = doc.data();
-
-      let date = "—";
-      if (tx.createdAt && tx.createdAt.toDate) {
-        date = tx.createdAt.toDate().toLocaleString();
-      }
-
-      let label = "";
-      let color = "";
-      let sign = "-";
-
-      switch (tx.type) {
-  case "deposit":
-    label = "Recharge";
-    color = "#2ecc71";
-    sign = "+";
-    break;
-
-  case "withdraw":
-    label = "Retrait";
-    color = "#ff0033";
-    sign = "-";
-    break;
-
-  case "gift_sent":
-    label = "Cadeau envoyé";
-    color = "#f39c12";
-    sign = "-";
-    break;
-
-  case "gift_received":
-    label = "Cadeau reçu";
-    color = "#f39c12";
-    sign = "+";
-    break;
-
-  case "blue_payment":
-    label = "Badge Blue";
-    color = "#3498db";
-    sign = "-";
-    break;
-
-  case "merchant_request_payment":
-    label = "Paiement accès marchand";
-    color = "#ff0050";
-    sign = "-";
-    break;
-
-  case "merchant_request_refund":
-    label = "Remboursement accès marchand";
-    color = "#2ecc71";
-    sign = "+";
-    break;
-
-  case "merchant_referral_reward":
-    label = "Récompense parrain marchand";
-    color = "#2ecc71";
-    sign = "+";
-    break;
-
-  case "merchant_platform_fee":
-    label = "Frais plateforme marchand";
-    color = "#3498db";
-    sign = "+";
-    break;
-
-  case "merchant_renewal_payment":
-    label = "Renouvellement marchand";
-    color = "#ff0050";
-    sign = "-";
-    break;
-
-  case "merchant_renewal_referral_reward":
-    label = "Gain parrain renouvellement";
-    color = "#2ecc71";
-    sign = "+";
-    break;
-
-  case "merchant_renewal_admin_fee":
-    label = "Part admin renouvellement";
-    color = "#3498db";
-    sign = "+";
-    break;
-
-  case "merchant_order_created":
-    label = "Commande créée";
-    color = "#f39c12";
-    sign = "-";
-    break;
-
-  case "merchant_order_paid":
-    label = "Commande validée";
-    color = "#f39c12";
-    sign = "-";
-    break;
-
-  case "merchant_order_refund":
-    label = "Commande remboursée";
-    color = "#2ecc71";
-    sign = "+";
-    break;
-
-  case "merchant_sale_pending":
-    label = "Vente en attente";
-    color = "#f39c12";
-    sign = "+";
-    break;
-
-  case "merchant_sale_received":
-    label = "Vente reçue";
-    color = "#2ecc71";
-    sign = "+";
-    break;
-
-  case "merchant_sale_fee":
-    label = "Frais admin sur vente";
-    color = "#3498db";
-    sign = "+";
-    break;
-
-  case "merchant_sale_rejected":
-    label = "Vente refusée";
-    color = "#ff0033";
-    sign = "-";
-    break;
-
-  default:
-    label = tx.type || "Transaction";
-    color = "#ffffff";
-    sign = tx.amount >= 0 ? "+" : "-";
-}
-
-      let statusLabel = "—";
-      let statusColor = "#aaa";
-
-      switch (tx.status) {
-        case "pending":
-          statusLabel = "En attente";
-          statusColor = "#f39c12";
-          break;
-
-        case "completed":
-          statusLabel = "Terminée";
-          statusColor = "#2ecc71";
-          break;
-
-        case "failed":
-          statusLabel = "Échouée";
-          statusColor = "#ff0033";
-          break;
-
-        default:
-          statusLabel = tx.status || "—";
-      }
-
-      const balanceAfter =
-        typeof tx.balanceAfter === "number"
-          ? `${tx.balanceAfter} Gdes`
-          : "—";
-
-      html += `
-        <div class="card">
-
-          <div class="row">
-            <span class="label">Date</span>
-            <span class="value">${date}</span>
-          </div>
-
-          <div class="row">
-            <span class="label">Détails</span>
-            <span class="value" style="color:${color}">
-              ${label}
-            </span>
-          </div>
-
-          <div class="row">
-            <span class="label">Statut</span>
-            <span class="value" style="color:${statusColor}">
-              ${statusLabel}
-            </span>
-          </div>
-
-          <div class="row">
-            <span class="label">Montant</span>
-            <span class="value">
-              ${sign}${tx.amount} Gdes
-            </span>
-          </div>
-
-          <div class="row">
-            <span class="label">Solde après</span>
-            <span class="value">
-              ${balanceAfter}
-            </span>
-          </div>
-
-        </div>
-      `;
-    });
-
-    txList.innerHTML = html;
+    // 4. Affichage initial (Seulement les 3 derniers)
+    renderTransactions(allTransactions.slice(0, 3), true);
 
   } catch (e) {
-    console.error("Erreur chargement transactions:", e);
-    console.error("code:", e.code);
-    console.error("message:", e.message);
-
-    txList.innerHTML = `
-      <div style="padding:20px;text-align:center;">
-        Erreur chargement transactions
-      </div>
-    `;
+    console.error("Erreur chargement:", e);
+    txList.innerHTML = `<div style="padding:20px;text-align:center;">Erreur de chargement</div>`;
   }
 });
-console.log("transaction ok");
+
+// Calcul du résumé
+function calculateSummary(transactions) {
+  let deposits = 0;
+  let withdrawals = 0;
+  let gifts = 0;
+
+  transactions.forEach(tx => {
+    if (tx.status === "completed") {
+      if (tx.type === "deposit") deposits += Number(tx.amount || 0);
+      if (tx.type === "withdraw") withdrawals += Number(tx.amount || 0);
+      if (tx.type === "gift_sent" || tx.type === "gift_received") gifts += Number(tx.amount || 0);
+    }
+  });
+
+  document.getElementById("sumDeposits").textContent = `${deposits} Gdes`;
+  document.getElementById("sumWithdrawals").textContent = `${withdrawals} Gdes`;
+  document.getElementById("sumGifts").textContent = `${gifts} Gdes`;
+}
+
+// Rendu HTML des transactions
+function renderTransactions(transactions, isInitial = false) {
+  txList.innerHTML = "";
+
+  if (transactions.length === 0) {
+    txList.innerHTML = `<div style="padding:20px;text-align:center;opacity:0.7;font-size:14px;">Aucune transaction trouvée</div>`;
+    return;
+  }
+
+  let html = "";
+  if (isInitial && allTransactions.length > 3) {
+    html += `<div style="text-align:center; margin-bottom:10px; font-size:13px; color:#aaa;">Affichage des 3 dernières transactions. Utilisez la recherche.</div>`;
+  }
+
+  transactions.forEach(tx => {
+    let date = "—";
+    let rawDate = "";
+    if (tx.createdAt && tx.createdAt.toDate) {
+      const d = tx.createdAt.toDate();
+      date = d.toLocaleString();
+      rawDate = d.toISOString().split('T')[0]; // YYYY-MM-DD
+    }
+
+    let label = tx.type || "Transaction";
+    let color = "#ffffff";
+    let sign = tx.amount >= 0 ? "+" : "-";
+
+    switch (tx.type) {
+      case "deposit": label = "Recharge"; color = "#2ecc71"; sign = "+"; break;
+      case "withdraw": label = "Retrait"; color = "#ff0033"; sign = "-"; break;
+      case "gift_sent": label = "Cadeau envoyé"; color = "#f39c12"; sign = "-"; break;
+      case "gift_received": label = "Cadeau reçu"; color = "#f39c12"; sign = "+"; break;
+      case "blue_payment": label = "Badge Blue"; color = "#3498db"; sign = "-"; break;
+      case "merchant_request_payment": label = "Paiement marchand"; color = "#ff0050"; sign = "-"; break;
+    }
+
+    let statusLabel = tx.status || "—";
+    let statusColor = "#aaa";
+    if (tx.status === "pending") { statusLabel = "En attente"; statusColor = "#f39c12"; }
+    if (tx.status === "completed") { statusLabel = "Terminée"; statusColor = "#2ecc71"; }
+    if (tx.status === "failed") { statusLabel = "Échouée"; statusColor = "#ff0033"; }
+
+    html += `
+      <div class="card" data-raw-date="${rawDate}">
+        <div class="row">
+          <span class="label">ID</span>
+          <span class="value" style="font-size:11px; opacity:0.7;">${tx.id}</span>
+        </div>
+        <div class="row"><span class="label">Date</span><span class="value" style="font-size:13px;">${date}</span></div>
+        <div class="row"><span class="label">Détails</span><span class="value" style="color:${color}; font-size:13px;">${label}</span></div>
+        <div class="row"><span class="label">Statut</span><span class="value" style="color:${statusColor}; font-size:13px;">${statusLabel}</span></div>
+        <div class="row"><span class="label">Montant</span><span class="value" style="font-size:14px;">${sign}${tx.amount} Gdes</span></div>
+      </div>
+    `;
+  });
+
+  txList.innerHTML = html;
+}
+
+// Logique de filtrage
+function applyFilters() {
+  const searchVal = searchInput.value.toLowerCase().trim();
+  const typeVal = typeFilter.value;
+  const dateVal = dateFilter.value;
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  const startOfWeek = new Date(startOfToday);
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  let filtered = allTransactions.filter(tx => {
+    // 1. Filtre Recherche (ID, Montant, ou Type)
+    let matchSearch = true;
+    if (searchVal) {
+      const stringData = `${tx.id} ${tx.amount} ${tx.type}`.toLowerCase();
+      matchSearch = stringData.includes(searchVal);
+    }
+
+    // 2. Filtre Type
+    let matchType = true;
+    if (typeVal !== "all") {
+      if (typeVal === "deposit") matchType = (tx.type === "deposit");
+      else if (typeVal === "withdraw") matchType = (tx.type === "withdraw");
+      else if (typeVal === "gift") matchType = tx.type.includes("gift");
+      else if (["pending", "completed", "failed"].includes(typeVal)) matchType = (tx.status === typeVal);
+    }
+
+    // 3. Filtre Date
+    let matchDate = true;
+    if (dateVal !== "all" && tx.createdAt) {
+      const txDate = tx.createdAt.toDate();
+      if (dateVal === "today") matchDate = (txDate >= startOfToday);
+      else if (dateVal === "week") matchDate = (txDate >= startOfWeek);
+      else if (dateVal === "month") matchDate = (txDate >= startOfMonth);
+      else if (dateVal === "custom") {
+        const dStart = new Date(dateStart.value);
+        const dEnd = new Date(dateEnd.value);
+        dEnd.setHours(23, 59, 59); // Fin de journée
+        
+        if (dateStart.value && dateEnd.value) {
+          matchDate = (txDate >= dStart && txDate <= dEnd);
+        }
+      }
+    }
+
+    return matchSearch && matchType && matchDate;
+  });
+
+  // Si on effectue une recherche ou un filtre, on affiche tous les résultats correspondants
+  // Sinon, on remet l'affichage des 3 derniers.
+  const isFiltering = searchVal !== "" || typeVal !== "all" || dateVal !== "all";
+  renderTransactions(isFiltering ? filtered : filtered.slice(0, 3), !isFiltering);
+}
+
+// Écouteurs d'événements
+searchInput.addEventListener("input", applyFilters);
+typeFilter.addEventListener("change", applyFilters);
+
+dateFilter.addEventListener("change", (e) => {
+  if (e.target.value === "custom") {
+    customDateRow.style.display = "flex";
+  } else {
+    customDateRow.style.display = "none";
+    applyFilters();
+  }
+});
+
+dateStart.addEventListener("change", applyFilters);
+dateEnd.addEventListener("change", applyFilters);
+
+console.log("Historique chargé");
 </script>
 
 </body>
