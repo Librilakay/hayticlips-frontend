@@ -4,31 +4,33 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#ff0050">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Chat</title>
 
 <style>
+/* ================= RESET ET BLOCAGE PAGE STATIQUE ================= */
 *{
   margin:0;
   padding:0;
   box-sizing:border-box;
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y; /* Empêche le zoom par pincement natif */
 }
 
 html,body{
   width:100%;
   height:100%;
-  background:#000;
-  color:#fff;
-  overflow:hidden;
+  background:#000000; /* Noir pur */
+  color:#ffffff;
+  overflow:hidden; /* Bloque le scroll de la page entière */
+  overscroll-behavior-y: none; /* Empêche l'effet élastique sur iOS */
 }
 
 body{
-  height:100dvh;
+  height:100dvh; /* Utilisation de dvh pour gérer les barres d'outils mobiles */
   display:flex;
   flex-direction:column;
-  background: #0a0a0a; /* Fond légèrement plus clair que noir pur pour contraster avec le header */
 }
 
 /* ================= HEADER PRO ================= */
@@ -38,13 +40,11 @@ body{
   display:flex;
   align-items:center;
   padding:0 10px;
-  background:rgba(0, 0, 0, 0.85);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  border-bottom:1px solid rgba(255,255,255,0.08);
-  position:sticky;
-  top:0;
+  background:#000000; /* Noir pur */
+  border-bottom:1px solid #1a1a1a;
+  position:relative;
   z-index:100;
+  flex-shrink:0;
 }
 
 .back-btn{
@@ -58,18 +58,18 @@ body{
   cursor:pointer;
 }
 .back-btn svg{
-  fill:#fff;
-  width:24px;
-  height:24px;
+  fill:#ffffff;
+  width:26px;
+  height:26px;
 }
 
 .header-avatar{
-  width:38px;
-  height:38px;
+  width:40px;
+  height:40px;
   border-radius:50%;
   object-fit:cover;
-  margin:0 10px 0 2px;
-  border:1px solid #333;
+  margin:0 12px 0 4px;
+  border:1px solid #222;
   display:none; /* Affiché via JS */
 }
 
@@ -97,11 +97,12 @@ body{
   text-overflow:ellipsis;
   display:flex;
   align-items:center;
+  color:#ffffff;
 }
 
 #chatStatus{
   font-size:12px;
-  color:#aaa;
+  color:#888;
   margin-top:2px;
   font-weight:500;
 }
@@ -112,8 +113,8 @@ body{
   gap:6px;
   padding:6px 12px;
   border-radius:20px;
-  background:rgba(255, 255, 255, 0.05);
-  border:1px solid rgba(255,255,255,0.1);
+  background:#111;
+  border:1px solid #222;
   font-weight:700;
   font-size:13px;
   flex-shrink:0;
@@ -126,18 +127,19 @@ body{
   padding:16px 12px 10px;
   display:flex;
   flex-direction:column;
-  gap:6px; /* Espace réduit pour regrouper les messages */
+  gap:8px;
   scroll-behavior:smooth;
   -webkit-overflow-scrolling:touch;
+  background:#000000;
+  overscroll-behavior-y: contain; /* Garde le scroll interne sans remonter sur le parent */
 }
 
-.messages::-webkit-scrollbar{ width:0; }
+.messages::-webkit-scrollbar{ width:0; } /* Cache la scrollbar */
 
 .message-row{
   display:flex;
   align-items:flex-end;
   width:100%;
-  margin-bottom: 6px;
 }
 
 .me-row{ justify-content:flex-end; }
@@ -154,41 +156,41 @@ body{
 
 .msg-sender-name{
   font-size:11px;
-  color:#888;
-  margin-bottom:3px;
+  color:#666;
+  margin-bottom:4px;
   margin-left:4px;
 }
 
 /* Bulle de message */
 .msg{
   position:relative;
-  padding:8px 12px 24px 12px; /* Plus d'espace en bas pour l'heure */
+  padding:10px 14px 26px 14px;
   font-size:15px;
   line-height:1.4;
   white-space:pre-wrap;
   word-wrap:break-word;
-  border-radius:18px;
-  min-width: 80px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  border-radius:20px;
+  min-width: 85px;
 }
 
+/* Modifier les bordures pour effet bulle iMessage/WhatsApp */
 .me{
   background:#ff0050;
-  color:#fff;
-  border-bottom-right-radius:4px; /* Effet bulle */
+  color:#ffffff;
+  border-bottom-right-radius:4px; 
 }
 
 .other{
-  background:#262628;
-  color:#eaeaea;
-  border-bottom-left-radius:4px; /* Effet bulle */
+  background:#1a1a1a;
+  color:#ffffff;
+  border-bottom-left-radius:4px;
 }
 
 /* Méta info DANS la bulle (heure + vu) */
 .msg-meta{
   position:absolute;
-  bottom:4px;
-  right:10px;
+  bottom:6px;
+  right:12px;
   display:flex;
   align-items:center;
   gap:4px;
@@ -205,23 +207,24 @@ body{
 
 .system-message{
   align-self:center;
-  background:rgba(255,255,255,0.08);
-  padding:5px 12px;
+  background:#111;
+  padding:6px 14px;
   border-radius:12px;
-  font-size:11.5px;
+  font-size:11px;
   font-weight:600;
-  color:#ccc;
+  color:#888;
   margin:12px 0;
   max-width:90%;
   text-align:center;
+  border: 1px solid #222;
 }
 
 /* ================= TYPING INDICATOR ================= */
 .typing-indicator{
-  display:none; /* Prêt pour quand tu coderas la logique */
+  display:none; 
   align-items:center;
   gap:4px;
-  background:#262628;
+  background:#1a1a1a;
   padding:12px 16px;
   border-radius:18px;
   width:fit-content;
@@ -230,7 +233,7 @@ body{
 }
 .typing-indicator span{
   width:6px; height:6px;
-  background:#aaa;
+  background:#888;
   border-radius:50%;
   animation: typing 1.4s infinite ease-in-out both;
 }
@@ -247,8 +250,9 @@ body{
   align-items:flex-end;
   gap:10px;
   padding:10px 10px calc(10px + env(safe-area-inset-bottom));
-  background:#0a0a0a;
-  border-top:1px solid rgba(255,255,255,0.05);
+  background:#000000;
+  border-top:1px solid #1a1a1a;
+  flex-shrink:0;
 }
 
 .attach-btn{
@@ -270,11 +274,11 @@ body{
   flex:1;
   display:flex;
   align-items:center;
-  background:#1e1e1e;
+  background:#111;
   border-radius:22px;
-  padding:2px 4px 2px 14px;
+  padding:2px 4px 2px 16px;
   min-height:44px;
-  border:1px solid rgba(255,255,255,0.05);
+  border:1px solid #222;
 }
 
 .inputBox input{
@@ -283,12 +287,12 @@ body{
   border:none;
   outline:none;
   background:transparent;
-  color:#fff;
+  color:#ffffff;
   font-size:15px;
   padding:10px 0;
 }
 
-.inputBox input::placeholder{ color:#777; }
+.inputBox input::placeholder{ color:#666; }
 
 .send-btn{
   width:36px;
@@ -304,7 +308,7 @@ body{
   transition: transform 0.1s;
 }
 .send-btn:active{ transform:scale(0.9); }
-.send-btn svg{ fill:#fff; width:18px; height:18px; margin-left:2px; }
+.send-btn svg{ fill:#ffffff; width:18px; height:18px; margin-left:2px; }
 
 /* ================= BADGES ================= */
 .chat-badge{
@@ -314,7 +318,7 @@ body{
   width:14px;
   height:14px;
   border-radius:50%;
-  margin-left:4px;
+  margin-left:6px;
 }
 .chat-badge.gold{
   background:linear-gradient(135deg,#ffd700,#ffb700,#ff8c00);
@@ -327,9 +331,9 @@ body{
 .chat-badge.blue svg{ fill:white; }
 
 @keyframes pinkPulse{
-  0%{box-shadow:0 0 15px #ff0050}
-  50%{box-shadow:0 0 45px #ff0050}
-  100%{box-shadow:0 0 15px #ff0050}
+  0%{box-shadow:0 0 15px rgba(255,0,80,0.4)}
+  50%{box-shadow:0 0 35px rgba(255,0,80,0.8)}
+  100%{box-shadow:0 0 15px rgba(255,0,80,0.4)}
 }
 </style>
 </head>
@@ -349,7 +353,7 @@ body{
     </div>
 
     <div id="streakBox">
-      <svg id="streakFire" width="16" height="16" viewBox="0 0 24 24" fill="#555">
+      <svg id="streakFire" width="16" height="16" viewBox="0 0 24 24" fill="#444">
         <path d="M12 2C10 6 6 8 6 13a6 6 0 0012 0c0-3-2-5-4-7 0 2-1 3-2 4-1-1-1-3 0-8z"/>
       </svg>
       <span id="streakNumber">0</span>
@@ -369,7 +373,7 @@ body{
   </button>
   
   <div class="inputBox">
-    <input type="text" id="messageInput" placeholder="Message..." autocomplete="off">
+    <input type="text" id="messageInput" placeholder="Message..." autocomplete="off" enterkeyhint="send">
     <button class="send-btn" id="sendBtn">
       <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
     </button>
@@ -395,7 +399,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const messagesDiv = document.getElementById("messages");
-const typingIndicator = document.getElementById("typingIndicator"); // Pour ne pas le supprimer
+const typingIndicator = document.getElementById("typingIndicator"); 
 const sendBtn = document.getElementById("sendBtn");
 const input = document.getElementById("messageInput");
 const header = document.getElementById("chatTitle");
@@ -411,6 +415,11 @@ function formatTime(timestamp) {
   if(!timestamp) return "";
   const date = timestamp.toDate();
   return date.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+}
+
+// Fonction pour faire défiler vers le bas proprement
+function scrollToBottom() {
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
 onAuthStateChanged(auth, async (user)=>{
@@ -442,9 +451,9 @@ onAuthStateChanged(auth, async (user)=>{
     const today = new Date().toISOString().slice(0,10);
 
     if(game.todayPlayers && game.todayPlayers[p1] && game.todayPlayers[p2] && game.lastDay === today){
-      streakFire.style.fill = "#ff2b2b";
+      streakFire.style.fill = "#ff0050"; // Rouge custom
     }else{
-      streakFire.style.fill = "#555";
+      streakFire.style.fill = "#444";
     }
   });
 
@@ -453,7 +462,7 @@ onAuthStateChanged(auth, async (user)=>{
     const midnight = new Date();
     midnight.setHours(24,0,0,0);
     const timeout = midnight.getTime() - now.getTime();
-    setTimeout(()=>{ streakFire.style.fill = "#555"; resetFireAtMidnight(); },timeout);
+    setTimeout(()=>{ streakFire.style.fill = "#444"; resetFireAtMidnight(); },timeout);
   }
   resetFireAtMidnight();
 
@@ -480,10 +489,10 @@ onAuthStateChanged(auth, async (user)=>{
       // En ligne ou hors ligne
       if(u.online){
         chatStatus.textContent = "En ligne";
-        chatStatus.style.color = "#19c37d";
+        chatStatus.style.color = "#2ecc71"; // Vert statut plus propre
       } else {
         chatStatus.textContent = "Hors ligne";
-        chatStatus.style.color = "#aaa";
+        chatStatus.style.color = "#666";
       }
     }
   });
@@ -499,8 +508,8 @@ onAuthStateChanged(auth, async (user)=>{
 
     if(snap.empty){
       const emptyDiv = document.createElement("div");
-      emptyDiv.className = "empty-chat";
-      emptyDiv.textContent = "Aucun message pour le moment. Lancez la conversation !";
+      emptyDiv.className = "system-message";
+      emptyDiv.textContent = "Aucun message. Lancez la conversation !";
       messagesDiv.insertBefore(emptyDiv, typingIndicator);
       return;
     }
@@ -523,16 +532,15 @@ onAuthStateChanged(auth, async (user)=>{
       // Message Game 365 Win
       if(m.type === "game365_win"){
         const box = document.createElement("div");
-        box.style.cssText = "text-align:center; padding:22px 18px; margin:15px 0; border-radius:20px; background:linear-gradient(135deg,#111,#000); box-shadow:0 0 25px rgba(255,0,80,0.6); animation:pinkPulse 2s infinite;";
+        box.style.cssText = "text-align:center; padding:22px 18px; margin:15px 0; border-radius:20px; background:#111; border:1px solid #ff0050; animation:pinkPulse 2s infinite;";
         box.innerHTML = `
         <div style="margin-bottom:15px">
-          <svg width="52" height="52" viewBox="0 0 24 24" style="filter:drop-shadow(0 0 18px #ff0050);">
-            <defs><linearGradient id="starPremium" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff2a6d"/><stop offset="100%" stop-color="#ff0050"/></linearGradient></defs>
-            <path fill="url(#starPremium)" d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/>
+          <svg width="52" height="52" viewBox="0 0 24 24" style="filter:drop-shadow(0 0 10px #ff0050);">
+            <path fill="#ff0050" d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/>
           </svg>
         </div>
-        <div style="font-size:22px; font-weight:bold; color:#ff0050; text-shadow:0 0 10px #ff0050; margin-bottom:8px;">365 / 365</div>
-        <div style="font-size:15px; opacity:.9; line-height:1.5;"><strong>${header.textContent}</strong> & <strong>vous</strong><br>officiellement nommés<br><b>Amis de l'année</b><br>par <b>HaytiClips</b></div>`;
+        <div style="font-size:22px; font-weight:bold; color:#ff0050; text-shadow:0 0 5px #ff0050; margin-bottom:8px;">365 / 365</div>
+        <div style="font-size:14px; opacity:.9; line-height:1.5;"><strong>${header.textContent}</strong> & <strong>vous</strong><br>officiellement nommés<br><b>Amis de l'année</b><br>par <b>HaytiClips</b></div>`;
         messagesDiv.insertBefore(box, typingIndicator);
         lastSenderId = "system";
         return;
@@ -546,11 +554,10 @@ onAuthStateChanged(auth, async (user)=>{
       const wrapper = document.createElement("div");
       wrapper.className = "msg-wrapper";
 
-      // On affiche le nom seulement si l'expéditeur change et que ce n'est pas "moi"
+      // Nom expéditeur
       if (!isMe && lastSenderId !== m.sender) {
         const nameDiv = document.createElement("div");
         nameDiv.className = "msg-sender-name";
-        // On récupère le texte pur du header (sans le HTML du badge) pour le nom
         nameDiv.textContent = header.innerText.split(' ')[0] || "Contact"; 
         wrapper.appendChild(nameDiv);
       }
@@ -558,7 +565,6 @@ onAuthStateChanged(auth, async (user)=>{
       const bubble = document.createElement("div");
       bubble.className = "msg " + (isMe ? "me" : "other");
       
-      // Texte
       const textNode = document.createTextNode(m.text);
       bubble.appendChild(textNode);
 
@@ -570,18 +576,17 @@ onAuthStateChanged(auth, async (user)=>{
       timeSpan.textContent = formatTime(m.createdAt);
       metaDiv.appendChild(timeSpan);
 
-      // Double Ticks pour les messages envoyés
+      // Double Ticks
       if(isMe){
         const ticks = document.createElement("span");
         ticks.className = "msg-ticks";
-        // Vu/Reçu : prêt pour l'intégration de la logique (couleur bleue si "vu")
         ticks.innerHTML = `<svg viewBox="0 0 24 24"><path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"/></svg>`;
         metaDiv.appendChild(ticks);
       }
 
       bubble.appendChild(metaDiv);
 
-      // Gestion suppression
+      // Suppression
       let pressTimer;
       const startPress = () => { pressTimer = setTimeout(async ()=>{ if(confirm("Supprimer ce message ?")) await deleteDoc(doc(db,"conversations",convId,"messages",d.id)); }, 600); };
       const endPress = () => clearTimeout(pressTimer);
@@ -600,15 +605,19 @@ onAuthStateChanged(auth, async (user)=>{
       lastSenderId = m.sender;
     });
 
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    scrollToBottom();
   });
 
-  // ENVOI MESSAGE (Logique Game 365 intacte)
+  // Gérer le redimensionnement du clavier virtuel mobile
+  window.visualViewport.addEventListener("resize", scrollToBottom);
+
+  // ENVOI MESSAGE
   sendBtn.onclick = async ()=>{
     const text = input.value.trim();
     if(!text) return;
     
-    input.value = ""; // Vider immédiatement pour l'UX
+    input.value = ""; 
+    scrollToBottom();
 
     await addDoc(collection(db,"conversations",convId,"messages"),{
       sender:user.uid,
@@ -654,7 +663,7 @@ onAuthStateChanged(auth, async (user)=>{
     players[user.uid] = true;
 
     if (players[p1] && players[p2] && !dayValidated) {
-      streakFire.style.fill = "#ff2b2b";
+      streakFire.style.fill = "#ff0050";
       streak++;
       dayValidated = true;
 
