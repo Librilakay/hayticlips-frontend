@@ -1,155 +1,289 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff0050">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Admin – HaytiClips</title>
 
 <style>
-body{
-  margin:0;
-  background:#000;
-  color:#fff;
-  font-family:Arial, sans-serif;
+/* ================== RESET & BLOCAGE PAGE ================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y; /* Empêche le pinch-to-zoom */
 }
 
-.header{
-  padding:20px;
-  text-align:center;
-  font-size:20px;
-  font-weight:bold;
-  border-bottom:2px solid #ff0050;
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #000000;
+  color: #ffffff;
+  overflow: hidden; /* Empêche le défilement global de la page */
+  overscroll-behavior-y: none; /* Bloque le rebond élastique (iOS) */
 }
 
-.header-left{
-position:absolute;
-left:15px;
-font-size:22px;
-cursor:pointer;
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh; /* S'adapte parfaitement aux mobiles */
 }
 
-.stats{
-  display:flex;
-  justify-content:space-around;
-  padding:20px;
-  background:#111;
+/* ================== HEADER ================== */
+.header {
+  padding: 20px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  border-bottom: 1px solid #1a1a1a;
+  background: #000;
+  position: relative;
+  flex-shrink: 0;
 }
 
-.stat-box{
-  text-align:center;
+.header-left {
+  position: absolute;
+  left: 15px;
+  font-size: 24px;
+  cursor: pointer;
 }
 
-.stat-box strong{
-  font-size:22px;
-  color:#ff0050;
+.header-center {
+  color: #ff0050;
+  letter-spacing: 1px;
 }
 
-.search{
-  padding:15px;
+/* ================== STATS ================== */
+.stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 15px 10px;
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+  flex-shrink: 0;
 }
 
-.search input{
-  width:100%;
-  padding:12px;
-  border-radius:8px;
-  border:none;
+.stat-box {
+  text-align: center;
+  background: #111;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid #222;
+  flex: 1;
+  margin: 0 5px;
 }
 
-.user-list{
-  padding:10px;
+.stat-box strong {
+  display: block;
+  font-size: 24px;
+  color: #ff0050;
+  margin-bottom: 4px;
 }
 
-.user-card{
-  background:#111;
-  padding:15px;
-  margin-bottom:10px;
-  border-radius:10px;
+.stat-box div {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
-.user-card button{
-  margin-top:5px;
-  margin-right:5px;
-  padding:6px 10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
+/* ================== MENU NAVIGATION ================== */
+.menu-buttons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 15px 10px 5px 10px;
+  flex-shrink: 0;
 }
 
-.user-head{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  margin-bottom:10px;
-  cursor:pointer;
+.menu-buttons button {
+  padding: 10px 14px;
+  border: 1px solid #222;
+  border-radius: 20px;
+  background: #111;
+  color: #aaa;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-.user-avatar{
-  width:52px;
-  height:52px;
-  border-radius:50%;
-  object-fit:cover;
-  border:1px solid #333;
-  background:#000;
+.menu-buttons button.active {
+  background: #ff0050;
+  color: #fff;
+  border-color: #ff0050;
 }
 
-.user-meta{
-  flex:1;
-  min-width:0;
+/* ================== RECHERCHE ================== */
+.search {
+  padding: 10px 15px;
+  flex-shrink: 0;
 }
 
-.user-name{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-weight:700;
-  margin-bottom:4px;
+.search input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #222;
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
 }
 
-.user-bio{
-  font-size:13px;
-  color:#aaa;
-  word-break:break-word;
+.search input:focus {
+  border-color: #ff0050;
+}
+.search input::placeholder {
+  color: #666;
 }
 
-.badge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:16px;
-  height:16px;
-  border-radius:50%;
+/* ================== CONTENU SCROLLABLE ================== */
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 15px 30px 15px;
+  overscroll-behavior-y: contain; /* Scroll fluide interne uniquement */
 }
 
-.badge svg{
-  width:10px;
-  height:10px;
+/* Cache la barre de défilement pour un look propre */
+.content-area::-webkit-scrollbar { width: 0px; }
+
+/* ================== CARTES UTILISATEURS / RAPPORTS ================== */
+.user-card {
+  background: #111;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  border: 1px solid #222;
 }
 
-.badge-blue{
-  background:linear-gradient(135deg,#1da1f2,#0d8ddb);
-  box-shadow:0 0 8px rgba(29,161,242,0.45);
+.user-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
 }
 
-.badge-gold{
-  background:linear-gradient(135deg,#ffd700,#ffb700,#ff8c00);
-  box-shadow:0 0 8px rgba(255,200,0,0.45);
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #333;
+  background: #000;
 }
 
-.suspend{background:#ff0050;color:white;}
-.delete{background:#444;color:white;}
+.user-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.user-bio {
+  font-size: 13px;
+  color: #888;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.user-card button {
+  margin-top: 8px;
+  margin-right: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Couleurs Boutons Actions */
+.btn-suspend { background: #ff0050; color: white; }
+.btn-delete { background: #262628; color: #ff4d4d; border: 1px solid #ff4d4d30 !important; }
+.btn-success { background: #2ecc71; color: white; }
+
+/* ================== BADGES ================== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+.badge svg { width: 10px; height: 10px; }
+.badge-blue { background: linear-gradient(135deg,#1da1f2,#0d8ddb); }
+.badge-gold { background: linear-gradient(135deg,#ffd700,#ffb700,#ff8c00); }
+
+/* ================== MODAL ================== */
+#videoModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  backdrop-filter: blur(5px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  flex-direction: column;
+}
+
+#modalVideo {
+  max-width: 90%;
+  max-height: 60%;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  background: #000;
+  border: 1px solid #333;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 80%;
+  max-width: 300px;
+}
+
+.modal-actions button {
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="header-left" onclick="history.back()">←</div>
- <div class="header-center"> ADMIN DASHBOARD </div>
+  <div class="header-center">PANNEAU ADMIN</div>
 </div>
 
 <div class="stats">
   <div class="stat-box">
     <strong id="totalUsers">0</strong>
-    <div>Total utilisateurs</div>
+    <div>Inscrits</div>
   </div>
   <div class="stat-box">
     <strong id="onlineUsers">0</strong>
@@ -157,72 +291,41 @@ cursor:pointer;
   </div>
 </div>
 
-<div style="display:flex;justify-content:center;gap:10px;padding:10px;">
-  <button onclick="showUsers()">👥 Utilisateurs</button>
-        <button onclick="showReports()">🚩 Vidéos signalées</button>
-        <button onclick="showProfileReports()">👤 Profils signalés</button>
-  <button onclick="showModerationStats()">📊 Comptabilité</button>
+<div class="menu-buttons" id="tabButtons">
+  <button onclick="switchTab('userList', this)" class="active">👥 Utilisateurs</button>
+  <button onclick="switchTab('reportsList', this)">🚩 Vidéos</button>
+  <button onclick="switchTab('profileReportsList', this)">👤 Profils</button>
+  <button onclick="switchTab('moderationStats', this)">🛡️ Modération</button>
 </div>
 
-<div class="search">
-  <input type="text" id="searchInput" placeholder="Rechercher par nom...">
+<div class="search" id="searchContainer">
+  <input type="text" id="searchInput" placeholder="Rechercher un utilisateur...">
 </div>
 
-<div class="user-list" id="userList"></div>
-<div class="user-list" id="reportsList" style="display:none;"></div>
-<div class="user-list" id="profileReportsList" style="display:none;"></div>
-<div class="user-list" id="moderationStats" style="display:none;"></div>
-<div class="user-list"id="highRiskList" style="display:none;"></div>
+<div class="content-area">
+  <div id="userList"></div>
+  <div id="reportsList" style="display:none;"></div>
+  <div id="profileReportsList" style="display:none;"></div>
+  <div id="moderationStats" style="display:none;"></div>
+</div>
 
-<div id="videoModal" style="
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.9);
-display:none;
-justify-content:center;
-align-items:center;
-z-index:9999;
-flex-direction:column;
-">
-
-<video id="modalVideo"
-controls
-style="max-width:90%;max-height:70%;margin-bottom:20px;"></video>
-
-<button onclick="ignoreReport()" 
-style="background:#2ecc71;color:white;padding:10px 20px;border:none;border-radius:8px;margin-bottom:10px;">
-Ignorer signalement
-</button>
-
-<button onclick="deleteReportedVideo()" 
-style="background:#ff0050;color:white;padding:10px 20px;border:none;border-radius:8px;">
-Supprimer la vidéo
-</button>
-
-<button onclick="closeVideoModal()" 
-style="margin-top:10px;background:#444;color:white;padding:8px 20px;border:none;border-radius:8px;">
-Fermer
-</button>
-
+<div id="videoModal">
+  <video id="modalVideo" controls playsinline></video>
+  
+  <div class="modal-actions">
+    <button onclick="ignoreReport()" class="btn-success">Ignorer le signalement</button>
+    <button onclick="deleteReportedVideo()" class="btn-suspend">Supprimer la vidéo</button>
+    <button onclick="closeVideoModal()" style="background:#222; color:#aaa;">Fermer</button>
+  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
-  getFirestore,
-  collection,
-  getDocs,
-  getDoc,
-  doc,
-  updateDoc,
-  deleteDoc,
-  serverTimestamp,
-  query,
-  where,
-  onSnapshot
+  getFirestore, collection, getDocs, getDoc, doc, updateDoc, deleteDoc,
+  serverTimestamp, query, where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-// 👇 IMPORT SUPABASE 👇
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const firebaseConfig = {
@@ -238,7 +341,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 👇 CONFIGURATION SUPABASE 👇
 const supabaseUrl = "https://nxpifzslxoigcuuhslox.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cGlmenNseG9pZ2N1dWhzbG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTgwODgsImV4cCI6MjA4NTk5NDA4OH0.yYQ3nQn6Z0ZCC9ZjuHt_HGJbf1CQVPHlz-b6nnEhFqg";
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -251,24 +353,17 @@ const searchInput = document.getElementById("searchInput");
 
 let allUsers = [];
 let currentReportedVideoId = null;
-let currentReportedVideoUrl = null; // 👈 Pour garder en mémoire l'URL de la vidéo signalée
+let currentReportedVideoUrl = null; 
 
 onAuthStateChanged(auth, async user => {
-
-  if(!user){
-    window.location.href = "login.html";
-    return;
-  }
+  if(!user){ window.location.href = "login.html"; return; }
 
   const snap = await getDocs(collection(db,"users"));
   const users = [];
 
-  snap.forEach(d=>{
-    users.push({id:d.id,...d.data()});
-  });
+  snap.forEach(d=>{ users.push({id:d.id,...d.data()}); });
 
   const me = users.find(u=>u.id===user.uid);
-
   if(!me || (me.role !== "admin" && me.role !== "moderator")){
     window.location.href = "feed.html";
     return;
@@ -281,255 +376,156 @@ onAuthStateChanged(auth, async user => {
 
 function updateStats(users){
   totalUsersEl.textContent = users.length;
-
-  const online = users.filter(u=>u.online===true);
-  onlineUsersEl.textContent = online.length;
+  onlineUsersEl.textContent = users.filter(u=>u.online===true).length;
 }
 
 function getBadgeHTML(user){
-
   if(!user || !user.verification) return "";
-
-  // GOLD
-  if(
-    user.verification.type === "gold" &&
-    user.verification.status === "active"
-  ){
-    return `
-      <span class="badge badge-gold">
-        <svg viewBox="0 0 24 24" fill="black">
-          <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/>
-        </svg>
-      </span>
-    `;
+  if(user.verification.type === "gold" && user.verification.status === "active"){
+    return `<span class="badge badge-gold"><svg viewBox="0 0 24 24" fill="black"><path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/></svg></span>`;
   }
-
-  // BLUE
-  if(
-    user.verification.type === "blue" &&
-    user.verification.status === "active" &&
-    user.verification.expiresAt?.toDate &&
-    user.verification.expiresAt.toDate() > new Date()
-  ){
-    return `
-      <span class="badge badge-blue">
-        <svg viewBox="0 0 24 24" fill="white">
-          <path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/>
-        </svg>
-      </span>
-    `;
+  if(user.verification.type === "blue" && user.verification.status === "active" && user.verification.expiresAt?.toDate && user.verification.expiresAt.toDate() > new Date()){
+    return `<span class="badge badge-blue"><svg viewBox="0 0 24 24" fill="white"><path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/></svg></span>`;
   }
-
   return "";
 }
 
+/* ================== GESTION DES ONGLETS ================== */
+window.switchTab = (tabId, btn) => {
+  // Masquer tous les contenus
+  document.getElementById('userList').style.display = 'none';
+  document.getElementById('reportsList').style.display = 'none';
+  document.getElementById('profileReportsList').style.display = 'none';
+  document.getElementById('moderationStats').style.display = 'none';
+
+  // Afficher le bon contenu
+  document.getElementById(tabId).style.display = 'block';
+
+  // Mettre à jour le bouton actif
+  document.querySelectorAll('#tabButtons button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // Gérer la barre de recherche
+  document.getElementById('searchContainer').style.display = (tabId === 'userList') ? 'block' : 'none';
+
+  // Charger les données si nécessaire
+  if(tabId === 'reportsList') loadReports();
+  if(tabId === 'profileReportsList') loadProfileReports();
+  if(tabId === 'moderationStats') loadModerationStats();
+};
+
+/* ================== UTILISATEURS ================== */
 function renderUsers(users){
   userList.innerHTML = "";
-
   users.forEach(u => {
-
     const badgeHTML = getBadgeHTML(u);
     const avatar = u.avatar || `https://i.pravatar.cc/150?u=${u.id}`;
-
+    
     userList.innerHTML += `
       <div class="user-card">
-
         <div class="user-head" onclick="openUserProfile('${u.id}')">
           <img src="${avatar}" class="user-avatar">
-
           <div class="user-meta">
-            <div class="user-name">
-              <span>${u.username || "Sans nom"}</span>
-              ${badgeHTML}
-            </div>
-            <div class="user-bio">${u.bio || ""}</div>
+            <div class="user-name"><span>${u.username || "Sans nom"}</span>${badgeHTML}</div>
+            <div class="user-bio">${u.bio || "Aucune bio"}</div>
           </div>
         </div>
-
-        <div style="font-size:12px;color:#888;margin-bottom:8px;">
-          UID: ${u.id}
-        </div>
-
-        <div style="margin-top:8px;">
+        <div style="font-size:11px;color:#666;margin-bottom:10px;font-family:monospace;">ID: ${u.id}</div>
+        <div>
           ${u.suspended ? `
-            <button class="delete" onclick="event.stopPropagation(); unsuspendUser('${u.id}')">
-              Réactiver
-            </button>
+            <button class="btn-success" onclick="event.stopPropagation(); unsuspendUser('${u.id}')">Réactiver</button>
           ` : `
-            <button class="suspend" onclick="event.stopPropagation(); suspendUser('${u.id}',3)">Suspendre 3j</button>
-            <button class="suspend" onclick="event.stopPropagation(); suspendUser('${u.id}',15)">Suspendre 15j</button>
-            <button class="suspend" onclick="event.stopPropagation(); suspendUser('${u.id}',30)">Suspendre 30j</button>
+            <button class="btn-suspend" onclick="event.stopPropagation(); suspendUser('${u.id}',3)">Susp. 3j</button>
+            <button class="btn-suspend" onclick="event.stopPropagation(); suspendUser('${u.id}',15)">Susp. 15j</button>
           `}
-          <button class="delete" onclick="event.stopPropagation(); deleteUserAccount('${u.id}')">Supprimer</button>
+          <button class="btn-delete" onclick="event.stopPropagation(); deleteUserAccount('${u.id}')">Supprimer</button>
         </div>
-
       </div>
     `;
   });
 }
 
+searchInput.addEventListener("input",()=>{
+  const value = searchInput.value.toLowerCase();
+  renderUsers(allUsers.filter(u=>(u.username || "").toLowerCase().includes(value)));
+});
 
-window.openUserProfile = (uid) => {
-  window.location.href = `profil.html?uid=${uid}`;
-};
+window.openUserProfile = (uid) => { window.location.href = `profil.html?uid=${uid}`; };
 
 window.suspendUser = async (uid,days)=>{
-  const until = new Date();
-  until.setDate(until.getDate()+days);
-
-  await updateDoc(doc(db,"users",uid),{
-    suspended:true,
-    suspendUntil: until
-  });
-
-  alert("Utilisateur suspendu");
+  const until = new Date(); until.setDate(until.getDate()+days);
+  await updateDoc(doc(db,"users",uid),{ suspended:true, suspendUntil: until });
+  alert("Compte suspendu !");
 };
 
-// 👇 SUPPRESSION DU COMPTE ET DES VIDÉOS DE SUPABASE 👇
+window.unsuspendUser = async (uid)=>{
+  await updateDoc(doc(db,"users",uid),{ suspended:false, suspendUntil:null });
+  alert("Compte réactivé !"); location.reload();
+};
+
 window.deleteUserAccount = async (uid)=>{
+  if(!confirm("Supprimer DÉFINITIVEMENT ce compte et toutes ses vidéos ?")) return;
 
-  if(!confirm("Supprimer définitivement le compte ?")) return;
-
-  // 1️⃣ Récupérer toutes ses vidéos
-  const videosSnap = await getDocs(
-    query(collection(db,"videos"), where("userId","==",uid))
-  );
-
-  // 2️⃣ Boucler sur les vidéos pour les supprimer de Supabase puis de Firestore
+  const videosSnap = await getDocs(query(collection(db,"videos"), where("userId","==",uid)));
   for(const v of videosSnap.docs){
-    const videoData = v.data();
-    const mediaUrl = videoData.mediaUrls?.[0];
-
-    // Nettoyage Supabase
+    const mediaUrl = v.data().mediaUrls?.[0];
     if (mediaUrl && mediaUrl.includes("supabase.co")) {
       try {
-        const urlParts = mediaUrl.split(`/${BUCKET_NAME}/`);
-        if (urlParts.length > 1) {
-          let fileName = urlParts[1].split('?')[0];
-          fileName = decodeURIComponent(fileName);
-          await supabase.storage.from(BUCKET_NAME).remove([fileName]);
-          console.log("✅ Vidéo de l'utilisateur supprimée de Supabase :", fileName);
-        }
-      } catch (supaErr) {
-        console.error("❌ Erreur Supabase :", supaErr);
-      }
+        let fileName = decodeURIComponent(mediaUrl.split(`/${BUCKET_NAME}/`)[1].split('?')[0]);
+        await supabase.storage.from(BUCKET_NAME).remove([fileName]);
+      } catch (e) {}
     }
-
-    // Suppression Firestore
     await deleteDoc(v.ref);
   }
 
-  // 3️⃣ Supprimer l'avatar de Supabase (Optionnel mais recommandé)
   const userSnap = await getDoc(doc(db, "users", uid));
   if (userSnap.exists()) {
     const avatarUrl = userSnap.data().avatar;
     if (avatarUrl && avatarUrl.includes("supabase.co")) {
       try {
-        const urlParts = avatarUrl.split(`/${BUCKET_NAME}/`);
-        if (urlParts.length > 1) {
-          let fileName = urlParts[1].split('?')[0];
-          fileName = decodeURIComponent(fileName);
-          await supabase.storage.from(BUCKET_NAME).remove([fileName]);
-        }
+        let fileName = decodeURIComponent(avatarUrl.split(`/${BUCKET_NAME}/`)[1].split('?')[0]);
+        await supabase.storage.from(BUCKET_NAME).remove([fileName]);
       } catch (e) {}
     }
   }
 
-  // 4️⃣ Supprimer le profil
   await deleteDoc(doc(db,"users",uid));
-
-  alert("Compte et vidéos supprimés");
-
-  loadProfileReports();
-  location.reload();
+  alert("Compte supprimé !"); location.reload();
 };
 
-searchInput.addEventListener("input",()=>{
-  const value = searchInput.value.toLowerCase();
-  const filtered = allUsers.filter(u=>
-    (u.username || "").toLowerCase().includes(value)
-  );
-  renderUsers(filtered);
-});
-
-window.unsuspendUser = async (uid)=>{
-  await updateDoc(doc(db,"users",uid),{
-    suspended:false,
-    suspendUntil:null
-  });
-
-  alert("Utilisateur réactivé");
-  location.reload();
-};
-
-window.showUsers = ()=>{
-  document.getElementById("userList").style.display="block";
-  document.getElementById("reportsList").style.display="none";
-  document.getElementById("profileReportsList").style.display="none";
-  document.getElementById("moderationStats").style.display="none";
-};
-
-window.showReports = ()=>{
-  document.getElementById("userList").style.display="none";
-  document.getElementById("reportsList").style.display="block";
-  document.getElementById("profileReportsList").style.display="none";
-  document.getElementById("moderationStats").style.display="none";
-  loadReports();
-};
-
+/* ================== VIDÉOS SIGNALÉES ================== */
 async function loadReports(){
-
   const reportsList = document.getElementById("reportsList");
-  reportsList.innerHTML = "Chargement...";
-
+  reportsList.innerHTML = "<div style='text-align:center;color:#666;'>Recherche de signalements...</div>";
   const videosSnap = await getDocs(collection(db,"videos"));
-
   let found = false;
   reportsList.innerHTML = "";
 
   for(const videoDoc of videosSnap.docs){
-
-    const reportsSnap = await getDocs(
-      collection(db,"videos",videoDoc.id,"reports")
-    );
-
+    const reportsSnap = await getDocs(collection(db,"videos",videoDoc.id,"reports"));
     if(reportsSnap.empty) continue;
-
+    
     found = true;
-
     const video = videoDoc.data();
-
-    const userSnap = await getDoc(doc(db,"users",video.userId));
-    const username = userSnap.exists()
-      ? userSnap.data().username
-      : "Utilisateur";
+    const user = allUsers.find(u => u.id === video.userId);
+    const username = user ? user.username : "Utilisateur Inconnu";
 
     reportsList.innerHTML += `
-      <div class="user-card"
-        onclick="openVideoModal('${videoDoc.id}','${video.mediaUrls?.[0] || ""}')">
-
-        <strong>${username}</strong>
-        <div>UID: ${video.userId}</div>
-        <div>Signalements: ${reportsSnap.size}</div>
-
+      <div class="user-card" onclick="openVideoModal('${videoDoc.id}','${video.mediaUrls?.[0] || ""}')" style="cursor:pointer; border-left: 4px solid #ff0050;">
+        <strong style="font-size:15px;">Auteur: ${username}</strong>
+        <div style="font-size:11px;color:#666;margin-top:4px;font-family:monospace;">UID: ${video.userId}</div>
+        <div style="margin-top:10px;font-weight:700;color:#ff0050;">🚨 ${reportsSnap.size} Signalement(s)</div>
       </div>
     `;
   }
-
-  if(!found){
-    reportsList.innerHTML = "Aucun signalement.";
-  }
+  if(!found) reportsList.innerHTML = "<div style='text-align:center;padding:20px;color:#666;'>Tout est propre. Aucun signalement.</div>";
 }
 
 window.openVideoModal = (videoId,src)=>{
-  currentReportedVideoId = videoId;
-  currentReportedVideoUrl = src; // 👈 On sauvegarde l'URL pour la suppression !
-
-  const modal = document.getElementById("videoModal");
-  const video = document.getElementById("modalVideo");
-
-  video.src = src;
-  modal.style.display="flex";
+  currentReportedVideoId = videoId; 
+  currentReportedVideoUrl = src; 
+  document.getElementById("modalVideo").src = src;
+  document.getElementById("videoModal").style.display="flex";
 };
 
 window.closeVideoModal = ()=>{
@@ -537,227 +533,118 @@ window.closeVideoModal = ()=>{
   document.getElementById("modalVideo").pause();
 };
 
-// 👇 SUPPRESSION D'UNE VIDÉO SIGNALÉE (SUPABASE + FIRESTORE) 👇
 window.deleteReportedVideo = async ()=>{
-
-  if(!confirm("Supprimer cette vidéo ?")) return;
-
-  // 1. Suppression Supabase
+  if(!confirm("Supprimer définitivement cette vidéo ?")) return;
   if (currentReportedVideoUrl && currentReportedVideoUrl.includes("supabase.co")) {
     try {
-      const urlParts = currentReportedVideoUrl.split(`/${BUCKET_NAME}/`);
-      if (urlParts.length > 1) {
-        let fileName = urlParts[1].split('?')[0];
-        fileName = decodeURIComponent(fileName);
-        await supabase.storage.from(BUCKET_NAME).remove([fileName]);
-        console.log("✅ Vidéo signalée supprimée de Supabase :", fileName);
-      }
-    } catch (supaErr) {
-      console.error("❌ Erreur Supabase :", supaErr);
-    }
+      let fileName = decodeURIComponent(currentReportedVideoUrl.split(`/${BUCKET_NAME}/`)[1].split('?')[0]);
+      await supabase.storage.from(BUCKET_NAME).remove([fileName]);
+    } catch (e) {}
   }
-
-  // 2. Suppression Firestore
   await deleteDoc(doc(db,"videos",currentReportedVideoId));
-
-  alert("Vidéo supprimée");
-
-  closeVideoModal();
-  loadReports();
+  alert("Vidéo supprimée !"); closeVideoModal(); loadReports();
 };
 
 window.ignoreReport = async ()=>{
-
-  if(!confirm("Ignorer tous les signalements ?")) return;
-
-  const reportsRef = collection(
-    db,
-    "videos",
-    currentReportedVideoId,
-    "reports"
-  );
-
-  const snap = await getDocs(reportsRef);
-
-  for(const d of snap.docs){
-    await deleteDoc(d.ref);
-  }
-
-  alert("Signalements supprimés");
-
-  closeVideoModal();
-  loadReports();
+  if(!confirm("Pardonner cette vidéo et effacer les signalements ?")) return;
+  const reportsSnap = await getDocs(collection(db,"videos",currentReportedVideoId,"reports"));
+  for(const d of reportsSnap.docs) await deleteDoc(d.ref);
+  alert("Signalements effacés !"); closeVideoModal(); loadReports();
 };
 
-window.showProfileReports = ()=>{
-  document.getElementById("userList").style.display="none";
-  document.getElementById("reportsList").style.display="none";
-  document.getElementById("profileReportsList").style.display="block";
-  document.getElementById("moderationStats").style.display="none";
-  loadProfileReports();
-};
-
+/* ================== PROFILS SIGNALÉS ================== */
 async function loadProfileReports(){
-
   const container = document.getElementById("profileReportsList");
-  container.innerHTML = "Chargement...";
+  container.innerHTML = "<div style='text-align:center;color:#666;'>Recherche de signalements...</div>";
+  const snap = await getDocs(query(collection(db,"profileReports"), where("status","==","pending")));
 
-  const snap = await getDocs(
-    query(
-      collection(db,"profileReports"),
-      where("status","==","pending")
-    )
-  );
-
-  if(snap.empty){
-    container.innerHTML = "Aucun profil signalé.";
-    return;
-  }
-
+  if(snap.empty){ container.innerHTML = "<div style='text-align:center;padding:20px;color:#666;'>Aucun profil signalé.</div>"; return; }
   container.innerHTML = "";
 
   snap.forEach(d => {
-
     const r = d.data();
     const reportedUser = allUsers.find(u => u.id === r.reportedUser);
     const avatar = reportedUser?.avatar || `https://i.pravatar.cc/150?u=${r.reportedUser}`;
     const badgeHTML = getBadgeHTML(reportedUser);
 
     container.innerHTML += `
-      <div class="user-card">
-
+      <div class="user-card" style="border-left: 4px solid #f39c12;">
         <div class="user-head" onclick="openUserProfile('${r.reportedUser}')">
           <img src="${avatar}" class="user-avatar">
-
           <div class="user-meta">
-            <div class="user-name">
-              <span>${r.reportedUsername || "Sans nom"}</span>
-              ${badgeHTML}
-            </div>
-            <div class="user-bio">Raison: ${r.reason}</div>
+            <div class="user-name"><span>${r.reportedUsername || "Sans nom"}</span>${badgeHTML}</div>
+            <div class="user-bio" style="color:#f39c12; font-weight:bold;">Motif: ${r.reason}</div>
           </div>
         </div>
-
-        <div>UID: ${r.reportedUser}</div>
-        <div>Followers: ${r.followersCount}</div>
-        <div>Status: ${r.status}</div>
-
-        <div style="margin-top:10px;">
-
-          <button class="suspend"
-            onclick="suspendUser('${r.reportedUser}',15)">
-            Suspendre 15j
-          </button>
-
-          <button class="delete"
-            onclick="deleteUserAccount('${r.reportedUser}')">
-            Supprimer compte
-          </button>
-
-          <button style="
-            background:#2ecc71;
-            color:white;
-            margin-top:6px;
-            padding:6px 10px;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;
-          "
-          onclick="ignoreProfileReport('${d.id}')">
-            Ignorer signalement
-          </button>
-
+        <div style="font-size:11px;color:#666;margin-bottom:10px;font-family:monospace;">UID: ${r.reportedUser}</div>
+        
+        <div>
+          <button class="btn-suspend" onclick="suspendUser('${r.reportedUser}',15)">Susp. 15j</button>
+          <button class="btn-delete" onclick="deleteUserAccount('${r.reportedUser}')">Supprimer</button>
+          <button class="btn-success" onclick="ignoreProfileReport('${d.id}')">Ignorer</button>
         </div>
-
       </div>
     `;
   });
 }
 
 window.ignoreProfileReport = async (reportId)=>{
-
   if(!confirm("Ignorer ce signalement ?")) return;
-
   await deleteDoc(doc(db,"profileReports",reportId));
-
-  alert("Signalement supprimé");
-
-  loadProfileReports();
+  alert("Signalement ignoré !"); loadProfileReports();
 };
 
-window.showModerationStats = ()=>{
-  document.getElementById("userList").style.display="none";
-  document.getElementById("reportsList").style.display="none";
-  document.getElementById("profileReportsList").style.display="none";
-  document.getElementById("moderationStats").style.display="block";
-  loadModerationStats();
-};
-
+/* ================== STATISTIQUES MODÉRATION ================== */
 async function loadModerationStats(){
-
   const container = document.getElementById("moderationStats");
-  container.innerHTML = "Chargement...";
-
-  // 1️⃣ Signalements profils
-  const profileSnap = await getDocs(
-    collection(db,"profileReports")
-  );
-
-  // 2️⃣ Signalements vidéos
+  container.innerHTML = "<div style='text-align:center;color:#666;'>Analyse en cours...</div>";
+  
+  const profileSnap = await getDocs(collection(db,"profileReports"));
   const videosSnap = await getDocs(collection(db,"videos"));
-
-  let totalVideoReports = 0;
-  let riskyVideos = 0;
-
+  
+  let totalVideoReports = 0, riskyVideos = 0, suspendedCount = 0;
   for(const v of videosSnap.docs){
-    const reportsSnap = await getDocs(
-      collection(db,"videos",v.id,"reports")
-    );
-
-    totalVideoReports += reportsSnap.size;
-
-    if(reportsSnap.size >= 3){
-      riskyVideos++;
-    }
+    const rSnap = await getDocs(collection(db,"videos",v.id,"reports"));
+    totalVideoReports += rSnap.size;
+    if(rSnap.size >= 3) riskyVideos++;
   }
 
-  // 3️⃣ Comptes à risque
   const reportCount = {};
   profileSnap.forEach(d=>{
     const r = d.data();
-    reportCount[r.reportedUser] =
-      (reportCount[r.reportedUser] || 0) + 1;
+    reportCount[r.reportedUser] = (reportCount[r.reportedUser] || 0) + 1;
   });
-
-  let riskyUsers = 0;
-  for(const uid in reportCount){
-    if(reportCount[uid] >= 3){
-      riskyUsers++;
-    }
-  }
-
-  // 4️⃣ Suspensions actives
-  const usersSnap = await getDocs(collection(db,"users"));
-
-  let suspendedCount = 0;
-  usersSnap.forEach(u=>{
-    if(u.data().suspended === true){
-      suspendedCount++;
-    }
-  });
+  let riskyUsers = Object.values(reportCount).filter(v => v >= 3).length;
+  
+  allUsers.forEach(u=>{ if(u.suspended) suspendedCount++; });
 
   container.innerHTML = `
-    <div class="user-card">
-      <strong>📊 Statistiques Globales</strong>
-      <div>Signalements profils : ${profileSnap.size}</div>
-      <div>Signalements vidéos : ${totalVideoReports}</div>
-      <div>Comptes ≥ 3 signalements : ${riskyUsers}</div>
-      <div>Vidéos ≥ 3 signalements : ${riskyVideos}</div>
-      <div>Comptes suspendus : ${suspendedCount}</div>
+    <div class="user-card" style="padding: 20px;">
+      <strong style="font-size:18px; margin-bottom:20px; display:block; color:#ff0050;">🛡️ Bilan de Santé de la Plateforme</strong>
+      
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #222; padding-bottom:8px;">
+        <span style="color:#aaa;">Total profils signalés</span>
+        <strong style="font-size:16px;">${profileSnap.size}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #222; padding-bottom:8px;">
+        <span style="color:#aaa;">Total vidéos signalées</span>
+        <strong style="font-size:16px;">${totalVideoReports}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #222; padding-bottom:8px;">
+        <span style="color:#f39c12;">Comptes à risque (≥ 3 reports)</span>
+        <strong style="font-size:16px; color:#f39c12;">${riskyUsers}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #222; padding-bottom:8px;">
+        <span style="color:#f39c12;">Vidéos à risque (≥ 3 reports)</span>
+        <strong style="font-size:16px; color:#f39c12;">${riskyVideos}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+        <span style="color:#ff4d4d;">Comptes actuellement suspendus</span>
+        <strong style="font-size:16px; color:#ff4d4d;">${suspendedCount}</strong>
+      </div>
     </div>
   `;
 }
-
 </script>
 
 </body>
