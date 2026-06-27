@@ -27,10 +27,9 @@ html, body {
   height: 100dvh;
   width: 100%;
   overflow-y: scroll;
-  scroll-snap-type: y mandatory; /* Magnétisme strict */
-  scroll-behavior: smooth; 
-  overscroll-behavior-y: none; /* Empêche le feed de rebondir en haut et en bas */
-  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: auto; /* 🔥 change 'smooth' par 'auto' pour un arrêt net et dur */
+  overscroll-behavior-y: none;
 }
 
 /* Pour masquer la barre de défilement (design plus propre) */
@@ -178,7 +177,7 @@ html, body {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 90px;
+  height: 65px;
   background: #000000;
   border-top: 1px solid #1a1a1a;
   display: flex;
@@ -194,9 +193,7 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: 12px;
   cursor: pointer;
-  position: relative;
 }
 
 .nav-btn svg {
@@ -572,9 +569,8 @@ color:white;
 <div class="feed" id="feed"></div>
 
 <div class="nav">
-  <div id="nav-home" class="nav-btn" style="position:relative;" onclick="location.href='feed.html'">
+  <div id="nav-home" class="nav-btn" onclick="location.href='feed.html'">
     <svg viewBox="0 0 24 24"><path d="M12 3L4 9v12h5v-7h6v7h5V9z"/></svg>
-    <div style="position:absolute; bottom:-10px; width:18px; height:3px; background:#ff0050; border-radius:999px;"></div>
   </div>
   
   <div id="nav-search" class="nav-btn" onclick="location.href='search.html'">
