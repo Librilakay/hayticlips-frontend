@@ -14,19 +14,17 @@ html, body {
   padding: 0;
   background: black;
   height: 100%;
-  width: 100%;
-  overflow: hidden; /* Bloque scroll global */
-  overscroll-behavior-y: none; /* 🔥 Empêche l'effet élastique/pull-to-refresh du navigateur */
-  touch-action: pan-y; /* 🔥 Interdit les mouvements horizontaux accidentels */
+  overflow: hidden; /* 🔥 bloque scroll global */
+  min-height: 100%;
+  min-width: 100%;
 }
 
 
 .video-box {
   position: relative;
-  width: 100%; /* 🔥 Corrigé : le 102% causait des mouvements bizarres de gauche à droite */
+  width: 102%;
   height: 100dvh;
   scroll-snap-align: start;
-  scroll-snap-stop: always; /* 🔥 CRUCIAL : Force le scroll à s'arrêter sur CHAQUE vidéo, empêche d'en glisser 2 d'un coup */
   background: black;
   display: flex;
   justify-content: center;
@@ -59,17 +57,10 @@ html, body {
 /* FEED */
 .feed {
   position: relative;
-  height: 100dvh;
-  width: 100%; /* Sécurité pour éviter tout débordement */
-  overflow-y: scroll;
+  height: 100dvh; /* 🔥 remplace 100vh */
+  overflow-y: auto;
   scroll-snap-type: y mandatory;
-  overscroll-behavior-y: none; /* 🔥 Bloque le rebond brutal en haut et en bas du feed */
-  -webkit-overflow-scrolling: touch; /* 🔥 Rend le geste tactile extrêmement fluide sur iOS */
-}
-
-/* Cache la barre de scroll pour l'immersion TikTok */
-.feed::-webkit-scrollbar {
-  display: none;
+  
 }
 
 
