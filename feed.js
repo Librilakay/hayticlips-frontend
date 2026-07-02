@@ -392,19 +392,27 @@ if (Math.abs(Number(v.score || 0) - finalScore) >= 10) {
   }).catch(console.error);
 }
 
-     if (!userCache[v.userId]) {
+if (!userCache[v.userId]) {
+        const userRef = doc(db,"users",v.userId);
+        const snap = await getDoc(userRef);
+        if(snap.exists()){
+          userCache[v.userId] = snap.data();
+        }
+     }
 
-const userRef = doc(db,"users",v.userId);
-
-const snap = await getDoc(userRef);
-
-if(snap.exists()){
-
-userCache[v.userId] = snap.data();
-
-}
-
-}
+     // ================= AJOUT : FILTRE COMPTE SUSPENDU =================
+     const ownerData = userCache[v.userId];
+     if (ownerData && ownerData.suspended) {
+       const now = new Date();
+       const until = ownerData.suspendUntil?.toDate?.();
+       
+       // Si le compte est suspendu et que la date de fin est dans le futur
+       if (until && until > now) {
+         console.log("Vidéo masquée : le créateur est suspendu", v.userId);
+         continue; // On annule l'affichage de cette vidéo et on passe à la suivante
+       }
+     }
+     // ==================================================================
 
       feed.insertAdjacentHTML("beforeend", `
         <div class="video-box" data-id="${v.id}" data-user="${v.userId}" data-score="${finalScore}">

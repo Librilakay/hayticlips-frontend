@@ -347,25 +347,33 @@ if(
 localStorage.setItem("2fa_enabled", u.security?.enabled ? "1" : "0");
 }
 
-  if(u.suspended){
-
+if(u.suspended){
     const now = new Date();
     const until = u.suspendUntil?.toDate?.();
 
     if(until && until > now){
+      alert("Ce compte est suspendu jusqu’au " + until.toLocaleDateString());
 
-  alert("Compte suspendu jusqu’au " + until.toLocaleDateString());
-
-  await signOut(auth);
-  window.location.href = "login.html";
-  return;
-} else {
-      await updateDoc(userRef,{
-        suspended:false,
-        suspendUntil:null
-      });
+      if (isOwner) {
+        // Seul le propriétaire est déconnecté et redirigé
+        await signOut(auth);
+        window.location.href = "login.html";
+      }
+      
+      // Le visiteur voit juste l'alerte mais reste sur la page
+      return; 
+      
+    } else {
+      if (isOwner) {
+        // Seul le propriétaire a les droits de retirer sa propre suspension
+        await updateDoc(userRef,{
+          suspended:false,
+          suspendUntil:null
+        });
+      }
     }
   }
+  
     const headerBadge = document.getElementById("headerBadge");
 headerBadge.innerHTML = "";
 
