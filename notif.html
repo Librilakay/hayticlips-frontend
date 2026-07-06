@@ -216,9 +216,12 @@ body {
 
 <div class="header">
   <span>Notifications</span>
-  <svg id="openMessages" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" style="cursor:pointer;">
-    <path d="M21 6h-18v12h4v4l4-4h10z"/>
-  </svg>
+  <div style="display: flex; gap: 15px; align-items: center;">
+    <span id="markAllReadBtn" style="font-size: 13px; font-weight: 500; color: #1da1f2; cursor: pointer; background: #1a1a1a; padding: 4px 10px; border-radius: 12px;">Tout lu</span>
+    <svg id="openMessages" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" style="cursor:pointer;">
+      <path d="M21 6h-18v12h4v4l4-4h10z"/>
+    </svg>
+  </div>
 </div>
 
 <div class="notifications" id="notificationsContainer"></div>
@@ -262,7 +265,9 @@ import {
   orderBy,
   onSnapshot,
   doc,
-  updateDoc
+  updateDoc,
+  getDocs,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -391,6 +396,11 @@ function buildMessage(data){
     case "like": return `<strong>${data.fromUsername}</strong> a aimé votre vidéo`;
     case "comment": return `<strong>${data.fromUsername}</strong> a commenté votre vidéo`;
     case "repost": return `<strong>${data.fromUsername}</strong> a reposté votre vidéo`;
+    
+    // NOUVELLES NOTIFICATIONS ICI 👇
+    case "comment_like": return `<strong>${data.fromUsername}</strong> a liké ton commentaire`;
+    case "reply": return `<strong>${data.fromUsername}</strong> a répondu à ton commentaire`;
+    
     case "blue_approved": return `Badge Blue activé pour 30 jours<br><span style="color:#888;font-size:12px;">Expire le : ${formatExpireDate(data)}</span>`;
     case "blue_expired": return `Votre badge Blue a expiré`;
     case "gift": return `<strong>${data.fromUsername}</strong> vous envoie ${data.amount} Gdes pour votre vidéo 🎁`;
@@ -426,6 +436,33 @@ function formatDate(timestamp){
   if(diffDays === 1) return `Hier`;
   return date.toLocaleDateString();
 }
+
+document.getElementById("markAllReadBtn").onclick = async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  try {
+    const q = query(
+      collection(db, "notifications"),
+      where("to", "==", user.uid),
+      where("read", "==", false)
+    );
+    const snap = await getDocs(q);
+    
+    if (snap.empty) return; // Si tout est déjà lu, on ne fait rien
+
+    const batch = writeBatch(db);
+    snap.forEach(docSnap => {
+      batch.update(docSnap.ref, { read: true });
+    });
+    
+    await batch.commit();
+    console.log("Toutes les notifications marquées comme lues !");
+    
+  } catch (err) {
+    console.error("Erreur Tout lu:", err);
+  }
+};
 
 document.getElementById("openMessages").onclick = ()=>{ window.location.href = "conversations.html"; };
 window.go = (url) => location.href = url;
