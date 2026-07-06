@@ -1194,9 +1194,10 @@ sendBtn.onclick = async () => {
       input.placeholder = "Ajouter un commentaire…";
       return; 
       
-    } catch (err) {
+} catch (err) {
       console.error("❌ ERREUR RÉPONSE:", err);
       alert("Erreur réponse: " + err.message);
+      return; // <-- IMPORTANT : Stoppe la fonction ici en cas d'échec pour ne pas créer un vrai commentaire en dessous
      }
   } 
   // MODE COMMENTAIRE NORMAL (seulement si PAS de réponse)
