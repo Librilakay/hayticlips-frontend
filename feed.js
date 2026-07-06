@@ -892,7 +892,7 @@ function loadComments(videoId) {
           <div style="flex:1;">
             <div style="display:flex;justify-content:space-between;">
               <div>
-                <div class="comment-username">
+<div class="comment-username" style="cursor:pointer;" data-uid="${c.uid}">
                    <strong>${c.username}</strong>
                 </div>
                 <span class="date">${date}</span>
@@ -1002,15 +1002,17 @@ function loadComments(videoId) {
             }
 
             let existingReply = repliesDiv.querySelector(`[data-reply-id="${r.id}"]`);
+            const isMyReply = reply.uid === currentUser?.uid; // Vérifie si c'est MA réponse
             
             if (!existingReply) {
               repliesDiv.insertAdjacentHTML("beforeend", `
-                <div class="reply-item" data-reply-id="${r.id}">
-                  <div class="reply-username">
+                <div class="reply-item" data-reply-id="${r.id}" data-parent-id="${d.id}">
+                  <div class="reply-username" style="cursor:pointer;" data-uid="${reply.uid}">
                        <strong>${userData.username}</strong>
                       ${badgeHTML}
                  </div> :
                   ${reply.text}
+                  ${isMyReply ? `<span class="delete-reply" style="cursor:pointer;color:#ff4d4d;font-size:11px;margin-left:8px;">✕</span>` : ''}
                 </div>
               `);
             } else {
@@ -1051,24 +1053,35 @@ document.getElementById("commentsList").addEventListener("click", async (e) => {
 
       const currentCount = commentSnap.data().likesCount || 0;
 
-      if (likeSnap.exists()) {
-
+if (likeSnap.exists()) {
         t.delete(likeRef);
         t.update(commentRef, {
           likesCount: Math.max(0, currentCount - 1)
         });
-
       } else {
-
         t.set(likeRef, {
           uid: currentUser.uid,
           createdAt: serverTimestamp()
         });
-
         t.update(commentRef, {
           likesCount: currentCount + 1
         });
 
+        // 🔔 AJOUT : NOTIFICATION LIKE COMMENTAIRE
+        const commentOwner = commentSnap.data().uid;
+        if (commentOwner && commentOwner !== currentUser.uid) {
+          const notifRef = doc(collection(db, "notifications")); // Crée une ref avec ID auto
+          t.set(notifRef, {
+            type: "comment_like",
+            from: currentUser.uid,
+            fromUsername: currentUser.username,
+            fromAvatar: currentUser.avatar || null,
+            to: commentOwner,
+            videoId: currentVideoId,
+            read: false,
+            createdAt: serverTimestamp()
+          });
+        }
       }
 
     });
@@ -1145,6 +1158,7 @@ sendBtn.onclick = async () => {
     console.log("📝 ENVOYER RÉPONSE à:", replyingToCommentId);
     
     try {
+      // 1. Ajouter la réponse
       await addDoc(
         collection(db, "videos", currentVideoId, "comments", replyingToCommentId, "replies"),
         {
@@ -1155,18 +1169,36 @@ sendBtn.onclick = async () => {
         }
       );
       
+      // 2. 🔔 AJOUT : NOTIFICATION DE RÉPONSE
+      const parentCommentSnap = await getDoc(doc(db, "videos", currentVideoId, "comments", replyingToCommentId));
+      if (parentCommentSnap.exists()) {
+        const parentOwner = parentCommentSnap.data().uid;
+        if (parentOwner !== currentUser.uid) {
+          await addDoc(collection(db, "notifications"), {
+            type: "reply",
+            from: currentUser.uid,
+            fromUsername: currentUser.username,
+            fromAvatar: currentUser.avatar || null,
+            to: parentOwner,
+            videoId: currentVideoId,
+            preview: text.substring(0, 100),
+            read: false,
+            createdAt: serverTimestamp()
+          });
+        }
+      }
+
       console.log("✅ RÉPONSE ENVOYÉE");
       input.value = "";
       replyingToCommentId = null;
       input.placeholder = "Ajouter un commentaire…";
-      return; // ← IMPORTANT : arrête ici pour les réponses
+      return; 
       
     } catch (err) {
       console.error("❌ ERREUR RÉPONSE:", err);
       alert("Erreur réponse: " + err.message);
-    }
-  }
-
+     }
+  } 
   // MODE COMMENTAIRE NORMAL (seulement si PAS de réponse)
   try {
     console.log("💬 ENVOYER COMMENTAIRE normal");
@@ -1362,6 +1394,37 @@ document.getElementById("commentsList").addEventListener("click", async e => {
 
   } catch (err) {
     console.error("❌ ERREUR SUPPRESSION:", err);
+  }
+});
+
+// ================= CLICS PROFILS ET SUPPRESSION RÉPONSES =================
+document.getElementById("commentsList").addEventListener("click", e => {
+  
+  // 1. Redirection vers le profil si clic sur un nom
+  const usernameEl = e.target.closest(".comment-username, .reply-username");
+  if (usernameEl && usernameEl.dataset.uid) {
+    e.stopPropagation();
+    window.location.href = `profil.html?uid=${usernameEl.dataset.uid}`;
+    return;
+  }
+  
+  // 2. Supprimer sa propre réponse
+  const delReplyBtn = e.target.closest(".delete-reply");
+  if (delReplyBtn && currentVideoId) {
+    e.stopPropagation();
+    const replyItem = delReplyBtn.closest(".reply-item");
+    const replyId = replyItem.dataset.replyId;
+    const parentId = replyItem.dataset.parentId;
+    
+    if (replyId && parentId) {
+      if (confirm("Supprimer cette réponse ?")) {
+        const replyRef = doc(db, "videos", currentVideoId, "comments", parentId, "replies", replyId);
+        // Supprime dans Firebase
+        deleteDoc(replyRef).catch(err => console.error("Erreur suppression:", err));
+        // Retire l'élément visuellement direct pour que l'UI soit instantanée
+        replyItem.remove(); 
+      }
+    }
   }
 });
 
