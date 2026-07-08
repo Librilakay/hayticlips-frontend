@@ -674,9 +674,42 @@ async function loadModerationStats(){
         <span style="color:#ff4d4d;">Comptes actuellement suspendus</span>
         <strong style="font-size:16px; color:#ff4d4d;">${suspendedCount}</strong>
       </div>
+
+      <!-- LE BOUTON DE RÉPARATION EST PLACÉ ICI -->
+      <button id="fixBtn" onclick="fixOldVideos()" style="width:100%; padding:12px; margin-top:20px; background:#1da1f2; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
+        🛠️ Réparer les anciennes vidéos
+      </button>
+
     </div>
   `;
 }
+
+window.fixOldVideos = async () => {
+  if(!confirm("Voulez-vous assigner le statut 'clean' à toutes les anciennes vidéos pour qu'elles réapparaissent dans le flux ?")) return;
+
+  try {
+    const btn = document.getElementById("fixBtn");
+    btn.textContent = "Mise à jour en cours...";
+    btn.disabled = true;
+
+    const snap = await getDocs(collection(db, "videos"));
+    let count = 0;
+
+    for (const v of snap.docs) {
+      // Si la vidéo n'a pas de statut de modération, on lui ajoute
+      if (!v.data().moderationStatus) {
+        await updateDoc(doc(db, "videos", v.id), { moderationStatus: "clean" });
+        count++;
+      }
+    }
+    alert(`✅ Succès ! ${count} anciennes vidéos ont été réparées. Elles sont de retour dans le Feed !`);
+    btn.textContent = "🛠️ Réparer les anciennes vidéos";
+    btn.disabled = false;
+  } catch(err) {
+    alert("Erreur: " + err.message);
+  }
+};
+
 </script>
 
 </body>
