@@ -547,52 +547,6 @@ function renderPreview(file) {
   previewBox.appendChild(video);
 }
 
-async function sendToServerCompression(file){
-  const user = auth.currentUser;
-
-  if(!user){
-    throw new Error("Utilisateur non connecté");
-  }
-
-  const token = await user.getIdToken(true);
-
-  const formData = new FormData();
-  formData.append("video", file);
-
-  const res = await fetch("https://hayticlip-server.onrender.com/api/compress-video", {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + token
-    },
-    body: formData
-  });
-
-  if(!res.ok){
-    let msg = "Compression impossible";
-    try{
-      const data = await res.json();
-      msg = data.error || msg;
-    }catch(e){}
-    throw new Error(msg);
-  }
-
-  // LECTURE DU RÉSULTAT IA DEPUIS LE BACKEND
-  const modStatus = res.headers.get("X-Moderation-Status") || "clean";
-
-  const blob = await res.blob();
-
-  const compressedFile = new File(
-    [blob],
-    `hayticlips_compressed_${Date.now()}.mp4`,
-    { type: "video/mp4" }
-  );
-  
-  // On attache le statut au fichier pour l'utiliser lors de la sauvegarde
-  compressedFile.moderationStatus = modStatus;
-  
-  return compressedFile;
-}
-
 async function validateAndSetVideo(file){
   if (!file) return false;
 
@@ -601,10 +555,10 @@ async function validateAndSetVideo(file){
     return false;
   }
 
-  const maxSize = 50 * 1024 * 1024;
+  const maxSize = 50 * 1024 * 1024; // 50MB max pour la vidéo brute
 
   if (file.size > maxSize) {
-    alert("La vidéo dépasse 50MB.");
+    alert("La vidéo brute dépasse 50MB.");
     fileInput.value = "";
     resetPreview();
     return false;
@@ -616,7 +570,6 @@ async function validateAndSetVideo(file){
   const valid = await new Promise((resolve) => {
     video.onloadedmetadata = function () {
       URL.revokeObjectURL(video.src);
-
       if (video.duration > 120) {
         alert("La vidéo dépasse 120s.");
         fileInput.value = "";
@@ -624,7 +577,6 @@ async function validateAndSetVideo(file){
         resolve(false);
         return;
       }
-
       resolve(true);
     };
 
@@ -638,40 +590,13 @@ async function validateAndSetVideo(file){
 
   if (!valid) return false;
 
-  chooseFileBtn.disabled = true;
-  publishBtn.disabled = true;
-  chooseFileBtn.textContent = "Veuillez patienter...";
-  publishBtn.textContent = "Préparation...";
-
-try{
-  const compressedFile = await sendToServerCompression(file);
-
-  if(compressedFile.size > 20 * 1024 * 1024){
-    alert("Même compressée, la vidéo dépasse 20MB.");
-    fileInput.value = "";
-    resetPreview();
-    return false;
-  }
-
-  files = [compressedFile];
-  renderPreview(compressedFile);
-
-  const originalMB = (file.size / 1024 / 1024).toFixed(1);
-  const finalMB = (compressedFile.size / 1024 / 1024).toFixed(1);
-
-  console.log(`Compression serveur : ${originalMB}MB → ${finalMB}MB`);
-
-}catch(err){
-  console.error("Compression serveur error:", err);
-  alert("Compression impossible : " + err.message);
-  fileInput.value = "";
-  resetPreview();
-  return false;
-}
+  // L'UI est mise à jour instantanément
+  files = [file];
+  renderPreview(file);
 
   chooseFileBtn.disabled = false;
   publishBtn.disabled = false;
-  chooseFileBtn.textContent = "📁 Choisir un fichier";
+  chooseFileBtn.textContent = "📁 Choisir un autre fichier";
   publishBtn.textContent = "Publier";
 
   return true;
@@ -908,8 +833,8 @@ publishBtn.addEventListener("click", async () => {
     const usernamePromise = getUsername(currentUser.uid);
     const mediaUrls = [];
 
-    if(mainFile.size > 20 * 1024 * 1024){
-      alert("Vidéo trop lourde (20MB maximum)");
+if(mainFile.size > 50 * 1024 * 1024){
+      alert("Vidéo brute trop lourde (50MB maximum)");
       resetUI();
       return;
     }
@@ -945,6 +870,7 @@ publishBtn.addEventListener("click", async () => {
 const meData = meSnap.exists() ? meSnap.data() : {};
 const myAvatar = meData.avatar || null;
 
+// 1️⃣ ENREGISTREMENT TEMPORAIRE DANS FIRESTORE (Invisible dans le feed public)
     const videoRef = await addDoc(collection(db, "videos"), {
       userId: currentUser.uid,
       type: type,
@@ -960,8 +886,23 @@ const myAvatar = meData.avatar || null;
       viewsCount: 0,
       score: 0,
       reportsCount: 0,
-      moderationStatus: mainFile.moderationStatus || "clean" // 👈 LE STATUT IA EST SAUVEGARDÉ ICI
+      moderationStatus: "pending_ia" // 👈 Cache la vidéo du feed pendant le traitement
     });
+
+    // 2️⃣ DÉCLENCHEMENT DU SERVEUR EN TÂCHE DE FOND (Ne bloque pas l'utilisateur)
+    const token = await currentUser.getIdToken(true);
+    fetch("https://hayticlip-server.onrender.com/api/optimize-video", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        videoId: videoRef.id,       // L'ID de la vidéo dans Firestore
+        videoUrl: finalUrl,         // L'URL publique de la vidéo brute
+        filePath: fileName          // Le chemin Supabase pour que le serveur l'écrase après compression
+      })
+    }).catch(err => console.error("Erreur serveur en arrière-plan:", err));
 
     for(const usernameMention of rawMentions){
       if(usernameMention === username.toLowerCase()) continue;
@@ -990,8 +931,9 @@ const myAvatar = meData.avatar || null;
       }
     }
 
-    localStorage.setItem("lastUploadTime", Date.now());
+localStorage.setItem("lastUploadTime", Date.now());
     console.log("✅ Publication réussie !");
+    alert("🎉 Ta vidéo est en ligne ! Notre serveur l'analyse et l'optimise actuellement. Elle apparaîtra bientôt dans le Feed public.");
     window.location.href = `profil.html?uid=${currentUser.uid}`;
 
   } catch (error) {
