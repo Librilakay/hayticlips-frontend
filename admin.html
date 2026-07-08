@@ -497,11 +497,31 @@ window.deleteUserAccount = async (uid)=>{
 async function loadReports(){
   const reportsList = document.getElementById("reportsList");
   reportsList.innerHTML = "<div style='text-align:center;color:#666;'>Recherche de signalements...</div>";
-  const videosSnap = await getDocs(collection(db,"videos"));
+  
   let found = false;
-  reportsList.innerHTML = "";
+  let html = "";
 
+  // 1️⃣ RÉCUPÉRER LES VIDÉOS BLOQUÉES PAR L'IA
+  const aiFlaggedSnap = await getDocs(query(collection(db, "videos"), where("moderationStatus", "==", "flagged")));
+  aiFlaggedSnap.forEach(videoDoc => {
+    found = true;
+    const video = videoDoc.data();
+    const user = allUsers.find(u => u.id === video.userId);
+    const username = user ? user.username : "Utilisateur Inconnu";
+    html += `
+      <div class="user-card" onclick="openVideoModal('${videoDoc.id}','${video.mediaUrls?.[0] || ""}')" style="cursor:pointer; border-left: 4px solid #8e44ad; background: #1a0b14;">
+        <strong style="font-size:15px;">Auteur: ${username}</strong>
+        <div style="font-size:11px;color:#666;margin-top:4px;font-family:monospace;">UID: ${video.userId}</div>
+        <div style="margin-top:10px;font-weight:700;color:#d896ff;">🤖 Bloqué par l'IA (Quarantaine)</div>
+      </div>
+    `;
+  });
+
+  // 2️⃣ RÉCUPÉRER LES VIDÉOS SIGNALÉES PAR LES UTILISATEURS
+  const videosSnap = await getDocs(collection(db,"videos"));
   for(const videoDoc of videosSnap.docs){
+    if(videoDoc.data().moderationStatus === "flagged") continue; // On l'a déjà affichée au-dessus
+
     const reportsSnap = await getDocs(collection(db,"videos",videoDoc.id,"reports"));
     if(reportsSnap.empty) continue;
     
@@ -510,14 +530,16 @@ async function loadReports(){
     const user = allUsers.find(u => u.id === video.userId);
     const username = user ? user.username : "Utilisateur Inconnu";
 
-    reportsList.innerHTML += `
+    html += `
       <div class="user-card" onclick="openVideoModal('${videoDoc.id}','${video.mediaUrls?.[0] || ""}')" style="cursor:pointer; border-left: 4px solid #ff0050;">
         <strong style="font-size:15px;">Auteur: ${username}</strong>
         <div style="font-size:11px;color:#666;margin-top:4px;font-family:monospace;">UID: ${video.userId}</div>
-        <div style="margin-top:10px;font-weight:700;color:#ff0050;">🚨 ${reportsSnap.size} Signalement(s)</div>
+        <div style="margin-top:10px;font-weight:700;color:#ff0050;">🚨 ${reportsSnap.size} Signalement(s) Utilisateurs</div>
       </div>
     `;
   }
+
+  reportsList.innerHTML = html;
   if(!found) reportsList.innerHTML = "<div style='text-align:center;padding:20px;color:#666;'>Tout est propre. Aucun signalement.</div>";
 }
 
@@ -546,10 +568,20 @@ window.deleteReportedVideo = async ()=>{
 };
 
 window.ignoreReport = async ()=>{
-  if(!confirm("Pardonner cette vidéo et effacer les signalements ?")) return;
+  if(!confirm("Pardonner cette vidéo et la rendre visible dans le Feed ?")) return;
+  
+  // 1. Effacer les signalements utilisateurs (s'il y en a)
   const reportsSnap = await getDocs(collection(db,"videos",currentReportedVideoId,"reports"));
   for(const d of reportsSnap.docs) await deleteDoc(d.ref);
-  alert("Signalements effacés !"); closeVideoModal(); loadReports();
+  
+  // 2. Changer le statut IA sur "clean" pour l'afficher à tout le monde
+  await updateDoc(doc(db, "videos", currentReportedVideoId), {
+    moderationStatus: "clean"
+  });
+
+  alert("Vidéo approuvée ! Elle est maintenant visible par tous."); 
+  closeVideoModal(); 
+  loadReports();
 };
 
 /* ================== PROFILS SIGNALÉS ================== */

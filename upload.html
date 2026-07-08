@@ -576,13 +576,21 @@ async function sendToServerCompression(file){
     throw new Error(msg);
   }
 
+  // LECTURE DU RÉSULTAT IA DEPUIS LE BACKEND
+  const modStatus = res.headers.get("X-Moderation-Status") || "clean";
+
   const blob = await res.blob();
 
-  return new File(
+  const compressedFile = new File(
     [blob],
     `hayticlips_compressed_${Date.now()}.mp4`,
     { type: "video/mp4" }
   );
+  
+  // On attache le statut au fichier pour l'utiliser lors de la sauvegarde
+  compressedFile.moderationStatus = modStatus;
+  
+  return compressedFile;
 }
 
 async function validateAndSetVideo(file){
@@ -951,7 +959,8 @@ const myAvatar = meData.avatar || null;
       commentsCount: 0,
       viewsCount: 0,
       score: 0,
-      reportsCount: 0
+      reportsCount: 0,
+      moderationStatus: mainFile.moderationStatus || "clean" // 👈 LE STATUT IA EST SAUVEGARDÉ ICI
     });
 
     for(const usernameMention of rawMentions){

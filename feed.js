@@ -270,10 +270,11 @@ async function loadFeed() {
 }
 
   try {
-    const q = lastDoc
+const q = lastDoc
   ? query(
       collection(db,"videos"),
       where("archived","==",false),
+      where("moderationStatus","==","clean"), // 👈 LE FILTRE EST ICI
       orderBy("score","desc"),
       startAfter(lastDoc),
       limit(5)
@@ -281,6 +282,7 @@ async function loadFeed() {
   : query(
       collection(db,"videos"),
       where("archived","==",false),
+      where("moderationStatus","==","clean"), // 👈 LE FILTRE EST ICI
       orderBy("score","desc"),
       limit(5)
     );
