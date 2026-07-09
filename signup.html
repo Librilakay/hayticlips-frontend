@@ -150,7 +150,7 @@ input.error {
 
   <input type="text" id="prenom" placeholder="Prénom">
   <input type="text" id="nom" placeholder="Nom">
-  <input type="email" id="email" placeholder="Email (ex: test12)">
+  <input type="email" id="email" placeholder="Email (Gmail uniquement)">
   <input type="password" id="password" placeholder="Mot de passe">
   <input type="password" id="confirmPassword" placeholder="Confirmer le mot de passe">
   <input type="tel" id="phone" placeholder="Numéro de téléphone">
@@ -180,7 +180,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
   getAuth,
   createUserWithEmailAndPassword,
-  sendEmailVerification
+  sendEmailVerification,
+  deleteUser // Ajouté pour nettoyer les comptes fantômes en cas d'erreur
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -200,15 +201,20 @@ const emailInput = document.getElementById("email");
 const phoneInput = document.getElementById("phone");
 
 // ==========================================
-// 🪄 NOUVEAU : AUTO-COMPLÉTION EMAIL & TÉLÉPHONE
+// 🪄 AUTO-COMPLÉTION EMAIL & TÉLÉPHONE
 // ==========================================
 
-// Ajout automatique de @gmail.com quand on quitte le champ
-emailInput.addEventListener("blur", () => {
-  let val = emailInput.value.trim();
-  if (val.length > 0 && !val.includes("@")) {
-    emailInput.value = val + "@gmail.com";
+// Ajoute automatiquement @gmail.com (en live quand on quitte le champ)
+function formatEmail(val) {
+  let cleaned = val.trim().toLowerCase();
+  if (cleaned.length > 0 && !cleaned.includes("@")) {
+    return cleaned + "@gmail.com";
   }
+  return cleaned;
+}
+
+emailInput.addEventListener("blur", () => {
+  emailInput.value = formatEmail(emailInput.value);
 });
 
 // Formatage automatique du numéro Haïtien
@@ -222,7 +228,6 @@ phoneInput.addEventListener("input", (e) => {
   let val = phoneInput.value;
   // Empêche de supprimer le préfixe
   if (!val.startsWith("+509 ")) {
-    // Si l'utilisateur essaie d'effacer, on force le retour du +509
     if (val.startsWith("+509")) {
       phoneInput.value = "+509 " + val.slice(4).replace(/\s/g, "");
     } else {
@@ -253,8 +258,10 @@ function normalizePhone(phone) {
   return phone.replace(/\s+/g, ""); // Retire les espaces avant la vérification
 }
 
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+// 🚨 VÉRIFICATION STRICTE GMAIL
+function isValidGmail(email) {
+  // Vérifie que l'email est bien formé ET se termine obligatoirement par @gmail.com
+  return /^[^\s@]+@gmail\.com$/.test(email);
 }
 
 function isValidHaitiPhone(phone) {
@@ -267,89 +274,110 @@ signupBtn.addEventListener("click", async () => {
   try {
     const prenom = cleanName(document.getElementById("prenom").value);
     const nom = cleanName(document.getElementById("nom").value);
-    const email = emailInput.value.trim().toLowerCase();
+    
+    // 🚨 FIX : On force le formatage de l'email AVANT toute vérification
+    const rawEmail = emailInput.value;
+    const finalEmail = formatEmail(rawEmail);
+    emailInput.value = finalEmail; // On met à jour le champ visuellement pour l'utilisateur
+
     const phone = normalizePhone(phoneInput.value);
     const password = document.getElementById("password").value;
     const confirmPassword = document.getElementById("confirmPassword").value;
     const ageConfirm = document.getElementById("ageConfirm").checked;
 
-    if (!prenom || !nom || !email || !phone || !password || !confirmPassword) {
+    if (!prenom || !nom || !finalEmail || !phone || !password || !confirmPassword) {
       alert("Remplis correctement tous les champs.");
+      setButtonState(false);
       return;
     }
 
     if (prenom.length < 2 || prenom.length > 30 || nom.length < 2 || nom.length > 30) {
       alert("Prénom ou nom invalide.");
+      setButtonState(false);
       return;
     }
 
     if (!ageConfirm) {
       alert("Tu dois confirmer avoir 15 ans ou plus.");
+      setButtonState(false);
       return;
     }
 
-    if (!isValidEmail(email)) {
-      alert("Email invalide.");
-      return;
+    // 🚨 FIX : Blocage strict de tout ce qui n'est pas Gmail
+    if (!isValidGmail(finalEmail)) {
+      alert("⚠️ Erreur : Seules les adresses @gmail.com sont acceptées sur HaytiClips.");
+      setButtonState(false);
+      return; // On arrête tout, Firebase ne créera pas de compte !
     }
 
     if (!isValidHaitiPhone(phone)) {
       alert("Numéro haïtien invalide. Il doit comporter 8 chiffres après le +509.");
+      setButtonState(false);
       return;
     }
 
     if (password.length < 6) {
       alert("Mot de passe minimum 6 caractères.");
+      setButtonState(false);
       return;
     }
 
     if (password !== confirmPassword) {
       alert("Les mots de passe ne correspondent pas.");
+      setButtonState(false);
       return;
     }
 
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    // 1️⃣ Création dans Firebase Auth
+    let userCredential;
+    try {
+      userCredential = await createUserWithEmailAndPassword(auth, finalEmail, password);
+    } catch (authError) {
+      // On capture l'erreur Firebase tout de suite pour donner un beau message
+      if (authError.code === "auth/email-already-in-use") {
+        throw new Error("Cette adresse email est déjà utilisée.");
+      }
+      throw authError;
+    }
+    
     const user = userCredential.user;
 
-    const token = await user.getIdToken(true);
+    // 2️⃣ Envoi au Backend pour créer le document Firestore
+    try {
+      const token = await user.getIdToken(true);
+      const response = await fetch("https://hayticlip-server.onrender.com/api/initUserProfile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ prenom, nom, phone })
+      });
 
-    const response = await fetch("https://hayticlip-server.onrender.com/api/initUserProfile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        prenom,
-        nom,
-        phone
-      })
-    });
+      const data = await response.json();
 
-    const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Impossible de créer le profil.");
+      }
 
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || "Impossible d'initialiser le profil");
+    } catch (backendError) {
+      // 🚨 FIX PRO : Si le backend plante (téléphone déjà utilisé, etc.), on supprime le compte Firebase Auth !
+      console.error("Erreur serveur, nettoyage du compte Auth...", backendError);
+      await deleteUser(user).catch(err => console.error("Impossible de supprimer le compte fantôme:", err));
+      throw new Error("L'inscription a échoué : " + backendError.message);
     }
 
+    // 3️⃣ Envoi de l'email de vérification
     await sendEmailVerification(user, {
       url: "https://hayticlips.com/verify.html"
     });
 
-    alert("Nous vous avons envoyé un lien de vérification. Ouvrez l’application Gmail et cliquez sur le lien pour vérifier votre adresse e-mail.");
+    alert("🎉 Inscription réussie ! Nous vous avons envoyé un lien de vérification. Ouvrez l’application Gmail et cliquez sur le lien.");
+    window.location.href = "login.html"; // On redirige vers la connexion pour qu'il se connecte après vérification
 
   } catch (error) {
     console.error("SIGNUP ERROR:", error);
-
-    if (error.code === "auth/email-already-in-use") {
-      alert("Cet email est déjà utilisé.");
-    } else if (error.code === "auth/invalid-email") {
-      alert("Email invalide.");
-    } else if (error.code === "auth/weak-password") {
-      alert("Mot de passe trop faible.");
-    } else {
-      alert("Erreur inscription : " + (error.message || error.code));
-    }
+    alert(error.message || "Erreur d'inscription. Veuillez réessayer.");
   } finally {
     setButtonState(false);
   }
