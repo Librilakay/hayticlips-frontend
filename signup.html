@@ -150,10 +150,10 @@ input.error {
 
   <input type="text" id="prenom" placeholder="Prénom">
   <input type="text" id="nom" placeholder="Nom">
-  <input type="email" id="email" placeholder="email: exemple12@gmail.com">
+  <input type="email" id="email" placeholder="Email (ex: test12)">
   <input type="password" id="password" placeholder="Mot de passe">
   <input type="password" id="confirmPassword" placeholder="Confirmer le mot de passe">
-  <input type="tel" id="phone" placeholder="+509XXXXXXXX">
+  <input type="tel" id="phone" placeholder="Numéro de téléphone">
   
   <label class="age-check">
   <input type="checkbox" id="ageConfirm">
@@ -175,7 +175,6 @@ input.error {
 </div>
         
         
-<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
@@ -197,6 +196,46 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 const signupBtn = document.getElementById("signupBtn");
+const emailInput = document.getElementById("email");
+const phoneInput = document.getElementById("phone");
+
+// ==========================================
+// 🪄 NOUVEAU : AUTO-COMPLÉTION EMAIL & TÉLÉPHONE
+// ==========================================
+
+// Ajout automatique de @gmail.com quand on quitte le champ
+emailInput.addEventListener("blur", () => {
+  let val = emailInput.value.trim();
+  if (val.length > 0 && !val.includes("@")) {
+    emailInput.value = val + "@gmail.com";
+  }
+});
+
+// Formatage automatique du numéro Haïtien
+phoneInput.addEventListener("focus", () => {
+  if (phoneInput.value === "") {
+    phoneInput.value = "+509 ";
+  }
+});
+
+phoneInput.addEventListener("input", (e) => {
+  let val = phoneInput.value;
+  // Empêche de supprimer le préfixe
+  if (!val.startsWith("+509 ")) {
+    // Si l'utilisateur essaie d'effacer, on force le retour du +509
+    if (val.startsWith("+509")) {
+      phoneInput.value = "+509 " + val.slice(4).replace(/\s/g, "");
+    } else {
+      phoneInput.value = "+509 ";
+    }
+  }
+  
+  // Limite la longueur à +509 (5 caractères) + 8 chiffres = 13 caractères
+  if (phoneInput.value.length > 13) {
+    phoneInput.value = phoneInput.value.slice(0, 13);
+  }
+});
+// ==========================================
 
 function setButtonState(disabled) {
   signupBtn.disabled = disabled;
@@ -211,7 +250,7 @@ function cleanName(value) {
 }
 
 function normalizePhone(phone) {
-  return phone.replace(/\s+/g, "");
+  return phone.replace(/\s+/g, ""); // Retire les espaces avant la vérification
 }
 
 function isValidEmail(email) {
@@ -228,8 +267,8 @@ signupBtn.addEventListener("click", async () => {
   try {
     const prenom = cleanName(document.getElementById("prenom").value);
     const nom = cleanName(document.getElementById("nom").value);
-    const email = document.getElementById("email").value.trim().toLowerCase();
-    const phone = normalizePhone(document.getElementById("phone").value);
+    const email = emailInput.value.trim().toLowerCase();
+    const phone = normalizePhone(phoneInput.value);
     const password = document.getElementById("password").value;
     const confirmPassword = document.getElementById("confirmPassword").value;
     const ageConfirm = document.getElementById("ageConfirm").checked;
@@ -255,7 +294,7 @@ signupBtn.addEventListener("click", async () => {
     }
 
     if (!isValidHaitiPhone(phone)) {
-      alert("Numéro haïtien invalide.");
+      alert("Numéro haïtien invalide. Il doit comporter 8 chiffres après le +509.");
       return;
     }
 
@@ -294,10 +333,10 @@ signupBtn.addEventListener("click", async () => {
     }
 
     await sendEmailVerification(user, {
-  url: "https://hayticlips.com/verify.html"
-});
+      url: "https://hayticlips.com/verify.html"
+    });
 
-alert("Nous vous avons envoyé un lien de vérification. Ouvrez l’application Gmail et cliquez sur le lien pour vérifier votre adresse e-mail.");
+    alert("Nous vous avons envoyé un lien de vérification. Ouvrez l’application Gmail et cliquez sur le lien pour vérifier votre adresse e-mail.");
 
   } catch (error) {
     console.error("SIGNUP ERROR:", error);
