@@ -1044,7 +1044,12 @@ const listTitle = document.getElementById("listTitle");
 async function openList(type, profileUid, isOwner, isAdmin){
 
   listModal.style.display = "block";
-  listContainer.innerHTML = "Chargement...";
+  listTitle.textContent = type === "followers" ? "Abonnés" : "Abonnements";
+  listContainer.innerHTML = `
+    <div style="display:flex; justify-content:center; padding:20px;">
+      <div class="loader">Chargement...</div>
+    </div>
+  `;
 
   const subCol = type === "followers" ? "followers" : "following";
 
@@ -1054,7 +1059,6 @@ async function openList(type, profileUid, isOwner, isAdmin){
   );
 
   const snap = await getDocs(q);
-
   let docs = snap.docs;
 
   // 🔒 Limite 50 sauf owner ou admin
@@ -1064,48 +1068,79 @@ async function openList(type, profileUid, isOwner, isAdmin){
 
   listContainer.innerHTML = "";
 
-  for(const d of docs){
+  if(docs.length === 0) {
+    listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#888;">Aucun utilisateur trouvé</div>`;
+    return;
+  }
 
+  for(const d of docs){
     const userId = d.id;
     const userSnap = await getDoc(doc(db,"users",userId));
 
     if(!userSnap.exists()) continue;
 
     const data = userSnap.data();
-
-    // 🔥 priorité si te suit
-    let followsYou = false;
-
-    if(auth.currentUser){
-      const check = await getDoc(
-        doc(db,"users",userId,"following",auth.currentUser.uid)
-      );
-      followsYou = check.exists();
+    
+    // --- Logique des Badges SVG ---
+    let badgeHtml = "";
+    if(data.verification && data.verification.status === "active") {
+      if(data.verification.type === "blue") {
+        // Vérifier expiration Blue
+        const expireDate = data.verification.expiresAt?.toDate();
+        if(expireDate && expireDate > new Date()) {
+          badgeHtml = `
+            <span style="display:inline-flex; align-items:center; justify-content:center; background:#0095f6; border-radius:50%; width:16px; height:16px; margin-left:5px;">
+              <svg viewBox="0 0 24 24" fill="white" width="10" height="10"><path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/></svg>
+            </span>`;
+        }
+      } else if(data.verification.type === "gold") {
+        badgeHtml = `
+          <span style="display:inline-flex; align-items:center; justify-content:center; background:#FFD700; border-radius:50%; width:16px; height:16px; margin-left:5px;">
+            <svg viewBox="0 0 24 24" fill="black" width="10" height="10"><path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/></svg>
+          </span>`;
+      }
     }
 
-    listContainer.innerHTML += `
-      <div style="
-      padding:10px;
-      border-bottom:1px solid #222;
-      display:flex;
-      justify-content:space-between;
-      ">
-        <div>
-          ${data.username}
-          ${followsYou ? "<span style='color:#2ecc71;font-size:12px'>• te suit</span>" : ""}
-        </div>
-      </div>
+    // --- Rendu de la ligne utilisateur ---
+    const userRow = document.createElement("div");
+    userRow.style = `
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      border-bottom: 1px solid #1a1a1a;
+      cursor: pointer;
+      transition: background 0.2s;
     `;
+    userRow.onmouseover = () => userRow.style.background = "#0a0a0a";
+    userRow.onmouseout = () => userRow.style.background = "transparent";
+    
+    // Clic pour aller sur le profil
+    userRow.onclick = (e) => {
+      e.stopPropagation();
+      window.location.href = `profil.html?uid=${userId}`;
+    };
+
+    const avatarUrl = data.avatar || `https://i.pravatar.cc/150?u=${userId}`;
+
+    userRow.innerHTML = `
+      <img src="${avatarUrl}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; margin-right:12px; border: 1px solid #333;">
+      <div style="flex:1; display:flex; align-items:center;">
+        <span style="font-weight:600; color:white; font-size:15px;">${data.username}</span>
+        ${badgeHtml}
+      </div>
+      <div style="color:#555; font-size:12px;">Voir →</div>
+    `;
+
+    listContainer.appendChild(userRow);
   }
 
   if(!isOwner && !isAdmin && snap.size > 50){
-    listContainer.innerHTML += `
-      <div style="padding:20px;text-align:center;color:#888">
+    listContainer.insertAdjacentHTML('beforeend', `
+      <div style="padding:20px; text-align:center; color:#555; font-size:13px;">
         Seuls les 50 premiers sont visibles
       </div>
-    `;
+    `);
   }
-
 }
 
 const tabVideos = document.getElementById("tabVideos");
