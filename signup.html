@@ -181,8 +181,15 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   sendEmailVerification,
-  deleteUser // Ajouté pour nettoyer les comptes fantômes en cas d'erreur
+  deleteUser,
+  signInWithEmailAndPassword, // Ajouté pour récupérer les comptes fantômes
+  signOut // Ajouté pour sécuriser les vrais comptes
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc, 
+  getDoc 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Ajouté pour vérifier l'existence du profil
 
 const firebaseConfig = {
   apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
@@ -195,6 +202,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app); // Initialisation de Firestore
 
 const signupBtn = document.getElementById("signupBtn");
 const emailInput = document.getElementById("email");
@@ -204,7 +212,6 @@ const phoneInput = document.getElementById("phone");
 // 🪄 AUTO-COMPLÉTION EMAIL & TÉLÉPHONE
 // ==========================================
 
-// Ajoute automatiquement @gmail.com (en live quand on quitte le champ)
 function formatEmail(val) {
   let cleaned = val.trim().toLowerCase();
   if (cleaned.length > 0 && !cleaned.includes("@")) {
@@ -217,7 +224,6 @@ emailInput.addEventListener("blur", () => {
   emailInput.value = formatEmail(emailInput.value);
 });
 
-// Formatage automatique du numéro Haïtien
 phoneInput.addEventListener("focus", () => {
   if (phoneInput.value === "") {
     phoneInput.value = "+509 ";
@@ -226,7 +232,6 @@ phoneInput.addEventListener("focus", () => {
 
 phoneInput.addEventListener("input", (e) => {
   let val = phoneInput.value;
-  // Empêche de supprimer le préfixe
   if (!val.startsWith("+509 ")) {
     if (val.startsWith("+509")) {
       phoneInput.value = "+509 " + val.slice(4).replace(/\s/g, "");
@@ -235,7 +240,6 @@ phoneInput.addEventListener("input", (e) => {
     }
   }
   
-  // Limite la longueur à +509 (5 caractères) + 8 chiffres = 13 caractères
   if (phoneInput.value.length > 13) {
     phoneInput.value = phoneInput.value.slice(0, 13);
   }
@@ -255,12 +259,10 @@ function cleanName(value) {
 }
 
 function normalizePhone(phone) {
-  return phone.replace(/\s+/g, ""); // Retire les espaces avant la vérification
+  return phone.replace(/\s+/g, ""); 
 }
 
-// 🚨 VÉRIFICATION STRICTE GMAIL
 function isValidGmail(email) {
-  // Vérifie que l'email est bien formé ET se termine obligatoirement par @gmail.com
   return /^[^\s@]+@gmail\.com$/.test(email);
 }
 
@@ -275,10 +277,9 @@ signupBtn.addEventListener("click", async () => {
     const prenom = cleanName(document.getElementById("prenom").value);
     const nom = cleanName(document.getElementById("nom").value);
     
-    // 🚨 FIX : On force le formatage de l'email AVANT toute vérification
     const rawEmail = emailInput.value;
     const finalEmail = formatEmail(rawEmail);
-    emailInput.value = finalEmail; // On met à jour le champ visuellement pour l'utilisateur
+    emailInput.value = finalEmail; 
 
     const phone = normalizePhone(phoneInput.value);
     const password = document.getElementById("password").value;
@@ -303,11 +304,10 @@ signupBtn.addEventListener("click", async () => {
       return;
     }
 
-    // 🚨 FIX : Blocage strict de tout ce qui n'est pas Gmail
     if (!isValidGmail(finalEmail)) {
       alert("⚠️ Erreur : Seules les adresses @gmail.com sont acceptées sur HaytiClips.");
       setButtonState(false);
-      return; // On arrête tout, Firebase ne créera pas de compte !
+      return; 
     }
 
     if (!isValidHaitiPhone(phone)) {
@@ -328,16 +328,38 @@ signupBtn.addEventListener("click", async () => {
       return;
     }
 
-    // 1️⃣ Création dans Firebase Auth
+    // 1️⃣ Création ou Récupération du compte Auth
     let userCredential;
     try {
       userCredential = await createUserWithEmailAndPassword(auth, finalEmail, password);
     } catch (authError) {
-      // On capture l'erreur Firebase tout de suite pour donner un beau message
+      // 🚨 FIX : Mécanisme d'auto-réparation pour les comptes fantômes
       if (authError.code === "auth/email-already-in-use") {
-        throw new Error("Cette adresse email est déjà utilisée.");
+        try {
+          // On tente de le connecter pour voir si c'est son propre compte inachevé
+          userCredential = await signInWithEmailAndPassword(auth, finalEmail, password);
+          
+          // On vérifie si un document existe pour lui
+          const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+          
+          if (userDoc.exists()) {
+            // C'est un vrai compte complet. On le déconnecte pour sa sécurité et on le redirige.
+            await signOut(auth);
+            throw new Error("Vous avez déjà un compte. Veuillez vous connecter dans la page de connexion.");
+          } else {
+            // C'est un compte fantôme (pas de profil). On continue vers l'étape 2 !
+            console.log("Compte fantôme détecté et récupéré. Finalisation du profil...");
+          }
+        } catch (recoveryError) {
+          if (recoveryError.message.includes("déjà un compte")) {
+            throw recoveryError; // Relais de l'erreur du vrai compte
+          }
+          // Si le mot de passe est faux (le compte appartient à quelqu'un d'autre)
+          throw new Error("Cette adresse email est déjà utilisée. Si c'est votre compte, connectez-vous.");
+        }
+      } else {
+        throw authError; // Autre erreur Firebase (ex: mot de passe invalide)
       }
-      throw authError;
     }
     
     const user = userCredential.user;
@@ -361,7 +383,7 @@ signupBtn.addEventListener("click", async () => {
       }
 
     } catch (backendError) {
-      // 🚨 FIX PRO : Si le backend plante (téléphone déjà utilisé, etc.), on supprime le compte Firebase Auth !
+      // Si le backend échoue encore, on supprime le compte fantôme proprement car l'utilisateur est bien authentifié
       console.error("Erreur serveur, nettoyage du compte Auth...", backendError);
       await deleteUser(user).catch(err => console.error("Impossible de supprimer le compte fantôme:", err));
       throw new Error("L'inscription a échoué : " + backendError.message);
@@ -373,7 +395,7 @@ signupBtn.addEventListener("click", async () => {
     });
 
     alert("🎉 Inscription réussie ! Nous vous avons envoyé un lien de vérification. Ouvrez l’application Gmail et cliquez sur le lien.");
-    window.location.href = "login.html"; // On redirige vers la connexion pour qu'il se connecte après vérification
+    window.location.href = "login.html"; 
 
   } catch (error) {
     console.error("SIGNUP ERROR:", error);
