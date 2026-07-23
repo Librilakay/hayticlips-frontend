@@ -28,7 +28,6 @@ body{
   align-items:center;
   justify-content:center;
   padding:20px 16px;
- 
 }
 
 /* WARNING PWA (Écran bloquant) */
@@ -45,7 +44,7 @@ body{
   height: 100vh;
   background: #000;
   z-index: 9999;
-  padding: 20px;
+  padding: 24px;
 }
 
 .pwa-warning h2 {
@@ -56,8 +55,34 @@ body{
 
 .pwa-warning p {
   color: #aaa;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.5;
+  max-width: 320px;
+  margin-bottom: 24px;
+}
+
+.btn-guide {
+  width: 100%;
+  max-width: 320px;
+  padding: 14px 20px;
+  border-radius: 30px;
+  border: 1px solid #ff0050;
+  background: rgba(255, 0, 80, 0.15);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-guide:active {
+  transform: scale(0.98);
+  background: #ff0050;
 }
 
 /* CONTAINER */
@@ -157,8 +182,16 @@ button:active{
 <body>
 
 <div class="pwa-warning" id="pwaWarning">
-  <h2>⚠️ Action requise(obligatoire)</h2>
-  <p>Ajoutez HaytiClips à votre écran d'accueil pour l'utiliser.</p>
+  <h2>⚠️ Action requise (obligatoire)</h2>
+  <p>Ajoutez HaytiClips à votre écran d'accueil pour pouvoir utiliser l'application.</p>
+  
+  <a href="install-guide.html" class="btn-guide">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+    </svg>
+    Voir le mode d'emploi
+  </a>
 </div>
 
 <div class="container" id="mainContent">
@@ -239,7 +272,6 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
   }
 
   try {
-    // 1. On tente la connexion
     const cred = await signInWithEmailAndPassword(auth, email, password);
 
     if(!cred.user.emailVerified){
@@ -248,7 +280,6 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
       return;
     }
 
-    // 2. On récupère les infos Firestore
     const snap = await getDoc(doc(db,"users",cred.user.uid));
 
     if (!snap.exists()) {
@@ -280,19 +311,16 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
       }
     }
 
-    // 🔥 LA CORRECTION EST ICI 🔥
-    // On isole cette opération pour qu'elle ne casse pas la connexion si elle est bloquée par Firestore
     if (data.security && data.security.enabled) {
       try {
         await updateDoc(doc(db,"users",cred.user.uid),{
           "security.lastVerified": null
         });
       } catch (secErr) {
-        console.log("Info: Impossible de mettre à jour lastVerified depuis le client (bloqué par les règles de sécurité). La connexion continue normalement.");
+        console.log("Info: Impossible de mettre à jour lastVerified depuis le client.");
       }
     }
 
-    // 3. Tout est bon, on redirige !
     window.location.href = "feed.html";
 
   } catch (error) {

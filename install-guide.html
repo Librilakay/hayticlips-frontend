@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ff0050">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mode d'emploi - HaytiClips</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      padding: 20px 16px 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .back-btn {
+      background: #181818;
+      border: 1px solid #333;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    /* CARDS INSTRUCTIONS */
+    .card {
+      background: #121212;
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ff0050;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .steps-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .steps-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 15px;
+      line-height: 1.4;
+      color: #ddd;
+    }
+
+    .step-num {
+      background: #ff0050;
+      color: #fff;
+      font-weight: bold;
+      font-size: 12px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* SECTION MEDIA */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 30px 0 16px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .admin-btn {
+      display: none; /* Débloqué par JS si Admin */
+      background: #ff0050;
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .media-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .media-card {
+      background: #121212;
+      border: 1px solid #222;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .media-card img, .media-card video {
+      width: 100%;
+      max-height: 350px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .media-info {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .media-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #eee;
+    }
+
+    .delete-btn {
+      background: #333;
+      color: #ff4d4d;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* MODAL ADMIN ADD MEDIA */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #181818;
+      border: 1px solid #333;
+      border-radius: 18px;
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #000;
+      color: #fff;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn-submit {
+      flex: 1;
+      background: #ff0050;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      background: #333;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div class="header">
+    <a href="login.html" class="back-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </a>
+    <h1>Mode d'emploi (PWA)</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      📱 Sur iPhone (Safari)
+    </div>
+    <ul class="steps-list">
+      <li>
+        <span class="step-num">1</span>
+        <span>Ouvrez <strong>HaytiClips</strong> sur le navigateur <strong>Safari</strong>.</span>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <span>Appuyez sur l'icône de <strong>Partage</strong> en bas au centre (carré avec une flèche vers le haut).</span>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <span>Faites défiler vers le bas et appuyez sur <strong>« Sur l'écran d'accueil »</strong>.</span>
+      </li>
+      <li>
+        <span class="step-num">4</span>
+        <span>Confirmez en appuyant sur <strong>« Ajouter »</strong> en haut à droite.</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      🤖 Sur Android (Chrome)
+    </div>
+    <ul class="steps-list">
+      <li>
+        <span class="step-num">1</span>
+        <span>Ouvrez <strong>HaytiClips</strong> sur <strong>Google Chrome</strong>.</span>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <span>Appuyez sur les <strong>3 petits points</strong> en haut à droite.</span>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <span>Appuyez sur <strong>« Installer l'application »</strong> ou <strong>« Ajouter à l'écran d'accueil »</strong>.</span>
+      </li>
+      <li>
+        <span class="step-num">4</span>
+        <span>Validez l'installation.</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title">Tutoriels visuels</div>
+    <button class="admin-btn" id="adminAddBtn">➕ Ajouter Tuto</button>
+  </div>
+
+  <div class="media-grid" id="mediaContainer">
+    </div>
+
+</div>
+
+<div class="modal" id="adminModal">
+  <div class="modal-content">
+    <div class="modal-title">Ajouter une photo/vidéo</div>
+    
+    <div class="form-group">
+      <label>Titre explicatif</label>
+      <input type="text" id="mediaTitle" placeholder="Ex: Tuto installation iPhone">
+    </div>
+
+    <div class="form-group">
+      <label>Type de média</label>
+      <select id="mediaType">
+        <option value="image">Photo</option>
+        <option value="video">Vidéo</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Lien URL direct de la photo / vidéo</label>
+      <input type="url" id="mediaUrl" placeholder="https://...">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="closeModalBtn">Annuler</button>
+      <button class="btn-submit" id="saveMediaBtn">Publier</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  deleteDoc, 
+  doc, 
+  getDoc,
+  serverTimestamp,
+  query,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let isAdmin = false;
+
+// 1. VÉRIFICATION DU RÔLE ADMIN
+onAuthStateChanged(auth, async (currentUser) => {
+  if (currentUser) {
+    const userSnap = await getDoc(doc(db, "users", currentUser.uid));
+    if (userSnap.exists() && userSnap.data().role === "admin") {
+      isAdmin = true;
+      document.getElementById("adminAddBtn").style.display = "block";
+    }
+  }
+  loadTutorials();
+});
+
+// 2. CHARGER LES TUTORIELS DEPUIS FIRESTORE
+async function loadTutorials() {
+  const container = document.getElementById("mediaContainer");
+  container.innerHTML = "Chargement...";
+
+  try {
+    const q = query(collection(db, "pwa_tutorials"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+
+    container.innerHTML = "";
+
+    if (snap.empty) {
+      container.innerHTML = `<div style="color:#777; font-size:14px; text-align:center; padding:20px;">Aucun tutoriel visuel disponible.</div>`;
+      return;
+    }
+
+    snap.forEach((d) => {
+      const data = d.data();
+      const card = document.createElement("div");
+      card.className = "media-card";
+
+      let mediaContent = "";
+      if (data.type === "video") {
+        mediaContent = `<video src="${data.url}" controls playsinline></video>`;
+      } else {
+        mediaContent = `<img src="${data.url}" alt="${data.title}">`;
+      }
+
+      let deleteBtn = "";
+      if (isAdmin) {
+        deleteBtn = `<button class="delete-btn" onclick="deleteTutorial('${d.id}')">Supprimer</button>`;
+      }
+
+      card.innerHTML = `
+        ${mediaContent}
+        <div class="media-info">
+          <span class="media-title">${data.title}</span>
+          ${deleteBtn}
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+
+  } catch (err) {
+    console.error("Erreur chargement tutos:", err);
+    container.innerHTML = `<div style="color:#ff4d4d; font-size:13px;">Erreur de chargement des tutoriels.</div>`;
+  }
+}
+
+// 3. AJOUTER UN TUTORIEL (ADMIN)
+const modal = document.getElementById("adminModal");
+document.getElementById("adminAddBtn").onclick = () => modal.style.display = "flex";
+document.getElementById("closeModalBtn").onclick = () => modal.style.display = "none";
+
+document.getElementById("saveMediaBtn").onclick = async () => {
+  const title = document.getElementById("mediaTitle").value.trim();
+  const type = document.getElementById("mediaType").value;
+  const url = document.getElementById("mediaUrl").value.trim();
+
+  if (!title || !url) {
+    alert("Veuillez remplir tous les champs.");
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "pwa_tutorials"), {
+      title,
+      type,
+      url,
+      createdAt: serverTimestamp()
+    });
+
+    alert("Tutoriel publié !");
+    modal.style.display = "none";
+    document.getElementById("mediaTitle").value = "";
+    document.getElementById("mediaUrl").value = "";
+    loadTutorials();
+
+  } catch (err) {
+    alert("Erreur publication : " + err.message);
+  }
+};
+
+// 4. SUPPRIMER UN TUTORIEL
+window.deleteTutorial = async (id) => {
+  if (confirm("Supprimer ce tutoriel ?")) {
+    await deleteDoc(doc(db, "pwa_tutorials", id));
+    loadTutorials();
+  }
+};
+</script>
+
+</body>
+</html>
