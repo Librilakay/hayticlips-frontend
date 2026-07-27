@@ -43,7 +43,7 @@ body{
 .header-center{ font-size:18px; font-weight:800; }
 .header-right{ width:40px; text-align:right; }
 
-/* TABS (Inspiré de l'image fournie) */
+/* TABS */
 .tabs{
   display:flex;
   border-bottom:1px solid #222;
@@ -259,7 +259,7 @@ input:focus{ border-color:#ff0050; }
     </div>
 
     <div class="grid">
-      <!-- Nouvel ajout: Argent total sur la plateforme -->
+      <!-- Argent total sur la plateforme -->
       <div class="card" style="border-color:#ff0050;">
         <div class="card-title">Fonds Totaux Utilisateurs</div>
         <div class="card-value white" id="platformTotal">0 Gdes</div>
@@ -283,7 +283,7 @@ input:focus{ border-color:#ff0050; }
   <div class="tab-content" id="contentUtilisateur">
     
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Email ou ID de l'utilisateur...">
+      <input type="text" id="searchInput" placeholder="Rechercher par Username ou ID...">
       <button class="primary" id="searchBtn">Rechercher</button>
     </div>
 
@@ -291,7 +291,7 @@ input:focus{ border-color:#ff0050; }
       
       <div class="user-profile">
         <div class="user-info">
-          <h3 id="uEmail">email@user.com</h3>
+          <h3 id="uEmail">@username</h3>
           <p>ID: <span id="uId">...</span></p>
           <p style="margin-top:10px;">Balance actuelle : <strong class="pink" style="font-size:22px;" id="uBalance">0 Gdes</strong></p>
           <div id="uLockBadge" style="margin-top:6px; display:none;"><span class="badge-locked">COMPTE GELÉ</span></div>
@@ -372,7 +372,6 @@ async function getAdminToken(){
 async function loadFinance(){
   document.getElementById("statusText").textContent = "Chargement...";
   try {
-    // 1. Appel du backend existant pour les stats admin
     const token = await getAdminToken();
     const res = await fetch("https://hayticlip-server.onrender.com/api/admin/finance-summary", {
       headers: { "Authorization": "Bearer " + token }
@@ -385,10 +384,10 @@ async function loadFinance(){
       document.getElementById("netTotal").textContent = money(data.netTotal);
     }
 
-    // 2. Calculer le total de l'argent sur TOUTE la plateforme
+    // Calcul corrigé : Utilisation de sum("wallet") au lieu de sum("balance")
     const usersColl = collection(db, "users");
     const snapshot = await getAggregateFromServer(usersColl, {
-      totalMoney: sum("balance")
+      totalMoney: sum("wallet")
     });
     const platformMoney = snapshot.data().totalMoney || 0;
     document.getElementById("platformTotal").textContent = money(platformMoney);
@@ -402,7 +401,7 @@ async function loadFinance(){
 document.getElementById("refreshBtn").onclick = loadFinance;
 
 /* ================= ONGLET UTILISATEUR ================= */
-let currentUserLoaded = null; // Stocke l'ID de l'utilisateur recherché
+let currentUserLoaded = null;
 
 document.getElementById("searchBtn").onclick = async () => {
   const val = document.getElementById("searchInput").value.trim();
@@ -419,12 +418,12 @@ document.getElementById("searchBtn").onclick = async () => {
     let userSnap;
     let uid = val;
     
-    // Essayer par ID d'abord
+    // 1. Essayer par ID
     userSnap = await getDoc(doc(db, "users", val));
     
-    // Si pas trouvé par ID, essayer par Email
+    // 2. Essayer par USERNAME
     if(!userSnap.exists()){
-      const q = query(collection(db, "users"), where("email", "==", val.toLowerCase()), limit(1));
+      const q = query(collection(db, "users"), where("usernameLower", "==", val.toLowerCase()), limit(1));
       const querySnapshot = await getDocs(q);
       if(!querySnapshot.empty){
         userSnap = querySnapshot.docs[0];
@@ -440,18 +439,14 @@ document.getElementById("searchBtn").onclick = async () => {
     const userData = userSnap.data();
     currentUserLoaded = uid;
 
-    // Afficher les infos
-    document.getElementById("uEmail").textContent = userData.email || "Sans email";
+    document.getElementById("uEmail").textContent = "@" + (userData.username || "inconnu");
     document.getElementById("uId").textContent = uid;
-    document.getElementById("uBalance").textContent = money(userData.balance);
+    document.getElementById("uBalance").textContent = money(userData.wallet); 
     
-    // Gérer l'état du lock
-    const isLocked = userData.balanceLocked === true;
+    const isLocked = userData.walletLocked === true;
     updateLockButtonUI(isLocked);
 
     document.getElementById("userResultArea").style.display = "block";
-
-    // Charger les transactions de cet utilisateur
     loadUserTransactions(uid);
 
   } catch(e) {
@@ -468,11 +463,11 @@ function updateLockButtonUI(isLocked){
   const lockBadge = document.getElementById("uLockBadge");
   
   if(isLocked){
-    lockBtn.textContent = "Dégeler la balance";
+    lockBtn.textContent = "Dégeler le wallet";
     lockBtn.className = "secondary";
     lockBadge.style.display = "block";
   } else {
-    lockBtn.textContent = "Geler la balance";
+    lockBtn.textContent = "Geler le wallet (Vider)";
     lockBtn.className = "danger";
     lockBadge.style.display = "none";
   }
@@ -480,18 +475,34 @@ function updateLockButtonUI(isLocked){
   lockBtn.onclick = () => toggleLock(isLocked);
 }
 
+// Fonction corrigée pour "prendre la totalité" (mettre wallet à 0)
 async function toggleLock(currentlyLocked){
   if(!currentUserLoaded) return;
   const newStatus = !currentlyLocked;
   
-  if(confirm(`Voulez-vous vraiment ${newStatus ? 'GELER' : 'DÉGELER'} l'argent de cet utilisateur ?`)){
+  const messageConfirm = newStatus 
+    ? "Voulez-vous vraiment GELER ce compte et VIDER totalement sa balance (prendre la totalité et mettre à 0 Gdes) ?" 
+    : "Voulez-vous vraiment DÉGELER le compte de cet utilisateur ?";
+  
+  if(confirm(messageConfirm)){
     try {
-      await updateDoc(doc(db, "users", currentUserLoaded), {
-        balanceLocked: newStatus
-      });
+      const updates = { walletLocked: newStatus };
+      
+      // Si on active le verrouillage, on force le wallet à 0 (confiscation totale)
+      if (newStatus === true) {
+        updates.wallet = 0;
+      }
+
+      await updateDoc(doc(db, "users", currentUserLoaded), updates);
+      
+      // Mise à jour de l'affichage en direct de la balance
+      if (newStatus === true) {
+        document.getElementById("uBalance").textContent = money(0);
+      }
+      
       updateLockButtonUI(newStatus);
     } catch(e) {
-      alert("Erreur lors de la mise à jour");
+      alert("Erreur lors de la mise à jour : " + e.message);
     }
   }
 }
@@ -501,7 +512,7 @@ async function loadUserTransactions(uid){
   txList.innerHTML = "Chargement...";
   
   try {
-    const q = query(collection(db, "transactions"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(30));
+    const q = query(collection(db, "walletTransactions"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(30));
     const snaps = await getDocs(q);
     
     if(snaps.empty){
@@ -513,7 +524,7 @@ async function loadUserTransactions(uid){
     snaps.forEach(docSnap => {
       const tx = docSnap.data();
       const amount = Number(tx.amount || 0);
-      const isOut = tx.direction === "out" || tx.type === "sendGift" || tx.type === "achat_badge"; // Exemples de sorties
+      const isOut = tx.direction === "out" || tx.type === "sendGift" || tx.type === "achat_badge"; 
       const amountClass = isOut ? "red" : "green";
       const sign = isOut ? "-" : "+";
 
@@ -533,14 +544,14 @@ async function loadUserTransactions(uid){
 
   } catch(e) {
     console.error(e);
-    txList.innerHTML = `<div class="empty" style="color:#ff4d4f">Erreur de lecture des transactions. (Vérifiez les index Firestore)</div>`;
+    txList.innerHTML = `<div class="empty" style="color:#ff4d4f">Erreur de lecture des transactions. (Avez-vous créé l'index dans Firebase ?)</div>`;
   }
 }
 
 /* ================= AUTHENTIFICATION ================= */
 document.getElementById("logoutBtn").onclick = async () => {
   await signOut(auth);
-  window.location.href = "login.html";
+  window.location.href = "profil.html";
 };
 
 onAuthStateChanged(auth, async(user)=>{
