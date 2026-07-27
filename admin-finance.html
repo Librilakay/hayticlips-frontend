@@ -26,221 +26,209 @@ body{
   padding-bottom:30px;
 }
 
+/* HEADER */
 .header{
   height:60px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 14px;
-  border-bottom:1px solid #222;
+  padding:0 16px;
   background:#000;
   position:sticky;
   top:0;
   z-index:100;
 }
 
-.header-left{
-  font-size:24px;
+.header-left{ font-size:24px; cursor:pointer; width:40px; }
+.header-center{ font-size:18px; font-weight:800; }
+.header-right{ width:40px; text-align:right; }
+
+/* TABS (Inspiré de l'image fournie) */
+.tabs{
+  display:flex;
+  border-bottom:1px solid #222;
+  margin-bottom:20px;
+  background:#000;
+  position:sticky;
+  top:60px;
+  z-index:99;
+}
+
+.tab{
+  flex:1;
+  text-align:center;
+  padding:16px 10px;
+  color:#888;
+  font-size:16px;
+  font-weight:700;
   cursor:pointer;
-  width:40px;
+  transition:all 0.3s ease;
+  border-bottom:3px solid transparent;
 }
 
-.header-center{
-  font-size:18px;
-  font-weight:900;
+.tab.active{
+  color:#fff;
+  border-bottom:3px solid #ff0050;
 }
 
-.header-right{
-  width:40px;
+.tab-content{
+  display:none;
 }
 
+.tab-content.active{
+  display:block;
+}
+
+/* CONTAINERS */
 .page{
   max-width:1100px;
   margin:0 auto;
-  padding:20px 16px;
+  padding:0 16px;
 }
 
-.topbar{
-  display:flex;
-  gap:10px;
-  margin-bottom:18px;
-  flex-wrap:wrap;
-}
-
+/* BUTTONS & INPUTS */
 button{
   border:none;
   border-radius:30px;
-  padding:13px 16px;
+  padding:13px 20px;
   font-weight:800;
+  font-size:15px;
   cursor:pointer;
+  transition:transform 0.1s;
 }
+button:active{ transform:scale(0.97); }
+button:disabled{ opacity:.5; cursor:not-allowed; }
 
-button:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
+.primary{ background:#ff0050; color:#fff; }
+.secondary{ background:#1a1a1a; color:#fff; border:1px solid #333; }
+.danger{ background:#ff4d4f; color:#fff; }
 
-.primary{
-  background:#ff0050;
-  color:#fff;
-}
-
-.secondary{
+input{
+  width:100%;
   background:#111;
-  color:#fff;
   border:1px solid #333;
+  color:#fff;
+  padding:14px 16px;
+  border-radius:12px;
+  font-size:15px;
+  outline:none;
 }
+input:focus{ border-color:#ff0050; }
 
-.status{
-  color:#aaa;
-  font-size:13px;
-  margin-bottom:18px;
-  line-height:1.5;
+.search-box{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
 }
+.search-box input{ flex:1; }
 
+/* GRID & CARDS */
 .grid{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
   gap:12px;
-  margin-bottom:20px;
+  margin-bottom:24px;
 }
 
 .card{
   background:#111;
   border:1px solid #222;
-  border-radius:18px;
-  padding:16px;
+  border-radius:16px;
+  padding:18px;
 }
 
 .card-title{
-  font-size:13px;
+  font-size:14px;
   color:#aaa;
   margin-bottom:8px;
+  font-weight:600;
 }
 
 .card-value{
-  font-size:24px;
+  font-size:26px;
   font-weight:900;
 }
 
+/* UTILS */
 .green{color:#00d084}
 .red{color:#ff4d4f}
 .pink{color:#ff0050}
-.gray{color:#aaa}
+.white{color:#fff}
 
 .section-title{
-  font-size:17px;
-  font-weight:900;
-  margin:26px 0 12px;
+  font-size:18px;
+  font-weight:800;
+  margin:30px 0 16px;
 }
 
-.type-list,
+/* LISTS (Transactions) */
 .tx-list{
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:12px;
 }
 
-.type-row,
 .tx-card{
   background:#111;
   border:1px solid #222;
   border-radius:16px;
-  padding:14px;
-}
-
-.type-row{
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:12px;
+  padding:16px;
+  display:flex;
+  justify-content:space-between;
   align-items:center;
 }
 
-.type-name{
-  font-weight:900;
-  word-break:break-word;
-}
-
-.type-meta{
-  font-size:12px;
-  color:#888;
-  margin-top:4px;
-}
-
-.amount{
-  font-weight:900;
-  white-space:nowrap;
-  text-align:right;
-}
-
-.tx-top{
+.tx-info{
   display:flex;
-  justify-content:space-between;
-  gap:12px;
-  margin-bottom:8px;
+  flex-direction:column;
+  gap:6px;
 }
 
-.badge{
-  display:inline-block;
-  padding:5px 10px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:900;
-  background:#1a1a1a;
-  border:1px solid #333;
+.tx-type{
+  font-weight:800;
+  font-size:15px;
 }
 
-.meta{
-  color:#aaa;
+.tx-date{
   font-size:13px;
-  line-height:1.7;
-  word-break:break-word;
+  color:#888;
+}
+
+.tx-amount{
+  font-weight:900;
+  font-size:16px;
 }
 
 .empty{
+  padding:30px;
+  text-align:center;
+  color:#666;
   border:1px dashed #333;
   border-radius:16px;
-  padding:30px 16px;
-  text-align:center;
-  color:#888;
+  font-weight:600;
 }
 
-.warning{
-  background:#160b0f;
-  border:1px solid #3a1a25;
-  color:#ff9bb8;
-  padding:14px;
+/* USER PROFILE CARD */
+.user-profile{
+  background:#111;
+  border:1px solid #333;
   border-radius:16px;
-  font-size:13px;
-  line-height:1.6;
-  margin-bottom:18px;
+  padding:20px;
+  margin-bottom:24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:16px;
 }
 
-@media(max-width:850px){
-  .grid{
-    grid-template-columns:1fr 1fr;
-  }
-}
+.user-info p{ margin-bottom:4px; color:#aaa; font-size:14px; }
+.user-info h3{ font-size:20px; margin-bottom:8px; }
+.badge-locked{ background:#ff4d4f; color:#fff; padding:3px 8px; border-radius:10px; font-size:11px; font-weight:bold; }
 
-@media(max-width:560px){
-  .grid{
-    grid-template-columns:1fr;
-  }
-
-  .type-row,
-  .tx-top{
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-  }
-
-  .amount{
-    text-align:left;
-  }
-
-  .card-value{
-    font-size:23px;
-  }
+@media(max-width:600px){
+  .search-box{ flex-direction:column; }
+  .user-profile{ flex-direction:column; align-items:flex-start; }
 }
 </style>
 </head>
@@ -249,64 +237,86 @@ button:disabled{
 
 <div class="header">
   <div class="header-left" onclick="history.back()">←</div>
-  <div class="header-center">Admin Finance</div>
-  <div class="header-right"></div>
+  <div class="header-center">Finance Admin</div>
+  <div class="header-right">
+    <svg id="logoutBtn" style="cursor:pointer" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tabGlobal">Global</div>
+  <div class="tab" id="tabUtilisateur">Utilisateur</div>
 </div>
 
 <div class="page">
 
-  <div class="warning">
-    Cette page ne calcule pas l’argent côté navigateur. Elle demande les totaux au backend pour éviter de charger des milliers ou millions de transactions dans le téléphone.
-  </div>
-
-  <div class="topbar">
-    <button class="primary" id="refreshBtn">Actualiser</button>
-    <button class="secondary" id="logoutBtn">Déconnexion</button>
-  </div>
-
-  <div class="status" id="statusText">Chargement...</div>
-
-  <div class="grid">
-    <div class="card">
-      <div class="card-title">Entrées admin</div>
-      <div class="card-value green" id="totalIn">0 Gdes</div>
+  <!-- ================= ONGLET GLOBAL ================= -->
+  <div class="tab-content active" id="contentGlobal">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <p style="color:#aaa; font-size:13px;" id="statusText">Statut : Prêt</p>
+      <button class="secondary" id="refreshBtn" style="padding:8px 16px; font-size:13px;">Actualiser</button>
     </div>
 
-    <div class="card">
-      <div class="card-title">Sorties admin</div>
-      <div class="card-value red" id="totalOut">0 Gdes</div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Balance nette</div>
-      <div class="card-value pink" id="netTotal">0 Gdes</div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Transactions analysées</div>
-      <div class="card-value gray" id="txCount">0</div>
+    <div class="grid">
+      <!-- Nouvel ajout: Argent total sur la plateforme -->
+      <div class="card" style="border-color:#ff0050;">
+        <div class="card-title">Fonds Totaux Utilisateurs</div>
+        <div class="card-value white" id="platformTotal">0 Gdes</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Entrées Admin</div>
+        <div class="card-value green" id="totalIn">0 Gdes</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Sorties Admin</div>
+        <div class="card-value red" id="totalOut">0 Gdes</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Balance Nette Admin</div>
+        <div class="card-value pink" id="netTotal">0 Gdes</div>
+      </div>
     </div>
   </div>
 
-  <div class="section-title">Totaux séparés par type</div>
-  <div class="type-list" id="typeList"></div>
+  <!-- ================= ONGLET UTILISATEUR ================= -->
+  <div class="tab-content" id="contentUtilisateur">
+    
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Email ou ID de l'utilisateur...">
+      <button class="primary" id="searchBtn">Rechercher</button>
+    </div>
 
-  <div class="section-title">Dernières transactions admin</div>
-  <div class="tx-list" id="txList"></div>
+    <div id="userResultArea" style="display:none;">
+      
+      <div class="user-profile">
+        <div class="user-info">
+          <h3 id="uEmail">email@user.com</h3>
+          <p>ID: <span id="uId">...</span></p>
+          <p style="margin-top:10px;">Balance actuelle : <strong class="pink" style="font-size:22px;" id="uBalance">0 Gdes</strong></p>
+          <div id="uLockBadge" style="margin-top:6px; display:none;"><span class="badge-locked">COMPTE GELÉ</span></div>
+        </div>
+        <div>
+          <button id="lockBtn" class="danger">Geler la balance</button>
+        </div>
+      </div>
+
+      <div class="section-title">Historique des transactions</div>
+      <div class="tx-list" id="userTxList">
+        <!-- Rempli par JS -->
+      </div>
+      
+    </div>
+    <div id="userEmptyArea" class="empty" style="display:none;">Utilisateur introuvable.</div>
+  </div>
 
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { 
+  getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, limit, orderBy, getAggregateFromServer, sum 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -322,213 +332,228 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const statusText = document.getElementById("statusText");
-const refreshBtn = document.getElementById("refreshBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-
-const totalInEl = document.getElementById("totalIn");
-const totalOutEl = document.getElementById("totalOut");
-const netTotalEl = document.getElementById("netTotal");
-const txCountEl = document.getElementById("txCount");
-
-const typeList = document.getElementById("typeList");
-const txList = document.getElementById("txList");
-
-function money(n){
-  return `${Number(n || 0).toLocaleString("fr-FR")} Gdes`;
+// Utilitaires
+function money(n){ return `${Number(n || 0).toLocaleString("fr-FR")} Gdes`; }
+function formatDate(val){
+  if(!val) return "-";
+  let d = val.seconds ? new Date(val.seconds * 1000) : new Date(val);
+  return d.toLocaleString("fr-FR");
 }
 
-function escapeHTML(str = ""){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+/* ================= GESTION DES ONGLETS ================= */
+const tabGlobal = document.getElementById("tabGlobal");
+const tabUtilisateur = document.getElementById("tabUtilisateur");
+const contentGlobal = document.getElementById("contentGlobal");
+const contentUtilisateur = document.getElementById("contentUtilisateur");
+
+function switchTab(tab) {
+  tabGlobal.classList.remove("active");
+  tabUtilisateur.classList.remove("active");
+  contentGlobal.classList.remove("active");
+  contentUtilisateur.classList.remove("active");
+
+  if(tab === 'global') {
+    tabGlobal.classList.add("active");
+    contentGlobal.classList.add("active");
+  } else {
+    tabUtilisateur.classList.add("active");
+    contentUtilisateur.classList.add("active");
+  }
 }
 
-function formatDate(value){
-  if(!value) return "-";
+tabGlobal.onclick = () => switchTab('global');
+tabUtilisateur.onclick = () => switchTab('utilisateur');
 
-  if(value._seconds){
-    return new Date(value._seconds * 1000).toLocaleString("fr-FR");
-  }
-
-  if(value.seconds){
-    return new Date(value.seconds * 1000).toLocaleString("fr-FR");
-  }
-
-  if(typeof value === "string" || typeof value === "number"){
-    return new Date(value).toLocaleString("fr-FR");
-  }
-
-  return "-";
-}
-
+/* ================= ONGLET GLOBAL ================= */
 async function getAdminToken(){
-  if(!auth.currentUser){
-    throw new Error("Utilisateur non connecté");
-  }
-
   return await auth.currentUser.getIdToken(true);
 }
 
-async function ensureAdmin(user){
-  const snap = await getDoc(doc(db,"users",user.uid));
-
-  if(!snap.exists()){
-    throw new Error("Profil introuvable");
-  }
-
-  const data = snap.data() || {};
-
-  if(data.role !== "admin"){
-    throw new Error("Accès refusé");
-  }
-}
-
-function renderTypeTotals(rows){
-  if(!Array.isArray(rows) || rows.length === 0){
-    typeList.innerHTML = `<div class="empty">Aucun total disponible.</div>`;
-    return;
-  }
-
-  typeList.innerHTML = "";
-
-  rows.forEach(row=>{
-    const div = document.createElement("div");
-    div.className = "type-row";
-
-    div.innerHTML = `
-      <div>
-        <div class="type-name">${escapeHTML(row.type || "inconnu")}</div>
-        <div class="type-meta">${Number(row.count || 0).toLocaleString("fr-FR")} transaction(s)</div>
-      </div>
-
-      <div>
-        <div class="amount green">+ ${money(row.in)}</div>
-        <div class="amount red">- ${money(row.out)}</div>
-        <div class="amount pink">Net: ${money(row.net)}</div>
-      </div>
-    `;
-
-    typeList.appendChild(div);
-  });
-}
-
-function renderTransactions(items){
-  if(!Array.isArray(items) || items.length === 0){
-    txList.innerHTML = `<div class="empty">Aucune transaction admin récente.</div>`;
-    return;
-  }
-
-  txList.innerHTML = "";
-
-  items.forEach(tx=>{
-    const amount = Number(tx.amount || 0);
-    const direction = tx.direction || "neutral";
-
-    const amountClass =
-      direction === "in" ? "green" :
-      direction === "out" ? "red" :
-      "gray";
-
-    const sign =
-      direction === "in" ? "+" :
-      direction === "out" ? "-" :
-      "";
-
-    const div = document.createElement("div");
-    div.className = "tx-card";
-
-    div.innerHTML = `
-      <div class="tx-top">
-        <div>
-          <span class="badge">${escapeHTML(tx.type || "inconnu")}</span>
-        </div>
-
-        <div class="amount ${amountClass}">
-          ${sign}${money(amount)}
-        </div>
-      </div>
-
-      <div class="meta">
-        <div><strong>Status :</strong> ${escapeHTML(tx.status || "-")}</div>
-        <div><strong>Tx ID :</strong> ${escapeHTML(tx.id || "")}</div>
-        <div><strong>User ID :</strong> ${escapeHTML(tx.userId || "")}</div>
-        <div><strong>Créée le :</strong> ${formatDate(tx.createdAt)}</div>
-        ${tx.orderId ? `<div><strong>Commande :</strong> ${escapeHTML(tx.orderId)}</div>` : ""}
-        ${tx.videoId ? `<div><strong>Vidéo :</strong> ${escapeHTML(tx.videoId)}</div>` : ""}
-        ${tx.paymentId ? `<div><strong>Paiement :</strong> ${escapeHTML(tx.paymentId)}</div>` : ""}
-        ${tx.balanceAfter !== undefined ? `<div><strong>Balance après :</strong> ${money(tx.balanceAfter)}</div>` : ""}
-      </div>
-    `;
-
-    txList.appendChild(div);
-  });
-}
-
 async function loadFinance(){
-  refreshBtn.disabled = true;
-  statusText.textContent = "Chargement sécurisé depuis le backend...";
-
-  try{
+  document.getElementById("statusText").textContent = "Chargement...";
+  try {
+    // 1. Appel du backend existant pour les stats admin
     const token = await getAdminToken();
-
     const res = await fetch("https://hayticlip-server.onrender.com/api/admin/finance-summary", {
-      method: "GET",
-      headers: {
-        "Authorization": "Bearer " + token
-      }
+      headers: { "Authorization": "Bearer " + token }
     });
-
     const data = await res.json();
-
-    if(!res.ok || !data.success){
-      throw new Error(data.error || "Erreur de chargement finance");
+    
+    if(data.success){
+      document.getElementById("totalIn").textContent = money(data.totalIn);
+      document.getElementById("totalOut").textContent = money(data.totalOut);
+      document.getElementById("netTotal").textContent = money(data.netTotal);
     }
 
-    totalInEl.textContent = money(data.totalIn);
-    totalOutEl.textContent = money(data.totalOut);
-    netTotalEl.textContent = money(data.netTotal);
-    txCountEl.textContent = Number(data.transactionsCount || 0).toLocaleString("fr-FR");
+    // 2. Calculer le total de l'argent sur TOUTE la plateforme
+    const usersColl = collection(db, "users");
+    const snapshot = await getAggregateFromServer(usersColl, {
+      totalMoney: sum("balance")
+    });
+    const platformMoney = snapshot.data().totalMoney || 0;
+    document.getElementById("platformTotal").textContent = money(platformMoney);
 
-    renderTypeTotals(data.typeTotals || []);
-    renderTransactions(data.latestTransactions || []);
+    document.getElementById("statusText").textContent = "À jour";
+  } catch(err) {
+    document.getElementById("statusText").textContent = "Erreur de chargement";
+    console.error(err);
+  }
+}
+document.getElementById("refreshBtn").onclick = loadFinance;
 
-    statusText.textContent = `Dernière mise à jour : ${new Date().toLocaleString("fr-FR")}`;
+/* ================= ONGLET UTILISATEUR ================= */
+let currentUserLoaded = null; // Stocke l'ID de l'utilisateur recherché
 
-  }catch(err){
-    console.error("FINANCE LOAD ERROR:", err);
+document.getElementById("searchBtn").onclick = async () => {
+  const val = document.getElementById("searchInput").value.trim();
+  if(!val) return;
+  
+  const searchBtn = document.getElementById("searchBtn");
+  searchBtn.textContent = "...";
+  searchBtn.disabled = true;
 
-    statusText.textContent = "Erreur de chargement";
-    typeList.innerHTML = `<div class="empty">${escapeHTML(err.message || "Erreur inconnue")}</div>`;
-    txList.innerHTML = "";
-  }finally{
-    refreshBtn.disabled = false;
+  document.getElementById("userResultArea").style.display = "none";
+  document.getElementById("userEmptyArea").style.display = "none";
+
+  try {
+    let userSnap;
+    let uid = val;
+    
+    // Essayer par ID d'abord
+    userSnap = await getDoc(doc(db, "users", val));
+    
+    // Si pas trouvé par ID, essayer par Email
+    if(!userSnap.exists()){
+      const q = query(collection(db, "users"), where("email", "==", val.toLowerCase()), limit(1));
+      const querySnapshot = await getDocs(q);
+      if(!querySnapshot.empty){
+        userSnap = querySnapshot.docs[0];
+        uid = userSnap.id;
+      }
+    }
+
+    if(!userSnap || !userSnap.exists()){
+      document.getElementById("userEmptyArea").style.display = "block";
+      return;
+    }
+
+    const userData = userSnap.data();
+    currentUserLoaded = uid;
+
+    // Afficher les infos
+    document.getElementById("uEmail").textContent = userData.email || "Sans email";
+    document.getElementById("uId").textContent = uid;
+    document.getElementById("uBalance").textContent = money(userData.balance);
+    
+    // Gérer l'état du lock
+    const isLocked = userData.balanceLocked === true;
+    updateLockButtonUI(isLocked);
+
+    document.getElementById("userResultArea").style.display = "block";
+
+    // Charger les transactions de cet utilisateur
+    loadUserTransactions(uid);
+
+  } catch(e) {
+    console.error(e);
+    alert("Erreur de recherche");
+  } finally {
+    searchBtn.textContent = "Rechercher";
+    searchBtn.disabled = false;
+  }
+};
+
+function updateLockButtonUI(isLocked){
+  const lockBtn = document.getElementById("lockBtn");
+  const lockBadge = document.getElementById("uLockBadge");
+  
+  if(isLocked){
+    lockBtn.textContent = "Dégeler la balance";
+    lockBtn.className = "secondary";
+    lockBadge.style.display = "block";
+  } else {
+    lockBtn.textContent = "Geler la balance";
+    lockBtn.className = "danger";
+    lockBadge.style.display = "none";
+  }
+  
+  lockBtn.onclick = () => toggleLock(isLocked);
+}
+
+async function toggleLock(currentlyLocked){
+  if(!currentUserLoaded) return;
+  const newStatus = !currentlyLocked;
+  
+  if(confirm(`Voulez-vous vraiment ${newStatus ? 'GELER' : 'DÉGELER'} l'argent de cet utilisateur ?`)){
+    try {
+      await updateDoc(doc(db, "users", currentUserLoaded), {
+        balanceLocked: newStatus
+      });
+      updateLockButtonUI(newStatus);
+    } catch(e) {
+      alert("Erreur lors de la mise à jour");
+    }
   }
 }
 
-refreshBtn.onclick = loadFinance;
+async function loadUserTransactions(uid){
+  const txList = document.getElementById("userTxList");
+  txList.innerHTML = "Chargement...";
+  
+  try {
+    const q = query(collection(db, "transactions"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(30));
+    const snaps = await getDocs(q);
+    
+    if(snaps.empty){
+      txList.innerHTML = `<div class="empty">Aucune transaction trouvée.</div>`;
+      return;
+    }
 
-logoutBtn.onclick = async()=>{
+    txList.innerHTML = "";
+    snaps.forEach(docSnap => {
+      const tx = docSnap.data();
+      const amount = Number(tx.amount || 0);
+      const isOut = tx.direction === "out" || tx.type === "sendGift" || tx.type === "achat_badge"; // Exemples de sorties
+      const amountClass = isOut ? "red" : "green";
+      const sign = isOut ? "-" : "+";
+
+      const div = document.createElement("div");
+      div.className = "tx-card";
+      div.innerHTML = `
+        <div class="tx-info">
+          <div class="tx-type">${tx.type || "Transaction"} ${tx.status === 'failed' ? '(Échoué)' : ''}</div>
+          <div class="tx-date">${formatDate(tx.createdAt)}</div>
+        </div>
+        <div class="tx-amount ${amountClass}">
+          ${sign}${money(amount)}
+        </div>
+      `;
+      txList.appendChild(div);
+    });
+
+  } catch(e) {
+    console.error(e);
+    txList.innerHTML = `<div class="empty" style="color:#ff4d4f">Erreur de lecture des transactions. (Vérifiez les index Firestore)</div>`;
+  }
+}
+
+/* ================= AUTHENTIFICATION ================= */
+document.getElementById("logoutBtn").onclick = async () => {
   await signOut(auth);
   window.location.href = "login.html";
 };
 
 onAuthStateChanged(auth, async(user)=>{
-  if(!user){
-    window.location.href = "login.html";
+  if(!user) { window.location.href = "login.html"; return; }
+  
+  const snap = await getDoc(doc(db,"users",user.uid));
+  if(!snap.exists() || snap.data().role !== "admin"){
+    alert("Accès refusé");
+    window.location.href = "feed.html";
     return;
   }
-
-  try{
-    await ensureAdmin(user);
-    await loadFinance();
-  }catch(err){
-    alert(err.message || "Accès refusé");
-    window.location.href = "feed.html";
-  }
+  
+  loadFinance();
 });
 </script>
 
