@@ -475,30 +475,41 @@ function updateLockButtonUI(isLocked){
   lockBtn.onclick = () => toggleLock(isLocked);
 }
 
-// Fonction corrigée pour "prendre la totalité" (mettre wallet à 0)
 async function toggleLock(currentlyLocked){
   if(!currentUserLoaded) return;
   const newStatus = !currentlyLocked;
   
   const messageConfirm = newStatus 
-    ? "Voulez-vous vraiment GELER ce compte et VIDER totalement sa balance (prendre la totalité et mettre à 0 Gdes) ?" 
-    : "Voulez-vous vraiment DÉGELER le compte de cet utilisateur ?";
+    ? "Voulez-vous vraiment GELER ce compte et VIDER totalement sa balance ?" 
+    : "Voulez-vous vraiment DÉGELER le compte et RESTAURER l'argent de cet utilisateur ?";
   
   if(confirm(messageConfirm)){
     try {
+      // 1. On interroge Firebase pour avoir le solde exact à la seconde près
+      const userRef = doc(db, "users", currentUserLoaded);
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.data();
+
       const updates = { walletLocked: newStatus };
+      let newBalanceToDisplay = 0;
       
-      // Si on active le verrouillage, on force le wallet à 0 (confiscation totale)
       if (newStatus === true) {
+        // ON GÈLE : on sauvegarde son argent dans "frozenWallet" puis on met "wallet" à 0
+        updates.frozenWallet = userData.wallet || 0;
         updates.wallet = 0;
+        newBalanceToDisplay = 0;
+      } else {
+        // ON DÉGÈLE : on récupère l'argent sauvegardé, on lui redonne, et on nettoie "frozenWallet"
+        newBalanceToDisplay = userData.frozenWallet || 0;
+        updates.wallet = newBalanceToDisplay;
+        updates.frozenWallet = 0; 
       }
 
-      await updateDoc(doc(db, "users", currentUserLoaded), updates);
+      // 2. On envoie la mise à jour
+      await updateDoc(userRef, updates);
       
-      // Mise à jour de l'affichage en direct de la balance
-      if (newStatus === true) {
-        document.getElementById("uBalance").textContent = money(0);
-      }
+      // 3. Mise à jour de l'affichage sur la page admin
+      document.getElementById("uBalance").textContent = money(newBalanceToDisplay);
       
       updateLockButtonUI(newStatus);
     } catch(e) {
