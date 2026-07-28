@@ -23,7 +23,7 @@ html,body{
 
 body{
   min-height:100vh;
-  padding-bottom:30px;
+  padding-bottom:50px;
 }
 
 /* HEADER */
@@ -37,6 +37,7 @@ body{
   position:sticky;
   top:0;
   z-index:100;
+  border-bottom:1px solid #222;
 }
 
 .header-left{ font-size:24px; cursor:pointer; width:40px; }
@@ -71,17 +72,12 @@ body{
   border-bottom:3px solid #ff0050;
 }
 
-.tab-content{
-  display:none;
-}
-
-.tab-content.active{
-  display:block;
-}
+.tab-content{ display:none; }
+.tab-content.active{ display:block; }
 
 /* CONTAINERS */
 .page{
-  max-width:1100px;
+  max-width:1200px;
   margin:0 auto;
   padding:0 16px;
 }
@@ -89,12 +85,13 @@ body{
 /* BUTTONS & INPUTS */
 button{
   border:none;
-  border-radius:30px;
-  padding:13px 20px;
-  font-weight:800;
-  font-size:15px;
+  border-radius:12px;
+  padding:12px 16px;
+  font-weight:700;
+  font-size:14px;
   cursor:pointer;
   transition:transform 0.1s;
+  width: 100%;
 }
 button:active{ transform:scale(0.97); }
 button:disabled{ opacity:.5; cursor:not-allowed; }
@@ -102,8 +99,9 @@ button:disabled{ opacity:.5; cursor:not-allowed; }
 .primary{ background:#ff0050; color:#fff; }
 .secondary{ background:#1a1a1a; color:#fff; border:1px solid #333; }
 .danger{ background:#ff4d4f; color:#fff; }
+.warning{ background:#f39c12; color:#fff; }
 
-input{
+input, textarea{
   width:100%;
   background:#111;
   border:1px solid #333;
@@ -113,7 +111,8 @@ input{
   font-size:15px;
   outline:none;
 }
-input:focus{ border-color:#ff0050; }
+input:focus, textarea:focus{ border-color:#ff0050; }
+textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 
 .search-box{
   display:flex;
@@ -121,114 +120,85 @@ input:focus{ border-color:#ff0050; }
   margin-bottom:20px;
 }
 .search-box input{ flex:1; }
+.search-box button{ width: auto; padding: 0 24px; }
 
 /* GRID & CARDS */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
-  gap:12px;
-  margin-bottom:24px;
-}
+.grid-4{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
+.grid-2{ display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin-bottom:24px; }
+.grid-3{ display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:16px; margin-bottom:24px; }
 
-.card{
-  background:#111;
-  border:1px solid #222;
-  border-radius:16px;
-  padding:18px;
-}
+.card{ background:#111; border:1px solid #222; border-radius:16px; padding:18px; }
+.card-header{ font-size:15px; font-weight:800; border-bottom:1px solid #222; padding-bottom:10px; margin-bottom:12px; color:#ddd; }
 
-.card-title{
-  font-size:14px;
-  color:#aaa;
-  margin-bottom:8px;
-  font-weight:600;
-}
-
-.card-value{
-  font-size:26px;
-  font-weight:900;
-}
+.card-title{ font-size:13px; color:#aaa; margin-bottom:4px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+.card-value{ font-size:24px; font-weight:900; }
 
 /* UTILS */
 .green{color:#00d084}
 .red{color:#ff4d4f}
 .pink{color:#ff0050}
 .white{color:#fff}
+.orange{color:#f39c12}
+.gray{color:#aaa}
 
-.section-title{
-  font-size:18px;
-  font-weight:800;
-  margin:30px 0 16px;
-}
+.badge{ padding:4px 8px; border-radius:8px; font-size:11px; font-weight:800; text-transform:uppercase; }
+.badge.active{ background:#00d08422; color:#00d084; border:1px solid #00d084; }
+.badge.frozen{ background:#ff4d4f22; color:#ff4d4f; border:1px solid #ff4d4f; }
+.badge.blue{ background:#1da1f222; color:#1da1f2; border:1px solid #1da1f2; }
 
-/* LISTS (Transactions) */
-.tx-list{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
+.info-row{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed #222; }
+.info-row:last-child{ border-bottom:none; }
+.info-label{ color:#888; font-size:14px; }
+.info-data{ font-weight:600; font-size:14px; text-align:right;}
 
-.tx-card{
-  background:#111;
+/* LISTS (Transactions & Audits) */
+.tx-list, .audit-list{ display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto; padding-right:5px;}
+.tx-list::-webkit-scrollbar, .audit-list::-webkit-scrollbar { width: 4px; }
+.tx-list::-webkit-scrollbar-thumb, .audit-list::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+.tx-card, .audit-card{
+  background:#1a1a1a;
   border:1px solid #222;
-  border-radius:16px;
-  padding:16px;
+  border-radius:12px;
+  padding:12px;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
+.audit-card { flex-direction: column; align-items: flex-start; gap: 6px; }
 
-.tx-info{
+.tx-info{ display:flex; flex-direction:column; gap:4px; }
+.tx-type{ font-weight:700; font-size:14px; }
+.tx-date{ font-size:12px; color:#888; }
+.tx-amount{ font-weight:900; font-size:15px; }
+
+.empty{ padding:30px; text-align:center; color:#666; border:1px dashed #333; border-radius:16px; font-size:14px; }
+
+/* USER PROFILE HEADER */
+.profile-header{
   display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-
-.tx-type{
-  font-weight:800;
-  font-size:15px;
-}
-
-.tx-date{
-  font-size:13px;
-  color:#888;
-}
-
-.tx-amount{
-  font-weight:900;
-  font-size:16px;
-}
-
-.empty{
-  padding:30px;
-  text-align:center;
-  color:#666;
-  border:1px dashed #333;
-  border-radius:16px;
-  font-weight:600;
-}
-
-/* USER PROFILE CARD */
-.user-profile{
+  align-items:center;
+  gap:20px;
   background:#111;
   border:1px solid #333;
   border-radius:16px;
   padding:20px;
   margin-bottom:24px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:16px;
 }
+.profile-avatar{ width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid #222; }
+.profile-details h2{ font-size:22px; margin-bottom:4px; display:flex; align-items:center; gap:8px;}
+.profile-details p{ color:#aaa; font-size:14px; margin-bottom:8px;}
+.profile-badges{ display:flex; gap:8px; flex-wrap:wrap; }
 
-.user-info p{ margin-bottom:4px; color:#aaa; font-size:14px; }
-.user-info h3{ font-size:20px; margin-bottom:8px; }
-.badge-locked{ background:#ff4d4f; color:#fff; padding:3px 8px; border-radius:10px; font-size:11px; font-weight:bold; }
+/* ACTION AREA */
+.action-box{ background:rgba(255,0,80,0.05); border:1px solid rgba(255,0,80,0.3); border-radius:16px; padding:20px; }
+.action-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
 
-@media(max-width:600px){
+@media(max-width:768px){
   .search-box{ flex-direction:column; }
-  .user-profile{ flex-direction:column; align-items:flex-start; }
+  .search-box button{ width: 100%; padding:14px; }
+  .profile-header{ flex-direction:column; text-align:center; }
+  .action-grid{ grid-template-columns:1fr; }
 }
 </style>
 </head>
@@ -237,29 +207,27 @@ input:focus{ border-color:#ff0050; }
 
 <div class="header">
   <div class="header-left" onclick="history.back()">←</div>
-  <div class="header-center">Finance Admin</div>
+  <div class="header-center">Dashboard Admin</div>
   <div class="header-right">
     <svg id="logoutBtn" style="cursor:pointer" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
   </div>
 </div>
 
 <div class="tabs">
-  <div class="tab active" id="tabGlobal">Global</div>
-  <div class="tab" id="tabUtilisateur">Utilisateur</div>
+  <div class="tab active" id="tabGlobal">Vue Globale</div>
+  <div class="tab" id="tabUtilisateur">Gestion Utilisateur</div>
 </div>
 
 <div class="page">
 
   <!-- ================= ONGLET GLOBAL ================= -->
   <div class="tab-content active" id="contentGlobal">
-    
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
       <p style="color:#aaa; font-size:13px;" id="statusText">Statut : Prêt</p>
-      <button class="secondary" id="refreshBtn" style="padding:8px 16px; font-size:13px;">Actualiser</button>
+      <button class="secondary" id="refreshBtn" style="width:auto; padding:8px 16px; font-size:13px;">Actualiser</button>
     </div>
 
-    <div class="grid">
-      <!-- Argent total sur la plateforme -->
+    <div class="grid-4">
       <div class="card" style="border-color:#ff0050;">
         <div class="card-title">Fonds Totaux Utilisateurs</div>
         <div class="card-value white" id="platformTotal">0 Gdes</div>
@@ -283,31 +251,90 @@ input:focus{ border-color:#ff0050; }
   <div class="tab-content" id="contentUtilisateur">
     
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Rechercher par Username ou ID...">
-      <button class="primary" id="searchBtn">Rechercher</button>
+      <input type="text" id="searchInput" placeholder="Rechercher par @Username ou ID utilisateur...">
+      <button class="primary" id="searchBtn">Chercher</button>
     </div>
+
+    <div id="userEmptyArea" class="empty" style="display:none;">Utilisateur introuvable ou non sélectionné.</div>
 
     <div id="userResultArea" style="display:none;">
       
-      <div class="user-profile">
-        <div class="user-info">
-          <h3 id="uEmail">@username</h3>
-          <p>ID: <span id="uId">...</span></p>
-          <p style="margin-top:10px;">Balance actuelle : <strong class="pink" style="font-size:22px;" id="uBalance">0 Gdes</strong></p>
-          <div id="uLockBadge" style="margin-top:6px; display:none;"><span class="badge-locked">COMPTE GELÉ</span></div>
-        </div>
-        <div>
-          <button id="lockBtn" class="danger">Geler la balance</button>
+      <!-- EN-TÊTE PROFIL -->
+      <div class="profile-header">
+        <img id="uAvatar" src="https://via.placeholder.com/80" class="profile-avatar">
+        <div class="profile-details">
+          <h2><span id="uName">Nom</span> <span id="uVerifBadge" class="badge blue" style="display:none;">Vérifié</span></h2>
+          <p>@<span id="uUsername">username</span> • ID: <span id="uId">...</span></p>
+          <div class="profile-badges">
+            <span id="uStatusBadge" class="badge active">🟢 Compte Actif</span>
+            <span id="uWalletStateBadge" class="badge active">💳 Wallet Actif</span>
+          </div>
         </div>
       </div>
 
-      <div class="section-title">Historique des transactions</div>
-      <div class="tx-list" id="userTxList">
-        <!-- Rempli par JS -->
+      <div class="grid-3">
+        <!-- INFOS WALLET -->
+        <div class="card">
+          <div class="card-header">Informations Financières</div>
+          <div class="info-row"><span class="info-label">Solde Actuel</span><span class="info-data pink" style="font-size:18px;" id="uBalance">0 Gdes</span></div>
+          <div class="info-row"><span class="info-label">Argent Gelé</span><span class="info-data orange" id="uFrozen">0 Gdes</span></div>
+          <div class="info-row"><span class="info-label">Total Rechargé</span><span class="info-data green" id="uTotalDep">0 Gdes</span></div>
+          <div class="info-row"><span class="info-label">Total Retiré</span><span class="info-data red" id="uTotalWith">0 Gdes</span></div>
+          <div class="info-row"><span class="info-label">Cadeaux Reçus</span><span class="info-data" id="uGiftsRec">0 Gdes</span></div>
+          <div class="info-row"><span class="info-label">Cadeaux Envoyés</span><span class="info-data" id="uGiftsSent">0 Gdes</span></div>
+        </div>
+
+        <!-- PARAMÈTRES WALLET -->
+        <div class="card">
+          <div class="card-header">Paramètres du Compte</div>
+          <div class="info-row"><span class="info-label">Code PIN configuré</span><span class="info-data" id="uHasPin">Non</span></div>
+          <div class="info-row"><span class="info-label">Statut Retraits</span><span class="info-data" id="uCanWithdraw">Activés</span></div>
+          <div class="info-row"><span class="info-label">Statut Recharges</span><span class="info-data" id="uCanDeposit">Activées</span></div>
+          <div class="info-row"><span class="info-label">Création compte</span><span class="info-data" id="uCreatedAt">-</span></div>
+          <div class="info-row"><span class="info-label">Dernière activité</span><span class="info-data" id="uLastActive">-</span></div>
+        </div>
+
+        <!-- SÉCURITÉ -->
+        <div class="card">
+          <div class="card-header">Sécurité & Connexion</div>
+          <div class="info-row"><span class="info-label">Échecs Code PIN</span><span class="info-data red" id="uPinFails">0</span></div>
+          <div class="info-row"><span class="info-label">Dernière IP</span><span class="info-data gray" id="uLastIp">Non enregistrée</span></div>
+          <div class="info-row"><span class="info-label">Appareil utilisé</span><span class="info-data gray" id="uLastDevice">Inconnu</span></div>
+          <div class="info-row"><span class="info-label">Dernière Connexion</span><span class="info-data" id="uLastLogin">-</span></div>
+        </div>
       </div>
-      
+
+      <!-- ACTIONS ADMINISTRATEUR -->
+      <div class="action-box" style="margin-bottom:24px;">
+        <div class="card-header" style="border-color:rgba(255,0,80,0.3);">Actions Administrateur (Zone Sensible)</div>
+        <p style="font-size:13px; color:#aaa; margin-bottom:12px;">Un motif est <b>strictement obligatoire</b> avant d'exécuter l'une de ces actions. Il sera enregistré dans le journal d'audit.</p>
+        
+        <textarea id="adminMotif" placeholder="Saisissez le motif justifiant cette action (ex: Fraude suspectée, Demande utilisateur, etc.)"></textarea>
+        
+        <div class="action-grid">
+          <button id="btnToggleFreeze" class="danger">🔒 Geler le Wallet (Vider)</button>
+          <button id="btnToggleWithdraw" class="warning">🚫 Suspendre les Retraits</button>
+          <button id="btnToggleDeposit" class="warning">💳 Suspendre les Recharges</button>
+          <button id="btnResetPin" class="secondary">🔑 Réinitialiser le PIN</button>
+          <button id="btnForceLogout" class="secondary">🚪 Déconnecter tous les appareils</button>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- HISTORIQUE TRANSACTIONS -->
+        <div class="card">
+          <div class="card-header">Dernières Transactions</div>
+          <div class="tx-list" id="userTxList"></div>
+        </div>
+
+        <!-- JOURNAL D'AUDIT -->
+        <div class="card">
+          <div class="card-header">Journal d'Audit Admin</div>
+          <div class="audit-list" id="userAuditList"></div>
+        </div>
+      </div>
+
     </div>
-    <div id="userEmptyArea" class="empty" style="display:none;">Utilisateur introuvable.</div>
   </div>
 
 </div>
@@ -337,7 +364,7 @@ function money(n){ return `${Number(n || 0).toLocaleString("fr-FR")} Gdes`; }
 function formatDate(val){
   if(!val) return "-";
   let d = val.seconds ? new Date(val.seconds * 1000) : new Date(val);
-  return d.toLocaleString("fr-FR");
+  return d.toLocaleString("fr-FR", {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
 
 /* ================= GESTION DES ONGLETS ================= */
@@ -360,19 +387,14 @@ function switchTab(tab) {
     contentUtilisateur.classList.add("active");
   }
 }
-
 tabGlobal.onclick = () => switchTab('global');
 tabUtilisateur.onclick = () => switchTab('utilisateur');
 
 /* ================= ONGLET GLOBAL ================= */
-async function getAdminToken(){
-  return await auth.currentUser.getIdToken(true);
-}
-
 async function loadFinance(){
   document.getElementById("statusText").textContent = "Chargement...";
   try {
-    const token = await getAdminToken();
+    const token = await auth.currentUser.getIdToken(true);
     const res = await fetch("https://hayticlip-server.onrender.com/api/admin/finance-summary", {
       headers: { "Authorization": "Bearer " + token }
     });
@@ -384,24 +406,18 @@ async function loadFinance(){
       document.getElementById("netTotal").textContent = money(data.netTotal);
     }
 
-    // Calcul corrigé : Utilisation de sum("wallet") au lieu de sum("balance")
-    const usersColl = collection(db, "users");
-    const snapshot = await getAggregateFromServer(usersColl, {
-      totalMoney: sum("wallet")
-    });
-    const platformMoney = snapshot.data().totalMoney || 0;
-    document.getElementById("platformTotal").textContent = money(platformMoney);
+    const snapshot = await getAggregateFromServer(collection(db, "users"), { totalMoney: sum("wallet") });
+    document.getElementById("platformTotal").textContent = money(snapshot.data().totalMoney || 0);
 
     document.getElementById("statusText").textContent = "À jour";
   } catch(err) {
     document.getElementById("statusText").textContent = "Erreur de chargement";
-    console.error(err);
   }
 }
 document.getElementById("refreshBtn").onclick = loadFinance;
 
 /* ================= ONGLET UTILISATEUR ================= */
-let currentUserLoaded = null;
+let currentUserObj = null;
 
 document.getElementById("searchBtn").onclick = async () => {
   const val = document.getElementById("searchInput").value.trim();
@@ -418,12 +434,11 @@ document.getElementById("searchBtn").onclick = async () => {
     let userSnap;
     let uid = val;
     
-    // 1. Essayer par ID
-    userSnap = await getDoc(doc(db, "users", val));
+    userSnap = await getDoc(doc(db, "users", val)); // Par ID
     
-    // 2. Essayer par USERNAME
     if(!userSnap.exists()){
-      const q = query(collection(db, "users"), where("usernameLower", "==", val.toLowerCase()), limit(1));
+      const cleanVal = val.replace('@','');
+      const q = query(collection(db, "users"), where("usernameLower", "==", cleanVal.toLowerCase()), limit(1));
       const querySnapshot = await getDocs(q);
       if(!querySnapshot.empty){
         userSnap = querySnapshot.docs[0];
@@ -436,155 +451,252 @@ document.getElementById("searchBtn").onclick = async () => {
       return;
     }
 
-    const userData = userSnap.data();
-    currentUserLoaded = uid;
+    const u = userSnap.data();
+    currentUserObj = { uid, ...u };
 
-    document.getElementById("uEmail").textContent = "@" + (userData.username || "inconnu");
+    // --- EN-TÊTE PROFIL ---
+    document.getElementById("uAvatar").src = u.avatar || u.photoURL || "https://via.placeholder.com/80";
+    document.getElementById("uName").textContent = u.name || u.username || "Inconnu";
+    document.getElementById("uUsername").textContent = u.username || "inconnu";
     document.getElementById("uId").textContent = uid;
-    document.getElementById("uBalance").textContent = money(userData.wallet); 
+    document.getElementById("uVerifBadge").style.display = u.verification === "verified" ? "inline-block" : "none";
     
-    const isLocked = userData.walletLocked === true;
-    updateLockButtonUI(isLocked);
+    const statusBadge = document.getElementById("uStatusBadge");
+    if(u.suspended) { statusBadge.className="badge frozen"; statusBadge.textContent="🔴 Compte Suspendu"; }
+    else { statusBadge.className="badge active"; statusBadge.textContent="🟢 Compte Actif"; }
+
+    // --- INFOS WALLET ---
+    document.getElementById("uBalance").textContent = money(u.wallet);
+    document.getElementById("uFrozen").textContent = money(u.frozenWallet);
+    document.getElementById("uTotalDep").textContent = money(u.totalDeposited || 0);
+    document.getElementById("uTotalWith").textContent = money(u.totalWithdrawn || 0);
+    document.getElementById("uGiftsRec").textContent = money(u.totalGiftsReceived || 0);
+    document.getElementById("uGiftsSent").textContent = money(u.totalGiftsSent || 0);
+
+    // --- PARAMETRES & SÉCURITÉ ---
+    document.getElementById("uHasPin").textContent = (u.pin && u.pin.length > 0) ? "Oui ✅" : "Non ❌";
+    document.getElementById("uCanWithdraw").innerHTML = u.withdrawBlocked ? "<span class='red'>Désactivés ❌</span>" : "<span class='green'>Activés ✅</span>";
+    document.getElementById("uCanDeposit").innerHTML = u.depositBlocked ? "<span class='red'>Désactivées ❌</span>" : "<span class='green'>Activées ✅</span>";
+    
+    document.getElementById("uCreatedAt").textContent = formatDate(u.createdAt);
+    document.getElementById("uLastActive").textContent = formatDate(u.lastActive);
+    document.getElementById("uLastLogin").textContent = formatDate(u.lastLogin || u.lastActive);
+    
+    document.getElementById("uPinFails").textContent = u.failedPinAttempts || "0";
+    document.getElementById("uLastIp").textContent = u.lastIp || "Non enregistrée";
+    document.getElementById("uLastDevice").textContent = u.lastDevice || "Inconnu";
+
+    // --- BOUTONS D'ACTION ---
+    updateActionButtonsUI();
 
     document.getElementById("userResultArea").style.display = "block";
     loadUserTransactions(uid);
+    loadAuditLogs(uid);
 
   } catch(e) {
     console.error(e);
     alert("Erreur de recherche");
   } finally {
-    searchBtn.textContent = "Rechercher";
+    searchBtn.textContent = "Chercher";
     searchBtn.disabled = false;
   }
 };
 
-function updateLockButtonUI(isLocked){
-  const lockBtn = document.getElementById("lockBtn");
-  const lockBadge = document.getElementById("uLockBadge");
-  
+function updateActionButtonsUI() {
+  const isLocked = currentUserObj.walletLocked === true;
+  const isWithBlocked = currentUserObj.withdrawBlocked === true;
+  const isDepBlocked = currentUserObj.depositBlocked === true;
+
+  const bFreeze = document.getElementById("btnToggleFreeze");
+  const bWithdraw = document.getElementById("btnToggleWithdraw");
+  const bDeposit = document.getElementById("btnToggleDeposit");
+  const badgeWallet = document.getElementById("uWalletStateBadge");
+
+  // Wallet State
   if(isLocked){
-    lockBtn.textContent = "Dégeler le wallet";
-    lockBtn.className = "secondary";
-    lockBadge.style.display = "block";
+    bFreeze.textContent = "🔓 Dégeler le Wallet";
+    bFreeze.className = "secondary";
+    badgeWallet.className = "badge frozen";
+    badgeWallet.textContent = "❄️ Wallet Gelé";
   } else {
-    lockBtn.textContent = "Geler le wallet (Vider)";
-    lockBtn.className = "danger";
-    lockBadge.style.display = "none";
+    bFreeze.textContent = "🔒 Geler le Wallet (Vider)";
+    bFreeze.className = "danger";
+    badgeWallet.className = "badge active";
+    badgeWallet.textContent = "💳 Wallet Actif";
   }
-  
-  lockBtn.onclick = () => toggleLock(isLocked);
-}
 
-async function toggleLock(currentlyLocked){
-  if(!currentUserLoaded) return;
-  const newStatus = !currentlyLocked;
-  
-  const messageConfirm = newStatus 
-    ? "Voulez-vous vraiment GELER ce compte et VIDER totalement sa balance ?" 
-    : "Voulez-vous vraiment DÉGELER le compte et RESTAURER l'argent de cet utilisateur ?";
-  
-  if(confirm(messageConfirm)){
-    try {
-      const userRef = doc(db, "users", currentUserLoaded);
-      const userSnap = await getDoc(userRef);
-      const userData = userSnap.data();
+  // Withdraw State
+  if(isWithBlocked){
+    bWithdraw.textContent = "✅ Réactiver les Retraits";
+    bWithdraw.className = "secondary";
+  } else {
+    bWithdraw.textContent = "🚫 Suspendre les Retraits";
+    bWithdraw.className = "warning";
+  }
 
-      const updates = { walletLocked: newStatus };
-      let newBalanceToDisplay = 0;
-      
-      if (newStatus === true) {
-        updates.frozenWallet = userData.wallet || 0;
-        updates.wallet = 0;
-        newBalanceToDisplay = 0;
-      } else {
-        newBalanceToDisplay = userData.frozenWallet || 0;
-        updates.wallet = newBalanceToDisplay;
-        updates.frozenWallet = 0; 
-      }
-
-      // 1. Mise à jour de l'utilisateur
-      await updateDoc(userRef, updates);
-
-      // 2. Envoi de la notification
-      try {
-        await addDoc(collection(db, "notifications"), {
-          from: auth.currentUser.uid, // L'ID de l'admin
-          to: currentUserLoaded,      // L'ID de l'utilisateur concerné
-          type: newStatus ? "wallet_frozen" : "wallet_unfrozen",
-          read: false,
-          createdAt: serverTimestamp()
-        });
-      } catch(notifErr) {
-        console.error("Erreur lors de l'envoi de la notification :", notifErr);
-      }
-      
-      // 3. Mise à jour de l'affichage UI
-      document.getElementById("uBalance").textContent = money(newBalanceToDisplay);
-      
-      updateLockButtonUI(newStatus);
-    } catch(e) {
-      alert("Erreur lors de la mise à jour : " + e.message);
-    }
+  // Deposit State
+  if(isDepBlocked){
+    bDeposit.textContent = "✅ Réactiver les Recharges";
+    bDeposit.className = "secondary";
+  } else {
+    bDeposit.textContent = "💳 Suspendre les Recharges";
+    bDeposit.className = "warning";
   }
 }
 
-async function loadUserTransactions(uid){
-  const txList = document.getElementById("userTxList");
-  txList.innerHTML = "Chargement...";
+/* ================= ACTIONS ADMIN (AVEC AUDIT) ================= */
+async function executeAdminAction(actionName, updatesToApply, confirmMessage, notifType = null) {
+  if(!currentUserObj) return;
+  const motifInput = document.getElementById("adminMotif");
+  const motif = motifInput.value.trim();
   
+  if(!motif) return alert("⚠️ Le champ Motif est obligatoire avant d'exécuter cette action.");
+  if(!confirm(`${confirmMessage}\n\nMotif : ${motif}`)) return;
+
   try {
-    const q = query(collection(db, "walletTransactions"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(30));
-    const snaps = await getDocs(q);
+    const userRef = doc(db, "users", currentUserObj.uid);
     
-    if(snaps.empty){
-      txList.innerHTML = `<div class="empty">Aucune transaction trouvée.</div>`;
-      return;
+    // 1. Mise à jour du User
+    await updateDoc(userRef, updatesToApply);
+
+    // 2. Enregistrement Audit
+    await addDoc(collection(db, "auditLogs"), {
+      adminUid: auth.currentUser.uid,
+      targetUid: currentUserObj.uid,
+      action: actionName,
+      motif: motif,
+      createdAt: serverTimestamp()
+    });
+
+    // 3. Notification (Optionnel)
+    if(notifType) {
+      await addDoc(collection(db, "notifications"), {
+        from: auth.currentUser.uid,
+        to: currentUserObj.uid,
+        type: notifType,
+        read: false,
+        createdAt: serverTimestamp()
+      });
     }
 
-    txList.innerHTML = "";
-    snaps.forEach(docSnap => {
-      const tx = docSnap.data();
-      const amount = Number(tx.amount || 0);
-      const isOut = tx.direction === "out" || tx.type === "sendGift" || tx.type === "achat_badge"; 
-      const amountClass = isOut ? "red" : "green";
-      const sign = isOut ? "-" : "+";
-
-      const div = document.createElement("div");
-      div.className = "tx-card";
-      div.innerHTML = `
-        <div class="tx-info">
-          <div class="tx-type">${tx.type || "Transaction"} ${tx.status === 'failed' ? '(Échoué)' : ''}</div>
-          <div class="tx-date">${formatDate(tx.createdAt)}</div>
-        </div>
-        <div class="tx-amount ${amountClass}">
-          ${sign}${money(amount)}
-        </div>
-      `;
-      txList.appendChild(div);
-    });
+    motifInput.value = ""; // Clear motif
+    alert("Action effectuée avec succès.");
+    document.getElementById("searchBtn").click(); // Recharger le profil silencieusement
 
   } catch(e) {
     console.error(e);
-    txList.innerHTML = `<div class="empty" style="color:#ff4d4f">Erreur de lecture des transactions. (Avez-vous créé l'index dans Firebase ?)</div>`;
+    alert("Erreur lors de l'exécution : " + e.message);
   }
 }
 
-/* ================= AUTHENTIFICATION ================= */
-document.getElementById("logoutBtn").onclick = async () => {
-  await signOut(auth);
-  window.location.href = "profil.html";
+// 1. Geler / Dégeler
+document.getElementById("btnToggleFreeze").onclick = () => {
+  const isLocked = currentUserObj.walletLocked === true;
+  let updates = { walletLocked: !isLocked };
+  
+  if (!isLocked) {
+    updates.frozenWallet = currentUserObj.wallet || 0;
+    updates.wallet = 0;
+  } else {
+    updates.wallet = currentUserObj.frozenWallet || 0;
+    updates.frozenWallet = 0;
+  }
+
+  const msg = !isLocked ? "Voulez-vous GELER ce compte et vider sa balance ?" : "Voulez-vous DÉGELER et restaurer l'argent ?";
+  executeAdminAction(!isLocked ? "Gel du wallet" : "Dégel du wallet", updates, msg, !isLocked ? "wallet_frozen" : "wallet_unfrozen");
 };
 
+// 2. Suspendre Retraits
+document.getElementById("btnToggleWithdraw").onclick = () => {
+  const isBlocked = currentUserObj.withdrawBlocked === true;
+  executeAdminAction(
+    isBlocked ? "Réactivation Retraits" : "Suspension Retraits", 
+    { withdrawBlocked: !isBlocked }, 
+    isBlocked ? "Réactiver les retraits pour cet utilisateur ?" : "Bloquer les retraits pour cet utilisateur ?"
+  );
+};
+
+// 3. Suspendre Recharges
+document.getElementById("btnToggleDeposit").onclick = () => {
+  const isBlocked = currentUserObj.depositBlocked === true;
+  executeAdminAction(
+    isBlocked ? "Réactivation Recharges" : "Suspension Recharges", 
+    { depositBlocked: !isBlocked }, 
+    isBlocked ? "Réactiver les recharges ?" : "Bloquer les recharges ?"
+  );
+};
+
+// 4. Reset PIN
+document.getElementById("btnResetPin").onclick = () => {
+  executeAdminAction("Réinitialisation PIN", { pin: null, failedPinAttempts: 0 }, "Voulez-vous effacer le code PIN de cet utilisateur ?");
+};
+
+// 5. Déconnecter (Force Logout par flag)
+document.getElementById("btnForceLogout").onclick = () => {
+  executeAdminAction("Déconnexion forcée", { forceLogoutAt: serverTimestamp() }, "Forcer la déconnexion sur tous les appareils de cet utilisateur ?");
+};
+
+/* ================= HISTORIQUES ================= */
+async function loadUserTransactions(uid){
+  const txList = document.getElementById("userTxList");
+  txList.innerHTML = "Chargement...";
+  try {
+    const q = query(collection(db, "walletTransactions"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(20));
+    const snaps = await getDocs(q);
+    
+    if(snaps.empty) return txList.innerHTML = `<div class="empty">Aucune transaction trouvée.</div>`;
+    
+    txList.innerHTML = "";
+    snaps.forEach(docSnap => {
+      const tx = docSnap.data();
+      const isOut = tx.direction === "out" || tx.type === "sendGift" || tx.type === "achat_badge"; 
+      txList.innerHTML += `
+        <div class="tx-card">
+          <div class="tx-info">
+            <div class="tx-type">${tx.type || "Transaction"} ${tx.status === 'failed' ? '(Échoué)' : ''}</div>
+            <div class="tx-date">${formatDate(tx.createdAt)}</div>
+          </div>
+          <div class="tx-amount ${isOut ? "red" : "green"}">${isOut ? "-" : "+"}${money(tx.amount)}</div>
+        </div>
+      `;
+    });
+  } catch(e) { txList.innerHTML = `<div class="empty">Erreur de lecture.</div>`; }
+}
+
+async function loadAuditLogs(uid){
+  const auditList = document.getElementById("userAuditList");
+  auditList.innerHTML = "Chargement...";
+  try {
+    const q = query(collection(db, "auditLogs"), where("targetUid", "==", uid), orderBy("createdAt", "desc"), limit(15));
+    const snaps = await getDocs(q);
+    
+    if(snaps.empty) return auditList.innerHTML = `<div class="empty">Aucun audit enregistré pour ce compte.</div>`;
+    
+    auditList.innerHTML = "";
+    snaps.forEach(docSnap => {
+      const log = docSnap.data();
+      auditList.innerHTML += `
+        <div class="audit-card">
+          <div style="font-weight:700; font-size:14px; color:#ff0050;">Opération : ${log.action}</div>
+          <div style="font-size:13px; color:#ddd;">Motif : <i>${log.motif}</i></div>
+          <div style="font-size:12px; color:#888;">Le ${formatDate(log.createdAt)} par Admin (${log.adminUid.substring(0,6)}...)</div>
+        </div>
+      `;
+    });
+  } catch(e) { auditList.innerHTML = `<div class="empty">Erreur / Index manquant pour Audit.</div>`; }
+}
+
+/* ================= AUTHENTIFICATION ================= */
+document.getElementById("logoutBtn").onclick = async () => { await signOut(auth); window.location.href = "profil.html"; };
+
 onAuthStateChanged(auth, async(user)=>{
-  if(!user) { window.location.href = "login.html"; return; }
-  
+  if(!user) return window.location.href = "login.html";
   const snap = await getDoc(doc(db,"users",user.uid));
   if(!snap.exists() || snap.data().role !== "admin"){
     alert("Accès refusé");
     window.location.href = "feed.html";
     return;
   }
-  
   loadFinance();
 });
 </script>
