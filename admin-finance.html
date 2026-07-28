@@ -192,13 +192,11 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 
 /* ACTION AREA */
 .action-box{ background:rgba(255,0,80,0.05); border:1px solid rgba(255,0,80,0.3); border-radius:16px; padding:20px; }
-.action-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
 
 @media(max-width:768px){
   .search-box{ flex-direction:column; }
   .search-box button{ width: 100%; padding:14px; }
   .profile-header{ flex-direction:column; text-align:center; }
-  .action-grid{ grid-template-columns:1fr; }
 }
 </style>
 </head>
@@ -208,9 +206,7 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 <div class="header">
   <div class="header-left" onclick="history.back()">←</div>
   <div class="header-center">Dashboard Admin</div>
-  <div class="header-right">
-    <svg id="logoutBtn" style="cursor:pointer" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-  </div>
+  <div class="header-right"></div>
 </div>
 
 <div class="tabs">
@@ -306,17 +302,13 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 
       <!-- ACTIONS ADMINISTRATEUR -->
       <div class="action-box" style="margin-bottom:24px;">
-        <div class="card-header" style="border-color:rgba(255,0,80,0.3);">Actions Administrateur (Zone Sensible)</div>
-        <p style="font-size:13px; color:#aaa; margin-bottom:12px;">Un motif est <b>strictement obligatoire</b> avant d'exécuter l'une de ces actions. Il sera enregistré dans le journal d'audit.</p>
+        <div class="card-header" style="border-color:rgba(255,0,80,0.3);">Action Administrateur</div>
+        <p style="font-size:13px; color:#aaa; margin-bottom:12px;">Un motif est <b>strictement obligatoire</b> avant d'exécuter cette action. Il sera enregistré dans le journal d'audit.</p>
         
         <textarea id="adminMotif" placeholder="Saisissez le motif justifiant cette action (ex: Fraude suspectée, Demande utilisateur, etc.)"></textarea>
         
-        <div class="action-grid">
+        <div style="margin-top:16px;">
           <button id="btnToggleFreeze" class="danger">🔒 Geler le Wallet (Vider)</button>
-          <button id="btnToggleWithdraw" class="warning">🚫 Suspendre les Retraits</button>
-          <button id="btnToggleDeposit" class="warning">💳 Suspendre les Recharges</button>
-          <button id="btnResetPin" class="secondary">🔑 Réinitialiser le PIN</button>
-          <button id="btnForceLogout" class="secondary">🚪 Déconnecter tous les appareils</button>
         </div>
       </div>
 
@@ -341,7 +333,7 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
   getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, limit, orderBy, getAggregateFromServer, sum, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -434,11 +426,18 @@ document.getElementById("searchBtn").onclick = async () => {
     let userSnap;
     let uid = val;
     
-    userSnap = await getDoc(doc(db, "users", val)); // Par ID
+    // 1. Recherche directe par UID exact
+    userSnap = await getDoc(doc(db, "users", val));
     
+    // 2. Si pas trouvé par ID, recherche par préfixe sur le nom d'utilisateur (dès la 1ère lettre)
     if(!userSnap.exists()){
-      const cleanVal = val.replace('@','');
-      const q = query(collection(db, "users"), where("usernameLower", "==", cleanVal.toLowerCase()), limit(1));
+      const cleanVal = val.replace('@','').toLowerCase();
+      const q = query(
+        collection(db, "users"), 
+        where("usernameLower", ">=", cleanVal),
+        where("usernameLower", "<=", cleanVal + "\uf8ff"),
+        limit(1)
+      );
       const querySnapshot = await getDocs(q);
       if(!querySnapshot.empty){
         userSnap = querySnapshot.docs[0];
@@ -486,7 +485,7 @@ document.getElementById("searchBtn").onclick = async () => {
     document.getElementById("uLastIp").textContent = u.lastIp || "Non enregistrée";
     document.getElementById("uLastDevice").textContent = u.lastDevice || "Inconnu";
 
-    // --- BOUTONS D'ACTION ---
+    // --- BOUTON D'ACTION ---
     updateActionButtonsUI();
 
     document.getElementById("userResultArea").style.display = "block";
@@ -504,15 +503,9 @@ document.getElementById("searchBtn").onclick = async () => {
 
 function updateActionButtonsUI() {
   const isLocked = currentUserObj.walletLocked === true;
-  const isWithBlocked = currentUserObj.withdrawBlocked === true;
-  const isDepBlocked = currentUserObj.depositBlocked === true;
-
   const bFreeze = document.getElementById("btnToggleFreeze");
-  const bWithdraw = document.getElementById("btnToggleWithdraw");
-  const bDeposit = document.getElementById("btnToggleDeposit");
   const badgeWallet = document.getElementById("uWalletStateBadge");
 
-  // Wallet State
   if(isLocked){
     bFreeze.textContent = "🔓 Dégeler le Wallet";
     bFreeze.className = "secondary";
@@ -523,24 +516,6 @@ function updateActionButtonsUI() {
     bFreeze.className = "danger";
     badgeWallet.className = "badge active";
     badgeWallet.textContent = "💳 Wallet Actif";
-  }
-
-  // Withdraw State
-  if(isWithBlocked){
-    bWithdraw.textContent = "✅ Réactiver les Retraits";
-    bWithdraw.className = "secondary";
-  } else {
-    bWithdraw.textContent = "🚫 Suspendre les Retraits";
-    bWithdraw.className = "warning";
-  }
-
-  // Deposit State
-  if(isDepBlocked){
-    bDeposit.textContent = "✅ Réactiver les Recharges";
-    bDeposit.className = "secondary";
-  } else {
-    bDeposit.textContent = "💳 Suspendre les Recharges";
-    bDeposit.className = "warning";
   }
 }
 
@@ -589,7 +564,7 @@ async function executeAdminAction(actionName, updatesToApply, confirmMessage, no
   }
 }
 
-// 1. Geler / Dégeler
+// Geler / Dégeler
 document.getElementById("btnToggleFreeze").onclick = () => {
   const isLocked = currentUserObj.walletLocked === true;
   let updates = { walletLocked: !isLocked };
@@ -604,36 +579,6 @@ document.getElementById("btnToggleFreeze").onclick = () => {
 
   const msg = !isLocked ? "Voulez-vous GELER ce compte et vider sa balance ?" : "Voulez-vous DÉGELER et restaurer l'argent ?";
   executeAdminAction(!isLocked ? "Gel du wallet" : "Dégel du wallet", updates, msg, !isLocked ? "wallet_frozen" : "wallet_unfrozen");
-};
-
-// 2. Suspendre Retraits
-document.getElementById("btnToggleWithdraw").onclick = () => {
-  const isBlocked = currentUserObj.withdrawBlocked === true;
-  executeAdminAction(
-    isBlocked ? "Réactivation Retraits" : "Suspension Retraits", 
-    { withdrawBlocked: !isBlocked }, 
-    isBlocked ? "Réactiver les retraits pour cet utilisateur ?" : "Bloquer les retraits pour cet utilisateur ?"
-  );
-};
-
-// 3. Suspendre Recharges
-document.getElementById("btnToggleDeposit").onclick = () => {
-  const isBlocked = currentUserObj.depositBlocked === true;
-  executeAdminAction(
-    isBlocked ? "Réactivation Recharges" : "Suspension Recharges", 
-    { depositBlocked: !isBlocked }, 
-    isBlocked ? "Réactiver les recharges ?" : "Bloquer les recharges ?"
-  );
-};
-
-// 4. Reset PIN
-document.getElementById("btnResetPin").onclick = () => {
-  executeAdminAction("Réinitialisation PIN", { pin: null, failedPinAttempts: 0 }, "Voulez-vous effacer le code PIN de cet utilisateur ?");
-};
-
-// 5. Déconnecter (Force Logout par flag)
-document.getElementById("btnForceLogout").onclick = () => {
-  executeAdminAction("Déconnexion forcée", { forceLogoutAt: serverTimestamp() }, "Forcer la déconnexion sur tous les appareils de cet utilisateur ?");
 };
 
 /* ================= HISTORIQUES ================= */
@@ -687,8 +632,6 @@ async function loadAuditLogs(uid){
 }
 
 /* ================= AUTHENTIFICATION ================= */
-document.getElementById("logoutBtn").onclick = async () => { await signOut(auth); window.location.href = "profil.html"; };
-
 onAuthStateChanged(auth, async(user)=>{
   if(!user) return window.location.href = "login.html";
   const snap = await getDoc(doc(db,"users",user.uid));
