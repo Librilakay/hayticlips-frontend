@@ -238,8 +238,10 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// AJOUTE CETTE LIGNE :
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
@@ -252,6 +254,7 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
     const API_BASE = "https://hayticlip-server.onrender.com";
 
     // --- GESTION DES ONGLETS ---
@@ -274,11 +277,35 @@
       depositForm.classList.remove("active");
     };
 
-    onAuthStateChanged(auth, user => {
-      if(!user) {
-        window.location.href = "login.html";
+    onAuthStateChanged(auth, async user => {
+  if(!user) {
+    window.location.href = "login.html";
+  } else {
+    try {
+      // On vérifie le statut du compte dans Firestore
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists() && userSnap.data().walletLocked === true) {
+        // Désactivation du bouton de recharge
+        const btnDeposit = document.getElementById("btnSubmitDeposit");
+        btnDeposit.disabled = true;
+        btnDeposit.textContent = "Opération impossible (Compte Gelé)";
+        btnDeposit.style.background = "#555";
+        btnDeposit.style.cursor = "not-allowed";
+
+        // Désactivation du bouton de retrait
+        const btnWithdraw = document.getElementById("btnSubmitWithdraw");
+        btnWithdraw.disabled = true;
+        btnWithdraw.textContent = "Opération impossible (Compte Gelé)";
+        btnWithdraw.style.background = "#555";
+        btnWithdraw.style.cursor = "not-allowed";
       }
-    });
+    } catch (error) {
+      console.error("Erreur lors de la vérification du statut du compte:", error);
+    }
+  }
+});
 
     // --- LOGIQUE DE CALCUL DES FRAIS ---
     // --- LOGIQUE DE CALCUL DES FRAIS ---

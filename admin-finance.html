@@ -316,7 +316,7 @@ input:focus{ border-color:#ff0050; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
-  getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, limit, orderBy, getAggregateFromServer, sum 
+  getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, limit, orderBy, getAggregateFromServer, sum, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -485,7 +485,6 @@ async function toggleLock(currentlyLocked){
   
   if(confirm(messageConfirm)){
     try {
-      // 1. On interroge Firebase pour avoir le solde exact à la seconde près
       const userRef = doc(db, "users", currentUserLoaded);
       const userSnap = await getDoc(userRef);
       const userData = userSnap.data();
@@ -494,21 +493,32 @@ async function toggleLock(currentlyLocked){
       let newBalanceToDisplay = 0;
       
       if (newStatus === true) {
-        // ON GÈLE : on sauvegarde son argent dans "frozenWallet" puis on met "wallet" à 0
         updates.frozenWallet = userData.wallet || 0;
         updates.wallet = 0;
         newBalanceToDisplay = 0;
       } else {
-        // ON DÉGÈLE : on récupère l'argent sauvegardé, on lui redonne, et on nettoie "frozenWallet"
         newBalanceToDisplay = userData.frozenWallet || 0;
         updates.wallet = newBalanceToDisplay;
         updates.frozenWallet = 0; 
       }
 
-      // 2. On envoie la mise à jour
+      // 1. Mise à jour de l'utilisateur
       await updateDoc(userRef, updates);
+
+      // 2. Envoi de la notification
+      try {
+        await addDoc(collection(db, "notifications"), {
+          from: auth.currentUser.uid, // L'ID de l'admin
+          to: currentUserLoaded,      // L'ID de l'utilisateur concerné
+          type: newStatus ? "wallet_frozen" : "wallet_unfrozen",
+          read: false,
+          createdAt: serverTimestamp()
+        });
+      } catch(notifErr) {
+        console.error("Erreur lors de l'envoi de la notification :", notifErr);
+      }
       
-      // 3. Mise à jour de l'affichage sur la page admin
+      // 3. Mise à jour de l'affichage UI
       document.getElementById("uBalance").textContent = money(newBalanceToDisplay);
       
       updateLockButtonUI(newStatus);

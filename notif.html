@@ -351,9 +351,18 @@ onAuthStateChanged(auth,(user)=>{
       container.appendChild(card);
 
       // Listener profil pour mise à jour de l'avatar et du pseudo
-      if (data.from && data.type !== "transfer_rejected" && data.type !== "blue_approved" && data.type !== "blue_expired") {
+// Listener profil pour mise à jour de l'avatar et du pseudo
+      if (
+        data.from && 
+        data.type !== "transfer_rejected" && 
+        data.type !== "blue_approved" && 
+        data.type !== "blue_expired" &&
+        data.type !== "wallet_frozen" && 
+        data.type !== "wallet_unfrozen"
+      ) {
         const userRef = doc(db, "users", data.from);
         const unsubUser = onSnapshot(userRef, userSnap => {
+          // ... le reste de ton code reste identique
           if (!userSnap.exists()) return;
           const userData = userSnap.data();
           
@@ -376,6 +385,8 @@ onAuthStateChanged(auth,(user)=>{
 
 function getNotificationAvatar(data){
   if(data.type === "transfer_rejected") return "https://cdn-icons-png.flaticon.com/512/564/564619.png"; 
+  if(data.type === "wallet_frozen") return "https://cdn-icons-png.flaticon.com/512/2913/2913133.png"; // Icône cadenas rouge
+  if(data.type === "wallet_unfrozen") return "https://cdn-icons-png.flaticon.com/512/2913/2913520.png"; // Icône cadenas ouvert vert
   if(data.type === "blue_approved" || data.type === "blue_expired") return data.userAvatar || data.toAvatar || "default-avatar.png";
   return data.fromAvatar || "default-avatar.png";
 }
@@ -397,7 +408,6 @@ function buildMessage(data){
     case "comment": return `<strong>${data.fromUsername}</strong> a commenté votre vidéo`;
     case "repost": return `<strong>${data.fromUsername}</strong> a reposté votre vidéo`;
     
-    // NOUVELLES NOTIFICATIONS ICI 👇
     case "comment_like": return `<strong>${data.fromUsername}</strong> a liké ton commentaire`;
     case "reply": return `<strong>${data.fromUsername}</strong> a répondu à ton commentaire`;
     
@@ -407,6 +417,11 @@ function buildMessage(data){
     case "mention": return `<strong>${data.fromUsername}</strong> vous a mentionné`;
     case "message": return `<strong>${data.fromUsername}</strong> vous a envoyé un message`;
     case "transfer_rejected": return `<strong style="color:#e74c3c;">Transaction Refusée</strong><br><span style="font-size:13px;opacity:0.9;">${data.message}</span>`;
+    
+    // NOUVELLES NOTIFICATIONS DE GEL ICI 👇
+    case "wallet_frozen": return `<strong style="color:#e74c3c;">Compte Gelé </strong><br><span style="font-size:13px;opacity:0.9;">Votre wallet a été bloqué et votre balance a été mise en sécurité.</span>`;
+    case "wallet_unfrozen": return `<strong style="color:#2ecc71;">Compte Dégelé </strong><br><span style="font-size:13px;opacity:0.9;">Votre wallet est à nouveau actif et votre argent a été restauré.</span>`;
+    
     default: return "Nouvelle notification";
   }
 }
