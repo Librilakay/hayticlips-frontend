@@ -115,12 +115,68 @@ input:focus, textarea:focus{ border-color:#ff0050; }
 textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 
 .search-box{
-  display:flex;
-  gap:10px;
-  margin-bottom:20px;
+  margin-bottom:16px;
 }
-.search-box input{ flex:1; }
-.search-box button{ width: auto; padding: 0 24px; }
+
+/* RECHERCHE ET RÉSULTATS */
+.search-results-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-bottom:24px;
+}
+
+.user-search-item{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  background:#111;
+  border:1px solid #222;
+  border-radius:14px;
+  padding:12px 16px;
+  cursor:pointer;
+  transition:background 0.2s, border-color 0.2s;
+}
+
+.user-search-item:hover{
+  background:#1a1a1a;
+  border-color:#ff0050;
+}
+
+.user-search-avatar{
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  object-fit:cover;
+  border:1px solid #333;
+  flex-shrink:0;
+}
+
+.user-search-info{
+  flex:1;
+  min-width:0;
+}
+
+.user-search-name{
+  font-weight:700;
+  font-size:15px;
+  color:#fff;
+}
+
+.user-search-username{
+  font-size:13px;
+  color:#ff0050;
+  font-weight:600;
+  margin-bottom:2px;
+}
+
+.user-search-bio{
+  font-size:12px;
+  color:#888;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
 /* GRID & CARDS */
 .grid-4{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
@@ -194,8 +250,6 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 .action-box{ background:rgba(255,0,80,0.05); border:1px solid rgba(255,0,80,0.3); border-radius:16px; padding:20px; }
 
 @media(max-width:768px){
-  .search-box{ flex-direction:column; }
-  .search-box button{ width: 100%; padding:14px; }
   .profile-header{ flex-direction:column; text-align:center; }
 }
 </style>
@@ -247,12 +301,15 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
   <div class="tab-content" id="contentUtilisateur">
     
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Rechercher par @Username ou ID utilisateur...">
-      <button class="primary" id="searchBtn">Chercher</button>
+      <input type="text" id="searchInput" placeholder="Tapez un nom d'utilisateur (@username) ou ID...">
     </div>
+
+    <!-- LISTE DES RÉSULTATS DE RECHERCHE EN TEMPS RÉEL -->
+    <div id="searchResults" class="search-results-list" style="display:none;"></div>
 
     <div id="userEmptyArea" class="empty" style="display:none;">Utilisateur introuvable ou non sélectionné.</div>
 
+    <!-- DÉTAILS DU COMPTE SÉLECTIONNÉ -->
     <div id="userResultArea" style="display:none;">
       
       <!-- EN-TÊTE PROFIL -->
@@ -408,98 +465,142 @@ async function loadFinance(){
 }
 document.getElementById("refreshBtn").onclick = loadFinance;
 
-/* ================= ONGLET UTILISATEUR ================= */
+/* ================= RECHERCHE EN TEMPS RÉEL ================= */
 let currentUserObj = null;
+let searchTimer = null;
 
-document.getElementById("searchBtn").onclick = async () => {
-  const val = document.getElementById("searchInput").value.trim();
-  if(!val) return;
+const searchInput = document.getElementById("searchInput");
+const searchResults = document.getElementById("searchResults");
+
+searchInput.oninput = () => {
+  clearTimeout(searchTimer);
+  const val = searchInput.value.trim();
   
-  const searchBtn = document.getElementById("searchBtn");
-  searchBtn.textContent = "...";
-  searchBtn.disabled = true;
+  if(!val) {
+    searchResults.style.display = "none";
+    searchResults.innerHTML = "";
+    document.getElementById("userResultArea").style.display = "none";
+    document.getElementById("userEmptyArea").style.display = "none";
+    return;
+  }
 
+  // Petite pause de 250ms pour éviter de trop solliciter Firestore à chaque frappe rapide
+  searchTimer = setTimeout(() => {
+    performSearch(val);
+  }, 250);
+};
+
+async function performSearch(val) {
+  const cleanVal = val.replace('@','').toLowerCase();
+  searchResults.style.display = "block";
+  searchResults.innerHTML = `<div class="empty">Recherche en cours...</div>`;
+  
   document.getElementById("userResultArea").style.display = "none";
   document.getElementById("userEmptyArea").style.display = "none";
 
   try {
-    let userSnap;
-    let uid = val;
-    
-    // 1. Recherche directe par UID exact
-    userSnap = await getDoc(doc(db, "users", val));
-    
-    // 2. Si pas trouvé par ID, recherche par préfixe sur le nom d'utilisateur (dès la 1ère lettre)
-    if(!userSnap.exists()){
-      const cleanVal = val.replace('@','').toLowerCase();
-      const q = query(
-        collection(db, "users"), 
-        where("usernameLower", ">=", cleanVal),
-        where("usernameLower", "<=", cleanVal + "\uf8ff"),
-        limit(1)
-      );
-      const querySnapshot = await getDocs(q);
-      if(!querySnapshot.empty){
-        userSnap = querySnapshot.docs[0];
-        uid = userSnap.id;
+    let usersList = [];
+
+    // 1. Recherche par préfixe sur le usernameLower
+    const q = query(
+      collection(db, "users"),
+      where("usernameLower", ">=", cleanVal),
+      where("usernameLower", "<=", cleanVal + "\uf8ff"),
+      limit(8)
+    );
+    const querySnap = await getDocs(q);
+    querySnap.forEach(docSnap => {
+      usersList.push({ uid: docSnap.id, ...docSnap.data() });
+    });
+
+    // 2. Si aucun résultat et que la valeur ressemble à un ID exact
+    if(usersList.length === 0) {
+      const docSnap = await getDoc(doc(db, "users", val));
+      if(docSnap.exists()){
+        usersList.push({ uid: docSnap.id, ...docSnap.data() });
       }
     }
 
-    if(!userSnap || !userSnap.exists()){
-      document.getElementById("userEmptyArea").style.display = "block";
+    if(usersList.length === 0) {
+      searchResults.innerHTML = `<div class="empty">Aucun utilisateur trouvé pour "${val}"</div>`;
       return;
     }
 
-    const u = userSnap.data();
-    currentUserObj = { uid, ...u };
+    // Affichage des cartes sous forme de liste
+    searchResults.innerHTML = "";
+    usersList.forEach(u => {
+      const item = document.createElement("div");
+      item.className = "user-search-item";
+      
+      const avatar = u.avatar || u.photoURL || "https://via.placeholder.com/80";
+      const bioText = u.bio || u.merchantBio || "Aucune biographie";
+      
+      item.innerHTML = `
+        <img src="${avatar}" class="user-search-avatar">
+        <div class="user-search-info">
+          <div class="user-search-name">${u.name || u.username || "Inconnu"}</div>
+          <div class="user-search-username">@${u.username || "inconnu"}</div>
+          <div class="user-search-bio">${bioText}</div>
+        </div>
+        <div style="font-size:18px; color:#ff0050;">➔</div>
+      `;
 
-    // --- EN-TÊTE PROFIL ---
-    document.getElementById("uAvatar").src = u.avatar || u.photoURL || "https://via.placeholder.com/80";
-    document.getElementById("uName").textContent = u.name || u.username || "Inconnu";
-    document.getElementById("uUsername").textContent = u.username || "inconnu";
-    document.getElementById("uId").textContent = uid;
-    document.getElementById("uVerifBadge").style.display = u.verification === "verified" ? "inline-block" : "none";
-    
-    const statusBadge = document.getElementById("uStatusBadge");
-    if(u.suspended) { statusBadge.className="badge frozen"; statusBadge.textContent="🔴 Compte Suspendu"; }
-    else { statusBadge.className="badge active"; statusBadge.textContent="🟢 Compte Actif"; }
-
-    // --- INFOS WALLET ---
-    document.getElementById("uBalance").textContent = money(u.wallet);
-    document.getElementById("uFrozen").textContent = money(u.frozenWallet);
-    document.getElementById("uTotalDep").textContent = money(u.totalDeposited || 0);
-    document.getElementById("uTotalWith").textContent = money(u.totalWithdrawn || 0);
-    document.getElementById("uGiftsRec").textContent = money(u.totalGiftsReceived || 0);
-    document.getElementById("uGiftsSent").textContent = money(u.totalGiftsSent || 0);
-
-    // --- PARAMETRES & SÉCURITÉ ---
-    document.getElementById("uHasPin").textContent = (u.pin && u.pin.length > 0) ? "Oui ✅" : "Non ❌";
-    document.getElementById("uCanWithdraw").innerHTML = u.withdrawBlocked ? "<span class='red'>Désactivés ❌</span>" : "<span class='green'>Activés ✅</span>";
-    document.getElementById("uCanDeposit").innerHTML = u.depositBlocked ? "<span class='red'>Désactivées ❌</span>" : "<span class='green'>Activées ✅</span>";
-    
-    document.getElementById("uCreatedAt").textContent = formatDate(u.createdAt);
-    document.getElementById("uLastActive").textContent = formatDate(u.lastActive);
-    document.getElementById("uLastLogin").textContent = formatDate(u.lastLogin || u.lastActive);
-    
-    document.getElementById("uPinFails").textContent = u.failedPinAttempts || "0";
-    document.getElementById("uLastIp").textContent = u.lastIp || "Non enregistrée";
-    document.getElementById("uLastDevice").textContent = u.lastDevice || "Inconnu";
-
-    // --- BOUTON D'ACTION ---
-    updateActionButtonsUI();
-
-    document.getElementById("userResultArea").style.display = "block";
-    loadUserTransactions(uid);
-    loadAuditLogs(uid);
+      item.onclick = () => displayUserProfile(u);
+      searchResults.appendChild(item);
+    });
 
   } catch(e) {
     console.error(e);
-    alert("Erreur de recherche");
-  } finally {
-    searchBtn.textContent = "Chercher";
-    searchBtn.disabled = false;
+    searchResults.innerHTML = `<div class="empty">Erreur de recherche</div>`;
   }
-};
+}
+
+function displayUserProfile(u) {
+  currentUserObj = u;
+  const uid = u.uid;
+
+  // Masquer la liste des résultats
+  searchResults.style.display = "none";
+
+  // --- EN-TÊTE PROFIL ---
+  document.getElementById("uAvatar").src = u.avatar || u.photoURL || "https://via.placeholder.com/80";
+  document.getElementById("uName").textContent = u.name || u.username || "Inconnu";
+  document.getElementById("uUsername").textContent = u.username || "inconnu";
+  document.getElementById("uId").textContent = uid;
+  document.getElementById("uVerifBadge").style.display = u.verification === "verified" ? "inline-block" : "none";
+  
+  const statusBadge = document.getElementById("uStatusBadge");
+  if(u.suspended) { statusBadge.className="badge frozen"; statusBadge.textContent="🔴 Compte Suspendu"; }
+  else { statusBadge.className="badge active"; statusBadge.textContent="🟢 Compte Actif"; }
+
+  // --- INFOS WALLET ---
+  document.getElementById("uBalance").textContent = money(u.wallet);
+  document.getElementById("uFrozen").textContent = money(u.frozenWallet);
+  document.getElementById("uTotalDep").textContent = money(u.totalDeposited || 0);
+  document.getElementById("uTotalWith").textContent = money(u.totalWithdrawn || 0);
+  document.getElementById("uGiftsRec").textContent = money(u.totalGiftsReceived || 0);
+  document.getElementById("uGiftsSent").textContent = money(u.totalGiftsSent || 0);
+
+  // --- PARAMETRES & SÉCURITÉ ---
+  document.getElementById("uHasPin").textContent = (u.pin && u.pin.length > 0) ? "Oui ✅" : "Non ❌";
+  document.getElementById("uCanWithdraw").innerHTML = u.withdrawBlocked ? "<span class='red'>Désactivés ❌</span>" : "<span class='green'>Activés ✅</span>";
+  document.getElementById("uCanDeposit").innerHTML = u.depositBlocked ? "<span class='red'>Désactivées ❌</span>" : "<span class='green'>Activées ✅</span>";
+  
+  document.getElementById("uCreatedAt").textContent = formatDate(u.createdAt);
+  document.getElementById("uLastActive").textContent = formatDate(u.lastActive);
+  document.getElementById("uLastLogin").textContent = formatDate(u.lastLogin || u.lastActive);
+  
+  document.getElementById("uPinFails").textContent = u.failedPinAttempts || "0";
+  document.getElementById("uLastIp").textContent = u.lastIp || "Non enregistrée";
+  document.getElementById("uLastDevice").textContent = u.lastDevice || "Inconnu";
+
+  // --- BOUTON D'ACTION ---
+  updateActionButtonsUI();
+
+  document.getElementById("userResultArea").style.display = "block";
+  loadUserTransactions(uid);
+  loadAuditLogs(uid);
+}
 
 function updateActionButtonsUI() {
   const isLocked = currentUserObj.walletLocked === true;
@@ -556,7 +657,12 @@ async function executeAdminAction(actionName, updatesToApply, confirmMessage, no
 
     motifInput.value = ""; // Clear motif
     alert("Action effectuée avec succès.");
-    document.getElementById("searchBtn").click(); // Recharger le profil silencieusement
+    
+    // Recharger le profil localement
+    const updatedSnap = await getDoc(userRef);
+    if(updatedSnap.exists()) {
+      displayUserProfile({ uid: currentUserObj.uid, ...updatedSnap.data() });
+    }
 
   } catch(e) {
     console.error(e);
