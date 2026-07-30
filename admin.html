@@ -15,7 +15,7 @@
   box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;
-  touch-action: pan-y; /* Empêche le pinch-to-zoom */
+  touch-action: pan-y;
 }
 
 html, body {
@@ -23,14 +23,14 @@ html, body {
   height: 100%;
   background: #000000;
   color: #ffffff;
-  overflow: hidden; /* Empêche le défilement global de la page */
-  overscroll-behavior-y: none; /* Bloque le rebond élastique (iOS) */
+  overflow: hidden;
+  overscroll-behavior-y: none;
 }
 
 body {
   display: flex;
   flex-direction: column;
-  height: 100dvh; /* S'adapte parfaitement aux mobiles */
+  height: 100dvh;
 }
 
 /* ================== HEADER ================== */
@@ -151,10 +151,8 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 10px 15px 30px 15px;
-  overscroll-behavior-y: contain; /* Scroll fluide interne uniquement */
+  overscroll-behavior-y: contain;
 }
-
-/* Cache la barre de défilement pour un look propre */
 .content-area::-webkit-scrollbar { width: 0px; }
 
 /* ================== CARTES UTILISATEURS / RAPPORTS ================== */
@@ -215,7 +213,6 @@ body {
   cursor: pointer;
 }
 
-/* Couleurs Boutons Actions */
 .btn-suspend { background: #ff0050; color: white; }
 .btn-delete { background: #262628; color: #ff4d4d; border: 1px solid #ff4d4d30 !important; }
 .btn-success { background: #2ecc71; color: white; }
@@ -311,7 +308,6 @@ body {
 
 <div id="videoModal">
   <video id="modalVideo" controls playsinline></video>
-  
   <div class="modal-actions">
     <button onclick="ignoreReport()" class="btn-success">Ignorer le signalement</button>
     <button onclick="deleteReportedVideo()" class="btn-suspend">Supprimer la vidéo</button>
@@ -390,48 +386,82 @@ function getBadgeHTML(user){
   return "";
 }
 
-/* ================== GESTION DES ONGLETS ================== */
 window.switchTab = (tabId, btn) => {
-  // Masquer tous les contenus
   document.getElementById('userList').style.display = 'none';
   document.getElementById('reportsList').style.display = 'none';
   document.getElementById('profileReportsList').style.display = 'none';
   document.getElementById('moderationStats').style.display = 'none';
 
-  // Afficher le bon contenu
   document.getElementById(tabId).style.display = 'block';
 
-  // Mettre à jour le bouton actif
   document.querySelectorAll('#tabButtons button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  // Gérer la barre de recherche
   document.getElementById('searchContainer').style.display = (tabId === 'userList') ? 'block' : 'none';
 
-  // Charger les données si nécessaire
   if(tabId === 'reportsList') loadReports();
   if(tabId === 'profileReportsList') loadProfileReports();
   if(tabId === 'moderationStats') loadModerationStats();
 };
 
+/* ================== DÉTECTION COMPTES INCOMPLETS ================== */
+function isUserIncomplete(u) {
+  // Basé sur tes captures d'écran, si profileCompleted est faux, c'est incomplet
+  if (u.profileCompleted === false) return true;
+  
+  // Ou s'il manque des champs vitaux comme Nom, Prénom ou les contacts
+  if (!u.nom && !u.prenom && !u.username) return true;
+  if (!u.email && !u.phone) return true;
+  
+  return false;
+}
+
 /* ================== UTILISATEURS ================== */
 function renderUsers(users){
-  userList.innerHTML = "";
+  let html = "";
+  
+  // Compter et afficher le bouton de suppression globale si nécessaire
+  const incompleteUsers = users.filter(isUserIncomplete);
+  if (incompleteUsers.length > 0) {
+    html += `
+      <div style="padding:15px; background:#2a0a0a; border: 1px solid #ff4d4d; border-radius:12px; margin-bottom:15px; text-align:center;">
+        <div style="color:#ff4d4d; font-weight:bold; margin-bottom:10px;">⚠️ ${incompleteUsers.length} comptes incomplets détectés</div>
+        <button id="massDeleteBtn" onclick="deleteAllIncompleteUsers()" style="background:#ff0050; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">
+          🗑️ Nettoyer tous les comptes incomplets
+        </button>
+      </div>
+    `;
+  }
+
   users.forEach(u => {
     const badgeHTML = getBadgeHTML(u);
     const avatar = u.avatar || `https://i.pravatar.cc/150?u=${u.id}`;
     
-    userList.innerHTML += `
+    const userEmail = u.email || "Aucun email";
+    const userPhone = u.phone || "Aucun numéro";
+    const displayName = u.nom && u.prenom ? `${u.prenom} ${u.nom}` : (u.username || "Sans nom");
+    
+    // Alerte individuelle
+    const isIncomplete = isUserIncomplete(u);
+    const warningBadge = isIncomplete ? 
+      `<div style="font-size:11px; color:#f39c12; margin-top:6px; background:#332200; padding:6px; border-radius:6px; border: 1px solid #f39c1250; display:inline-block;">⚠️ Profil Incomplet</div>` : "";
+
+    html += `
       <div class="user-card">
         <div class="user-head" onclick="openUserProfile('${u.id}')">
           <img src="${avatar}" class="user-avatar">
           <div class="user-meta">
-            <div class="user-name"><span>${u.username || "Sans nom"}</span>${badgeHTML}</div>
-            <div class="user-bio">${u.bio || "Aucune bio"}</div>
+            <div class="user-name"><span>${displayName}</span>${badgeHTML}</div>
+            <div class="user-bio">${u.bio || ""}</div>
           </div>
         </div>
-        <div style="font-size:11px;color:#666;margin-bottom:10px;font-family:monospace;">ID: ${u.id}</div>
-        <div>
+        
+        <div style="font-size:11px;color:#666;margin-bottom:4px;font-family:monospace;">ID: ${u.id}</div>
+        <div style="font-size:12px;color:#bbb;margin-bottom:2px;">📧 ${userEmail}</div>
+        <div style="font-size:12px;color:#bbb;margin-bottom:4px;">📞 ${userPhone}</div>
+        ${warningBadge}
+        
+        <div style="margin-top:12px;">
           ${u.suspended ? `
             <button class="btn-success" onclick="event.stopPropagation(); unsuspendUser('${u.id}')">Réactiver</button>
           ` : `
@@ -443,12 +473,64 @@ function renderUsers(users){
       </div>
     `;
   });
+  
+  userList.innerHTML = html;
 }
 
 searchInput.addEventListener("input",()=>{
   const value = searchInput.value.toLowerCase();
-  renderUsers(allUsers.filter(u=>(u.username || "").toLowerCase().includes(value)));
+  renderUsers(allUsers.filter(u=>{
+    const nameStr = (u.nom || "") + " " + (u.prenom || "") + " " + (u.username || "");
+    return nameStr.toLowerCase().includes(value);
+  }));
 });
+
+/* ================== SUPPRESSION DE MASSE ================== */
+window.deleteAllIncompleteUsers = async () => {
+  const incompleteUsers = allUsers.filter(isUserIncomplete);
+  if(incompleteUsers.length === 0) return;
+  
+  const msg = `Es-tu sûr de vouloir supprimer DÉFINITIVEMENT les données Firestore et Supabase de ces ${incompleteUsers.length} comptes incomplets ?\n\n(Leurs emails resteront dans Firebase Auth, c'est normal).`;
+  if(!confirm(msg)) return;
+
+  const btn = document.getElementById("massDeleteBtn");
+  if(btn) { btn.textContent = "Nettoyage en cours..."; btn.disabled = true; }
+
+  let deletedCount = 0;
+  for (const u of incompleteUsers) {
+    try {
+      // 1. Nettoyer les vidéos dans Supabase
+      const videosSnap = await getDocs(query(collection(db,"videos"), where("userId","==",u.id)));
+      for(const v of videosSnap.docs){
+        const mediaUrl = v.data().mediaUrls?.[0];
+        if (mediaUrl && mediaUrl.includes("supabase.co")) {
+          try {
+            let fileName = decodeURIComponent(mediaUrl.split(`/${BUCKET_NAME}/`)[1].split('?')[0]);
+            await supabase.storage.from(BUCKET_NAME).remove([fileName]);
+          } catch (e) {}
+        }
+        await deleteDoc(v.ref);
+      }
+
+      // 2. Nettoyer l'avatar dans Supabase
+      if (u.avatar && u.avatar.includes("supabase.co")) {
+        try {
+          let fileName = decodeURIComponent(u.avatar.split(`/${BUCKET_NAME}/`)[1].split('?')[0]);
+          await supabase.storage.from(BUCKET_NAME).remove([fileName]);
+        } catch (e) {}
+      }
+
+      // 3. Supprimer le document Firestore
+      await deleteDoc(doc(db,"users",u.id));
+      deletedCount++;
+    } catch(err) {
+      console.error("Erreur suppression de l'utilisateur", u.id, err);
+    }
+  }
+
+  alert(`✅ ${deletedCount} profils incomplets ont été nettoyés avec succès !`);
+  location.reload();
+};
 
 window.openUserProfile = (uid) => { window.location.href = `profil.html?uid=${uid}`; };
 
@@ -501,13 +583,12 @@ async function loadReports(){
   let found = false;
   let html = "";
 
-  // 1️⃣ RÉCUPÉRER LES VIDÉOS BLOQUÉES PAR L'IA
   const aiFlaggedSnap = await getDocs(query(collection(db, "videos"), where("moderationStatus", "==", "flagged")));
   aiFlaggedSnap.forEach(videoDoc => {
     found = true;
     const video = videoDoc.data();
     const user = allUsers.find(u => u.id === video.userId);
-    const username = user ? user.username : "Utilisateur Inconnu";
+    const username = user ? (user.nom || user.username) : "Utilisateur Inconnu";
     html += `
       <div class="user-card" onclick="openVideoModal('${videoDoc.id}','${video.mediaUrls?.[0] || ""}')" style="cursor:pointer; border-left: 4px solid #8e44ad; background: #1a0b14;">
         <strong style="font-size:15px;">Auteur: ${username}</strong>
@@ -517,10 +598,9 @@ async function loadReports(){
     `;
   });
 
-  // 2️⃣ RÉCUPÉRER LES VIDÉOS SIGNALÉES PAR LES UTILISATEURS
   const videosSnap = await getDocs(collection(db,"videos"));
   for(const videoDoc of videosSnap.docs){
-    if(videoDoc.data().moderationStatus === "flagged") continue; // On l'a déjà affichée au-dessus
+    if(videoDoc.data().moderationStatus === "flagged") continue; 
 
     const reportsSnap = await getDocs(collection(db,"videos",videoDoc.id,"reports"));
     if(reportsSnap.empty) continue;
@@ -528,7 +608,7 @@ async function loadReports(){
     found = true;
     const video = videoDoc.data();
     const user = allUsers.find(u => u.id === video.userId);
-    const username = user ? user.username : "Utilisateur Inconnu";
+    const username = user ? (user.nom || user.username) : "Utilisateur Inconnu";
 
     html += `
       <div class="user-card" onclick="openVideoModal('${videoDoc.id}','${video.mediaUrls?.[0] || ""}')" style="cursor:pointer; border-left: 4px solid #ff0050;">
@@ -570,18 +650,12 @@ window.deleteReportedVideo = async ()=>{
 window.ignoreReport = async ()=>{
   if(!confirm("Pardonner cette vidéo et la rendre visible dans le Feed ?")) return;
   
-  // 1. Effacer les signalements utilisateurs (s'il y en a)
   const reportsSnap = await getDocs(collection(db,"videos",currentReportedVideoId,"reports"));
   for(const d of reportsSnap.docs) await deleteDoc(d.ref);
   
-  // 2. Changer le statut IA sur "clean" pour l'afficher à tout le monde
-  await updateDoc(doc(db, "videos", currentReportedVideoId), {
-    moderationStatus: "clean"
-  });
-
+  await updateDoc(doc(db, "videos", currentReportedVideoId), { moderationStatus: "clean" });
   alert("Vidéo approuvée ! Elle est maintenant visible par tous."); 
-  closeVideoModal(); 
-  loadReports();
+  closeVideoModal(); loadReports();
 };
 
 /* ================== PROFILS SIGNALÉS ================== */
@@ -675,7 +749,6 @@ async function loadModerationStats(){
         <strong style="font-size:16px; color:#ff4d4d;">${suspendedCount}</strong>
       </div>
 
-      <!-- LE BOUTON DE RÉPARATION EST PLACÉ ICI -->
       <button id="fixBtn" onclick="fixOldVideos()" style="width:100%; padding:12px; margin-top:20px; background:#1da1f2; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
         🛠️ Réparer les anciennes vidéos
       </button>
@@ -686,17 +759,13 @@ async function loadModerationStats(){
 
 window.fixOldVideos = async () => {
   if(!confirm("Voulez-vous assigner le statut 'clean' à toutes les anciennes vidéos pour qu'elles réapparaissent dans le flux ?")) return;
-
   try {
     const btn = document.getElementById("fixBtn");
     btn.textContent = "Mise à jour en cours...";
     btn.disabled = true;
-
     const snap = await getDocs(collection(db, "videos"));
     let count = 0;
-
     for (const v of snap.docs) {
-      // Si la vidéo n'a pas de statut de modération, on lui ajoute
       if (!v.data().moderationStatus) {
         await updateDoc(doc(db, "videos", v.id), { moderationStatus: "clean" });
         count++;
