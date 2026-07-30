@@ -290,21 +290,33 @@ const q = lastDoc
     const snap = await getDocs(q);
     const docs = snap.docs;
 
-    // 🔥 Vérifier si on arrive avec ?videoId=
     const params = new URLSearchParams(window.location.search);
     const targetVideoId = params.get("videoId");
 
-    let orderedDocs = docs;
+    let orderedDocs = [...docs];
 
-    if (targetVideoId) {
-      const index = docs.findIndex(d => d.id === targetVideoId);
+    // 🔥 Seulement au premier chargement (pour ne pas bloquer le scroll infini)
+    if (targetVideoId && !lastDoc) {
+      const index = orderedDocs.findIndex(d => d.id === targetVideoId);
+      
       if (index !== -1) {
-        const targetDoc = docs[index];
-        orderedDocs = [
-          targetDoc,
-          ...docs.slice(0, index),
-          ...docs.slice(index + 1)
-        ];
+        // La vidéo est déjà dans le top 5, on la remonte tout en haut
+        const targetDoc = orderedDocs.splice(index, 1)[0];
+        orderedDocs.unshift(targetDoc);
+      } else {
+        // La vidéo n'est pas dans le top 5, on la télécharge manuellement
+        try {
+          const targetSnap = await getDoc(doc(db, "videos", targetVideoId));
+          // On vérifie qu'elle existe, n'est pas archivée et est clean
+          if (targetSnap.exists() && 
+              targetSnap.data().archived === false && 
+              targetSnap.data().moderationStatus === "clean") {
+            // On la force en première position du feed
+            orderedDocs.unshift(targetSnap);
+          }
+        } catch (err) {
+          console.error("Erreur récupération de la vidéo ciblée :", err);
+        }
       }
     }
 
