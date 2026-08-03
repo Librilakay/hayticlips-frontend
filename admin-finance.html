@@ -272,9 +272,13 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 
   <!-- ================= ONGLET GLOBAL ================= -->
   <div class="tab-content active" id="contentGlobal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
       <p style="color:#aaa; font-size:13px;" id="statusText">Statut : Prêt</p>
-      <button class="secondary" id="refreshBtn" style="width:auto; padding:8px 16px; font-size:13px;">Actualiser</button>
+      <div style="display:flex; gap:10px;">
+        <!-- NOUVEAU BOUTON ADMIN EXPORT -->
+        <button class="secondary" id="downloadAdminBtn" style="width:auto; padding:8px 16px; font-size:13px; border-color:#00d084; color:#00d084;">📥 Exporter Entrées/Sorties</button>
+        <button class="secondary" id="refreshBtn" style="width:auto; padding:8px 16px; font-size:13px;">Actualiser</button>
+      </div>
     </div>
 
     <div class="grid-4">
@@ -372,7 +376,11 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
       <div class="grid-2">
         <!-- HISTORIQUE TRANSACTIONS -->
         <div class="card">
-          <div class="card-header">Dernières Transactions</div>
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Dernières Transactions</span>
+            <!-- NOUVEAU BOUTON EXPORT USER -->
+            <button id="downloadUserTxBtn" class="secondary" style="width:auto; padding:4px 10px; font-size:11px;">📥 Tout Exporter</button>
+          </div>
           <div class="tx-list" id="userTxList"></div>
         </div>
 
@@ -414,6 +422,19 @@ function formatDate(val){
   if(!val) return "-";
   let d = val.seconds ? new Date(val.seconds * 1000) : new Date(val);
   return d.toLocaleString("fr-FR", {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+
+/* ================= UTILITAIRE EXPORT CSV ================= */
+function downloadCSV(csvContent, fileName) {
+  const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // \uFEFF pour le support des accents (BOM)
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", fileName);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 /* ================= GESTION DES ONGLETS ================= */
@@ -464,6 +485,47 @@ async function loadFinance(){
   }
 }
 document.getElementById("refreshBtn").onclick = loadFinance;
+
+// NOUVEAU SCRIPT : EXPORT RENTRÉES/SORTIES ADMIN
+document.getElementById("downloadAdminBtn").onclick = async () => {
+  const btn = document.getElementById("downloadAdminBtn");
+  btn.textContent = "⏳ Génération...";
+  btn.disabled = true;
+
+  try {
+    // On télécharge TOUTES les transactions de la plateforme triées par date
+    const q = query(collection(db, "walletTransactions"), orderBy("createdAt", "desc"));
+    const snaps = await getDocs(q);
+
+    let csv = "Date,Utilisateur_ID,Type,Montant,Direction,Statut,Transaction_ID\n";
+    let count = 0;
+
+    snaps.forEach(docSnap => {
+      const tx = docSnap.data();
+      const date = tx.createdAt ? new Date(tx.createdAt.seconds * 1000).toLocaleString("fr-FR").replace(',', '') : "-";
+      const type = tx.type || "Inconnu";
+      const amount = tx.amount || 0;
+      const direction = tx.direction || "-";
+      const status = tx.status || "-";
+      const uid = tx.userId || "-";
+      
+      csv += `"${date}","${uid}","${type}","${amount}","${direction}","${status}","${docSnap.id}"\n`;
+      count++;
+    });
+
+    if(count === 0) {
+      alert("Aucune transaction trouvée sur la plateforme.");
+    } else {
+      downloadCSV(csv, `rapport_complet_entrees_sorties_${new Date().toISOString().split('T')[0]}.csv`);
+    }
+  } catch(e) {
+    console.error(e);
+    alert("Erreur lors de la génération du rapport.");
+  }
+  
+  btn.textContent = "📥 Exporter Entrées/Sorties";
+  btn.disabled = false;
+};
 
 /* ================= RECHERCHE EN TEMPS RÉEL ================= */
 let currentUserObj = null;
@@ -713,6 +775,48 @@ async function loadUserTransactions(uid){
     });
   } catch(e) { txList.innerHTML = `<div class="empty">Erreur de lecture.</div>`; }
 }
+
+// NOUVEAU SCRIPT : EXPORT TRANSACTIONS UTILISATEUR
+document.getElementById("downloadUserTxBtn").onclick = async () => {
+  if(!currentUserObj) return;
+  const uid = currentUserObj.uid;
+  const btn = document.getElementById("downloadUserTxBtn");
+  btn.textContent = "⏳...";
+  btn.disabled = true;
+
+  try {
+    // On requête toutes les transactions de cet utilisateur sans limit(20)
+    const q = query(collection(db, "walletTransactions"), where("userId", "==", uid), orderBy("createdAt", "desc"));
+    const snaps = await getDocs(q);
+
+    if(snaps.empty) {
+      alert("Aucune transaction à télécharger pour cet utilisateur.");
+      btn.textContent = "📥 Tout Exporter";
+      btn.disabled = false;
+      return;
+    }
+
+    let csv = "Date,Type,Montant,Direction,Statut,Transaction_ID\n";
+    snaps.forEach(docSnap => {
+      const tx = docSnap.data();
+      const date = tx.createdAt ? new Date(tx.createdAt.seconds * 1000).toLocaleString("fr-FR").replace(',', '') : "-";
+      const type = tx.type || "Inconnu";
+      const amount = tx.amount || 0;
+      const direction = tx.direction || "-";
+      const status = tx.status || "-";
+      
+      csv += `"${date}","${type}","${amount}","${direction}","${status}","${docSnap.id}"\n`;
+    });
+
+    downloadCSV(csv, `transactions_${currentUserObj.username || uid}.csv`);
+  } catch(e) {
+    console.error(e);
+    alert("Erreur lors du téléchargement.");
+  }
+  
+  btn.textContent = "📥 Tout Exporter";
+  btn.disabled = false;
+};
 
 async function loadAuditLogs(uid){
   const auditList = document.getElementById("userAuditList");
