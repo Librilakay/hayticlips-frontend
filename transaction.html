@@ -8,6 +8,10 @@
 
 <title>Transactions – HaytiClips</title>
 
+<!-- IMPORTS POUR LA GÉNÉRATION DE PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
 <style>
 
 *{
@@ -27,17 +31,16 @@ padding:20px;
 
 .header{
 display:flex;
-align-items:center;
 justify-content:center;
-margin-bottom:25px;
+align-items:center;
+margin-bottom:30px;
 }
 
-.logo{
-display:flex;
-align-items:center;
-gap:10px;
-font-size:22px;
-font-weight:700;
+.logo-img{
+width:200px;
+max-width:80%;
+/* Optionnel : ajout d'un petit arrondi pour que l'icône soit propre */
+border-radius: 16px; 
 }
 
 /* LIST */
@@ -73,49 +76,30 @@ font-size:13px;
 font-weight:600;
 }
 
-/* TYPE COLORS */
-
-.deposit{
-color:#2ecc71;
-}
-
-.withdraw{
-color:#ff0033;
-}
-
-.gift{
-color:#f39c12;
-}
-
-.blue{
-color:#3498db;
-}
-
 /* BUTTON */
 
 .download{
-margin-top:12px;
+margin-top:0px;
+margin-bottom:20px;
 width:100%;
-padding:10px;
+padding:12px;
 border:none;
-border-radius:8px;
-background:#ff0033;
+border-radius:12px;
+background:#ff0050;
 color:white;
 font-weight:700;
 cursor:pointer;
-font-size:13px;
+font-size:14px;
+transition: transform 0.1s;
 }
 
-.header{
-display:flex;
-justify-content:center;
-align-items:center;
-margin-bottom:30px;
+.download:active {
+  transform: scale(0.98);
 }
 
-.logo-img{
-width:200px;
-max-width:80%;
+.download:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .back{
@@ -128,6 +112,7 @@ max-width:80%;
   color:white;
   text-decoration:none;
   font-size:14px;
+  z-index: 100;
 }
 
 /* NOUVEAUX STYLES : RÉSUMÉ & FILTRES */
@@ -197,11 +182,9 @@ max-width:80%;
 <body>
 
 <div class="header">
-
-<img src="ticlip.jpg" class="logo-img">
-
+  <!-- TON VRAI LOGO INTÉGRÉ ICI -->
+  <img src="icons/icon-192.jpg" class="logo-img" alt="Logo HaytiClips">
 </div>
-
 
 <div class="summary-grid" id="summaryGrid">
   <div class="summary-card">
@@ -221,6 +204,9 @@ max-width:80%;
     <div class="summary-val gift" id="sumGifts">0 Gdes</div>
   </div>
 </div>
+
+<!-- BOUTON D'EXPORT PDF -->
+<button id="btnExportPDF" class="download">📄 Télécharger mon relevé (PDF)</button>
 
 <div class="filters">
   <input type="text" id="searchInput" class="filter-input" placeholder="Rechercher (ID, Montant, Date...)">
@@ -250,11 +236,10 @@ max-width:80%;
 
 <div class="list" id="txList"></div>
 
-
-
 <a href="profil.html" class="back">Retour</a>
+
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -278,8 +263,29 @@ const dateFilter = document.getElementById("dateFilter");
 const customDateRow = document.getElementById("customDateRow");
 const dateStart = document.getElementById("dateStart");
 const dateEnd = document.getElementById("dateEnd");
+const btnExportPDF = document.getElementById("btnExportPDF");
 
-let allTransactions = []; // Stockage local des transactions
+let allTransactions = []; 
+let currentFilteredList = []; // Utilisé pour savoir quoi mettre dans le PDF
+let currentUserData = null; 
+
+// Utilitaire pour charger le logo en base64 (nécessaire pour jsPDF)
+async function getBase64Image(url) {
+  return new Promise((resolve) => {
+    let img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      let canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      let ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/jpeg"));
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -288,10 +294,13 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
-    // 1. Récupérer le solde actuel de l'utilisateur
+    // 1. Récupérer le solde actuel
     const userSnap = await getDoc(doc(db, "users", user.uid));
     if (userSnap.exists()) {
-      document.getElementById("sumBalance").textContent = `${userSnap.data().wallet || 0} Gdes`;
+      currentUserData = { uid: user.uid, ...userSnap.data() };
+      document.getElementById("sumBalance").textContent = `${currentUserData.wallet || 0} Gdes`;
+    } else {
+      currentUserData = { uid: user.uid, username: "Utilisateur" };
     }
 
     // 2. Récupérer toutes ses transactions
@@ -303,11 +312,12 @@ onAuthStateChanged(auth, async (user) => {
     const snap = await getDocs(q);
 
     allTransactions = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    currentFilteredList = allTransactions; 
 
-    // 3. Calculer les totaux pour le résumé
+    // 3. Calculer les totaux
     calculateSummary(allTransactions);
 
-    // 4. Affichage initial (Seulement les 3 derniers)
+    // 4. Affichage initial (3 derniers)
     renderTransactions(allTransactions.slice(0, 3), true);
 
   } catch (e) {
@@ -335,7 +345,7 @@ function calculateSummary(transactions) {
   document.getElementById("sumGifts").textContent = `${gifts} Gdes`;
 }
 
-// Rendu HTML des transactions
+// Rendu HTML
 function renderTransactions(transactions, isInitial = false) {
   txList.innerHTML = "";
 
@@ -346,7 +356,7 @@ function renderTransactions(transactions, isInitial = false) {
 
   let html = "";
   if (isInitial && allTransactions.length > 3) {
-    html += `<div style="text-align:center; margin-bottom:10px; font-size:13px; color:#aaa;">Affichage des 3 dernières transactions. Utilisez la recherche.</div>`;
+    html += `<div style="text-align:center; margin-bottom:10px; font-size:13px; color:#aaa;">Affichage des 3 dernières transactions. Utilisez la recherche ou téléchargez le PDF pour voir l'historique complet.</div>`;
   }
 
   transactions.forEach(tx => {
@@ -354,8 +364,8 @@ function renderTransactions(transactions, isInitial = false) {
     let rawDate = "";
     if (tx.createdAt && tx.createdAt.toDate) {
       const d = tx.createdAt.toDate();
-      date = d.toLocaleString();
-      rawDate = d.toISOString().split('T')[0]; // YYYY-MM-DD
+      date = d.toLocaleString('fr-FR');
+      rawDate = d.toISOString().split('T')[0];
     }
 
     let label = tx.type || "Transaction";
@@ -394,7 +404,7 @@ function renderTransactions(transactions, isInitial = false) {
   txList.innerHTML = html;
 }
 
-// Logique de filtrage
+// Filtres
 function applyFilters() {
   const searchVal = searchInput.value.toLowerCase().trim();
   const typeVal = typeFilter.value;
@@ -402,21 +412,17 @@ function applyFilters() {
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  
   const startOfWeek = new Date(startOfToday);
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-  
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   let filtered = allTransactions.filter(tx => {
-    // 1. Filtre Recherche (ID, Montant, ou Type)
     let matchSearch = true;
     if (searchVal) {
       const stringData = `${tx.id} ${tx.amount} ${tx.type}`.toLowerCase();
       matchSearch = stringData.includes(searchVal);
     }
 
-    // 2. Filtre Type
     let matchType = true;
     if (typeVal !== "all") {
       if (typeVal === "deposit") matchType = (tx.type === "deposit");
@@ -425,7 +431,6 @@ function applyFilters() {
       else if (["pending", "completed", "failed"].includes(typeVal)) matchType = (tx.status === typeVal);
     }
 
-    // 3. Filtre Date
     let matchDate = true;
     if (dateVal !== "all" && tx.createdAt) {
       const txDate = tx.createdAt.toDate();
@@ -435,8 +440,7 @@ function applyFilters() {
       else if (dateVal === "custom") {
         const dStart = new Date(dateStart.value);
         const dEnd = new Date(dateEnd.value);
-        dEnd.setHours(23, 59, 59); // Fin de journée
-        
+        dEnd.setHours(23, 59, 59); 
         if (dateStart.value && dateEnd.value) {
           matchDate = (txDate >= dStart && txDate <= dEnd);
         }
@@ -446,11 +450,92 @@ function applyFilters() {
     return matchSearch && matchType && matchDate;
   });
 
-  // Si on effectue une recherche ou un filtre, on affiche tous les résultats correspondants
-  // Sinon, on remet l'affichage des 3 derniers.
+  currentFilteredList = filtered; // On garde en mémoire pour le PDF
   const isFiltering = searchVal !== "" || typeVal !== "all" || dateVal !== "all";
   renderTransactions(isFiltering ? filtered : filtered.slice(0, 3), !isFiltering);
 }
+
+// LOGIQUE DE GÉNÉRATION PDF
+btnExportPDF.addEventListener("click", async () => {
+  if (currentFilteredList.length === 0) {
+    alert("Aucune transaction à exporter selon vos filtres actuels.");
+    return;
+  }
+  
+  btnExportPDF.textContent = "⏳ Création du relevé...";
+  btnExportPDF.disabled = true;
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const dateStr = new Date().toLocaleString("fr-FR");
+
+    // 1. En-tête : Tentative de charger le logo HaytiClips
+    let b64Logo = await getBase64Image("icons/icon-192.jpg");
+    if(b64Logo) {
+      doc.addImage(b64Logo, "JPEG", 14, 15, 20, 20);
+    } else {
+      // Fallback visuel si l'image ne charge pas (même si le chemin est bon)
+      doc.setFillColor(255, 0, 80);
+      doc.rect(14, 15, 10, 10, "F");
+    }
+
+    doc.setFontSize(16).setTextColor(255, 0, 80).setFont(undefined, 'bold');
+    doc.text("Relevé de Transactions - HaytiClips", 40, 24);
+    
+    doc.setFontSize(10).setTextColor(100, 100, 100).setFont(undefined, 'normal');
+    doc.text(`Généré le : ${dateStr}`, 40, 31);
+    
+    let username = currentUserData ? (currentUserData.name || currentUserData.username || "Utilisateur") : "Utilisateur";
+    doc.text(`Compte : @${username}`, 196, 24, { align: "right" });
+    
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 40, 196, 40);
+
+    // 2. Formatage des données du tableau
+    let tableData = currentFilteredList.map(tx => {
+      let dateText = tx.createdAt && tx.createdAt.toDate ? tx.createdAt.toDate().toLocaleString('fr-FR') : "—";
+      
+      let typeText = tx.type;
+      switch (tx.type) {
+        case "deposit": typeText = "Recharge"; break;
+        case "withdraw": typeText = "Retrait"; break;
+        case "gift_sent": typeText = "Cadeau (Envoyé)"; break;
+        case "gift_received": typeText = "Cadeau (Reçu)"; break;
+      }
+      
+      let statusText = tx.status === "completed" ? "Terminée" : (tx.status === "pending" ? "En attente" : "Échouée");
+      let sign = (tx.amount >= 0 && tx.type !== "withdraw" && tx.type !== "gift_sent") ? "+" : "-";
+
+      return [
+        dateText,
+        typeText,
+        `${sign}${tx.amount} Gdes`,
+        statusText,
+        tx.id.substring(0, 10) + "..."
+      ];
+    });
+
+    // 3. Dessiner le tableau avec autoTable
+    doc.autoTable({
+      startY: 45,
+      head: [['Date', 'Opération', 'Montant', 'Statut', 'Référence']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [255, 0, 80], textColor: [255,255,255], fontStyle: 'bold' },
+      styles: { fontSize: 9 },
+      alternateRowStyles: { fillColor: [245, 245, 245] }
+    });
+
+    doc.save(`Releve_HaytiClips_${username}.pdf`);
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors de la création du fichier PDF.");
+  }
+
+  btnExportPDF.textContent = "📄 Télécharger mon relevé (PDF)";
+  btnExportPDF.disabled = false;
+});
 
 // Écouteurs d'événements
 searchInput.addEventListener("input", applyFilters);
