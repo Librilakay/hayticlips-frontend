@@ -7,251 +7,90 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Admin Finance – HaytiClips</title>
 
+<!-- IMPORTS POUR LA GÉNÉRATION DE PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-}
+*{ margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
+html,body{ background:#000; color:#fff; min-height:100%; }
+body{ min-height:100vh; padding-bottom:50px; }
 
-html,body{
-  background:#000;
-  color:#fff;
-  min-height:100%;
-}
-
-body{
-  min-height:100vh;
-  padding-bottom:50px;
-}
-
-/* HEADER */
-.header{
-  height:60px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 16px;
-  background:#000;
-  position:sticky;
-  top:0;
-  z-index:100;
-  border-bottom:1px solid #222;
-}
-
+/* HEADER & TABS */
+.header{ height:60px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; background:#000; position:sticky; top:0; z-index:100; border-bottom:1px solid #222; }
 .header-left{ font-size:24px; cursor:pointer; width:40px; }
 .header-center{ font-size:18px; font-weight:800; }
 .header-right{ width:40px; text-align:right; }
-
-/* TABS */
-.tabs{
-  display:flex;
-  border-bottom:1px solid #222;
-  margin-bottom:20px;
-  background:#000;
-  position:sticky;
-  top:60px;
-  z-index:99;
-}
-
-.tab{
-  flex:1;
-  text-align:center;
-  padding:16px 10px;
-  color:#888;
-  font-size:16px;
-  font-weight:700;
-  cursor:pointer;
-  transition:all 0.3s ease;
-  border-bottom:3px solid transparent;
-}
-
-.tab.active{
-  color:#fff;
-  border-bottom:3px solid #ff0050;
-}
-
+.tabs{ display:flex; border-bottom:1px solid #222; margin-bottom:20px; background:#000; position:sticky; top:60px; z-index:99; }
+.tab{ flex:1; text-align:center; padding:16px 10px; color:#888; font-size:16px; font-weight:700; cursor:pointer; transition:all 0.3s ease; border-bottom:3px solid transparent; }
+.tab.active{ color:#fff; border-bottom:3px solid #ff0050; }
 .tab-content{ display:none; }
 .tab-content.active{ display:block; }
+.page{ max-width:1200px; margin:0 auto; padding:0 16px; }
 
-/* CONTAINERS */
-.page{
-  max-width:1200px;
-  margin:0 auto;
-  padding:0 16px;
-}
-
-/* BUTTONS & INPUTS */
-button{
-  border:none;
-  border-radius:12px;
-  padding:12px 16px;
-  font-weight:700;
-  font-size:14px;
-  cursor:pointer;
-  transition:transform 0.1s;
-  width: 100%;
-}
+/* BOUTONS ET INPUTS */
+button{ border:none; border-radius:12px; padding:12px 16px; font-weight:700; font-size:14px; cursor:pointer; transition:transform 0.1s; width: 100%; }
 button:active{ transform:scale(0.97); }
 button:disabled{ opacity:.5; cursor:not-allowed; }
-
 .primary{ background:#ff0050; color:#fff; }
 .secondary{ background:#1a1a1a; color:#fff; border:1px solid #333; }
 .danger{ background:#ff4d4f; color:#fff; }
-.warning{ background:#f39c12; color:#fff; }
-
-input, textarea{
-  width:100%;
-  background:#111;
-  border:1px solid #333;
-  color:#fff;
-  padding:14px 16px;
-  border-radius:12px;
-  font-size:15px;
-  outline:none;
-}
+.search-box{ margin-bottom:16px; }
+input, textarea{ width:100%; background:#111; border:1px solid #333; color:#fff; padding:14px 16px; border-radius:12px; font-size:15px; outline:none; }
 input:focus, textarea:focus{ border-color:#ff0050; }
 textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 
-.search-box{
-  margin-bottom:16px;
-}
+/* RECHERCHE */
+.search-results-list{ display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.user-search-item{ display:flex; align-items:center; gap:14px; background:#111; border:1px solid #222; border-radius:14px; padding:12px 16px; cursor:pointer; transition:background 0.2s, border-color 0.2s; }
+.user-search-item:hover{ background:#1a1a1a; border-color:#ff0050; }
+.user-search-avatar{ width:50px; height:50px; border-radius:50%; object-fit:cover; border:1px solid #333; flex-shrink:0; }
+.user-search-info{ flex:1; min-width:0; }
+.user-search-name{ font-weight:700; font-size:15px; color:#fff; }
+.user-search-username{ font-size:13px; color:#ff0050; font-weight:600; margin-bottom:2px; }
+.user-search-bio{ font-size:12px; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* RECHERCHE ET RÉSULTATS */
-.search-results-list{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  margin-bottom:24px;
-}
-
-.user-search-item{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  background:#111;
-  border:1px solid #222;
-  border-radius:14px;
-  padding:12px 16px;
-  cursor:pointer;
-  transition:background 0.2s, border-color 0.2s;
-}
-
-.user-search-item:hover{
-  background:#1a1a1a;
-  border-color:#ff0050;
-}
-
-.user-search-avatar{
-  width:50px;
-  height:50px;
-  border-radius:50%;
-  object-fit:cover;
-  border:1px solid #333;
-  flex-shrink:0;
-}
-
-.user-search-info{
-  flex:1;
-  min-width:0;
-}
-
-.user-search-name{
-  font-weight:700;
-  font-size:15px;
-  color:#fff;
-}
-
-.user-search-username{
-  font-size:13px;
-  color:#ff0050;
-  font-weight:600;
-  margin-bottom:2px;
-}
-
-.user-search-bio{
-  font-size:12px;
-  color:#888;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-/* GRID & CARDS */
+/* GRIDS & CARDS */
 .grid-4{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
 .grid-2{ display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin-bottom:24px; }
 .grid-3{ display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:16px; margin-bottom:24px; }
-
 .card{ background:#111; border:1px solid #222; border-radius:16px; padding:18px; }
 .card-header{ font-size:15px; font-weight:800; border-bottom:1px solid #222; padding-bottom:10px; margin-bottom:12px; color:#ddd; }
-
-.card-title{ font-size:13px; color:#aaa; margin-bottom:4px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+.card-title{ font-size:13px; color:#aaa; margin-bottom:4px; font-weight:600; text-transform:uppercase; }
 .card-value{ font-size:24px; font-weight:900; }
 
 /* UTILS */
-.green{color:#00d084}
-.red{color:#ff4d4f}
-.pink{color:#ff0050}
-.white{color:#fff}
-.orange{color:#f39c12}
-.gray{color:#aaa}
-
+.green{color:#00d084} .red{color:#ff4d4f} .pink{color:#ff0050} .white{color:#fff} .orange{color:#f39c12} .gray{color:#aaa}
 .badge{ padding:4px 8px; border-radius:8px; font-size:11px; font-weight:800; text-transform:uppercase; }
 .badge.active{ background:#00d08422; color:#00d084; border:1px solid #00d084; }
 .badge.frozen{ background:#ff4d4f22; color:#ff4d4f; border:1px solid #ff4d4f; }
 .badge.blue{ background:#1da1f222; color:#1da1f2; border:1px solid #1da1f2; }
-
 .info-row{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed #222; }
 .info-row:last-child{ border-bottom:none; }
 .info-label{ color:#888; font-size:14px; }
 .info-data{ font-weight:600; font-size:14px; text-align:right;}
 
-/* LISTS (Transactions & Audits) */
+/* LISTES */
 .tx-list, .audit-list{ display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto; padding-right:5px;}
 .tx-list::-webkit-scrollbar, .audit-list::-webkit-scrollbar { width: 4px; }
 .tx-list::-webkit-scrollbar-thumb, .audit-list::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-
-.tx-card, .audit-card{
-  background:#1a1a1a;
-  border:1px solid #222;
-  border-radius:12px;
-  padding:12px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
+.tx-card, .audit-card{ background:#1a1a1a; border:1px solid #222; border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center; }
 .audit-card { flex-direction: column; align-items: flex-start; gap: 6px; }
-
 .tx-info{ display:flex; flex-direction:column; gap:4px; }
 .tx-type{ font-weight:700; font-size:14px; }
 .tx-date{ font-size:12px; color:#888; }
 .tx-amount{ font-weight:900; font-size:15px; }
-
 .empty{ padding:30px; text-align:center; color:#666; border:1px dashed #333; border-radius:16px; font-size:14px; }
 
-/* USER PROFILE HEADER */
-.profile-header{
-  display:flex;
-  align-items:center;
-  gap:20px;
-  background:#111;
-  border:1px solid #333;
-  border-radius:16px;
-  padding:20px;
-  margin-bottom:24px;
-}
+/* PROFIL UTILISATEUR */
+.profile-header{ display:flex; align-items:center; gap:20px; background:#111; border:1px solid #333; border-radius:16px; padding:20px; margin-bottom:24px; }
 .profile-avatar{ width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid #222; }
 .profile-details h2{ font-size:22px; margin-bottom:4px; display:flex; align-items:center; gap:8px;}
 .profile-details p{ color:#aaa; font-size:14px; margin-bottom:8px;}
 .profile-badges{ display:flex; gap:8px; flex-wrap:wrap; }
-
-/* ACTION AREA */
 .action-box{ background:rgba(255,0,80,0.05); border:1px solid rgba(255,0,80,0.3); border-radius:16px; padding:20px; }
 
-@media(max-width:768px){
-  .profile-header{ flex-direction:column; text-align:center; }
-}
+@media(max-width:768px){ .profile-header{ flex-direction:column; text-align:center; } }
 </style>
 </head>
 
@@ -269,14 +108,12 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 </div>
 
 <div class="page">
-
-  <!-- ================= ONGLET GLOBAL ================= -->
+  <!-- ONGLET GLOBAL -->
   <div class="tab-content active" id="contentGlobal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
       <p style="color:#aaa; font-size:13px;" id="statusText">Statut : Prêt</p>
       <div style="display:flex; gap:10px;">
-        <!-- NOUVEAU BOUTON ADMIN EXPORT -->
-        <button class="secondary" id="downloadAdminBtn" style="width:auto; padding:8px 16px; font-size:13px; border-color:#00d084; color:#00d084;">📥 Exporter Entrées/Sorties</button>
+        <button class="secondary" id="downloadAdminBtn" style="width:auto; padding:8px 16px; font-size:13px; border-color:#ff0050; color:#ff0050;">📄 Exporter Rapport PDF</button>
         <button class="secondary" id="refreshBtn" style="width:auto; padding:8px 16px; font-size:13px;">Actualiser</button>
       </div>
     </div>
@@ -301,24 +138,17 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
     </div>
   </div>
 
-  <!-- ================= ONGLET UTILISATEUR ================= -->
+  <!-- ONGLET UTILISATEUR -->
   <div class="tab-content" id="contentUtilisateur">
-    
     <div class="search-box">
       <input type="text" id="searchInput" placeholder="Tapez un nom d'utilisateur (@username) ou ID...">
     </div>
-
-    <!-- LISTE DES RÉSULTATS DE RECHERCHE EN TEMPS RÉEL -->
     <div id="searchResults" class="search-results-list" style="display:none;"></div>
-
     <div id="userEmptyArea" class="empty" style="display:none;">Utilisateur introuvable ou non sélectionné.</div>
 
-    <!-- DÉTAILS DU COMPTE SÉLECTIONNÉ -->
     <div id="userResultArea" style="display:none;">
-      
-      <!-- EN-TÊTE PROFIL -->
       <div class="profile-header">
-        <img id="uAvatar" src="https://via.placeholder.com/80" class="profile-avatar">
+        <img id="uAvatar" src="https://via.placeholder.com/80" crossorigin="anonymous" class="profile-avatar">
         <div class="profile-details">
           <h2><span id="uName">Nom</span> <span id="uVerifBadge" class="badge blue" style="display:none;">Vérifié</span></h2>
           <p>@<span id="uUsername">username</span> • ID: <span id="uId">...</span></p>
@@ -330,7 +160,6 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
       </div>
 
       <div class="grid-3">
-        <!-- INFOS WALLET -->
         <div class="card">
           <div class="card-header">Informations Financières</div>
           <div class="info-row"><span class="info-label">Solde Actuel</span><span class="info-data pink" style="font-size:18px;" id="uBalance">0 Gdes</span></div>
@@ -340,8 +169,6 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
           <div class="info-row"><span class="info-label">Cadeaux Reçus</span><span class="info-data" id="uGiftsRec">0 Gdes</span></div>
           <div class="info-row"><span class="info-label">Cadeaux Envoyés</span><span class="info-data" id="uGiftsSent">0 Gdes</span></div>
         </div>
-
-        <!-- PARAMÈTRES WALLET -->
         <div class="card">
           <div class="card-header">Paramètres du Compte</div>
           <div class="info-row"><span class="info-label">Code PIN configuré</span><span class="info-data" id="uHasPin">Non</span></div>
@@ -350,8 +177,6 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
           <div class="info-row"><span class="info-label">Création compte</span><span class="info-data" id="uCreatedAt">-</span></div>
           <div class="info-row"><span class="info-label">Dernière activité</span><span class="info-data" id="uLastActive">-</span></div>
         </div>
-
-        <!-- SÉCURITÉ -->
         <div class="card">
           <div class="card-header">Sécurité & Connexion</div>
           <div class="info-row"><span class="info-label">Échecs Code PIN</span><span class="info-data red" id="uPinFails">0</span></div>
@@ -361,30 +186,22 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
         </div>
       </div>
 
-      <!-- ACTIONS ADMINISTRATEUR -->
       <div class="action-box" style="margin-bottom:24px;">
         <div class="card-header" style="border-color:rgba(255,0,80,0.3);">Action Administrateur</div>
-        <p style="font-size:13px; color:#aaa; margin-bottom:12px;">Un motif est <b>strictement obligatoire</b> avant d'exécuter cette action. Il sera enregistré dans le journal d'audit.</p>
-        
         <textarea id="adminMotif" placeholder="Saisissez le motif justifiant cette action (ex: Fraude suspectée, Demande utilisateur, etc.)"></textarea>
-        
         <div style="margin-top:16px;">
           <button id="btnToggleFreeze" class="danger">🔒 Geler le Wallet (Vider)</button>
         </div>
       </div>
 
       <div class="grid-2">
-        <!-- HISTORIQUE TRANSACTIONS -->
         <div class="card">
           <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
             <span>Dernières Transactions</span>
-            <!-- NOUVEAU BOUTON EXPORT USER -->
-            <button id="downloadUserTxBtn" class="secondary" style="width:auto; padding:4px 10px; font-size:11px;">📥 Tout Exporter</button>
+            <button id="downloadUserTxBtn" class="secondary" style="width:auto; padding:4px 10px; font-size:11px; color:#ff0050; border-color:#ff0050;">📄 Dossier PDF Utilisateur</button>
           </div>
           <div class="tx-list" id="userTxList"></div>
         </div>
-
-        <!-- JOURNAL D'AUDIT -->
         <div class="card">
           <div class="card-header">Journal d'Audit Admin</div>
           <div class="audit-list" id="userAuditList"></div>
@@ -423,44 +240,62 @@ function formatDate(val){
   let d = val.seconds ? new Date(val.seconds * 1000) : new Date(val);
   return d.toLocaleString("fr-FR", {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
-
-/* ================= UTILITAIRE EXPORT CSV ================= */
-function downloadCSV(csvContent, fileName) {
-  const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // \uFEFF pour le support des accents (BOM)
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  link.setAttribute("href", url);
-  link.setAttribute("download", fileName);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+function formatDateOnly(val){
+  if(!val) return "-";
+  let d = val.seconds ? new Date(val.seconds * 1000) : new Date(val);
+  return d.toLocaleDateString("fr-FR");
+}
+function formatTimeOnly(val){
+  if(!val) return "-";
+  let d = val.seconds ? new Date(val.seconds * 1000) : new Date(val);
+  return d.toLocaleTimeString("fr-FR", {hour:'2-digit', minute:'2-digit'});
 }
 
-/* ================= GESTION DES ONGLETS ================= */
+// Outil Image Base64 (Pour inclure la photo de profil dans le PDF)
+async function getBase64Image(url) {
+  return new Promise((resolve) => {
+    let img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      let canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      let ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+// Rendu Graphique du Logo HaytiClips (Carre Rouge + Texte) dans jsPDF
+function drawLogo(doc, x, y) {
+  doc.setFillColor(255, 0, 80);
+  doc.rect(x, y, 10, 10, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9).setFont(undefined, 'bold');
+  doc.text("HC", x + 1.5, y + 7);
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(18).setFont(undefined, 'bold');
+  doc.text("HaytiClips", x + 14, y + 8);
+}
+
+/* ================= ONGLET GLOBAL ================= */
 const tabGlobal = document.getElementById("tabGlobal");
 const tabUtilisateur = document.getElementById("tabUtilisateur");
 const contentGlobal = document.getElementById("contentGlobal");
 const contentUtilisateur = document.getElementById("contentUtilisateur");
 
 function switchTab(tab) {
-  tabGlobal.classList.remove("active");
-  tabUtilisateur.classList.remove("active");
-  contentGlobal.classList.remove("active");
-  contentUtilisateur.classList.remove("active");
-
-  if(tab === 'global') {
-    tabGlobal.classList.add("active");
-    contentGlobal.classList.add("active");
-  } else {
-    tabUtilisateur.classList.add("active");
-    contentUtilisateur.classList.add("active");
-  }
+  tabGlobal.classList.remove("active"); tabUtilisateur.classList.remove("active");
+  contentGlobal.classList.remove("active"); contentUtilisateur.classList.remove("active");
+  if(tab === 'global') { tabGlobal.classList.add("active"); contentGlobal.classList.add("active"); } 
+  else { tabUtilisateur.classList.add("active"); contentUtilisateur.classList.add("active"); }
 }
 tabGlobal.onclick = () => switchTab('global');
 tabUtilisateur.onclick = () => switchTab('utilisateur');
 
-/* ================= ONGLET GLOBAL ================= */
 async function loadFinance(){
   document.getElementById("statusText").textContent = "Chargement...";
   try {
@@ -469,16 +304,13 @@ async function loadFinance(){
       headers: { "Authorization": "Bearer " + token }
     });
     const data = await res.json();
-    
     if(data.success){
       document.getElementById("totalIn").textContent = money(data.totalIn);
       document.getElementById("totalOut").textContent = money(data.totalOut);
       document.getElementById("netTotal").textContent = money(data.netTotal);
     }
-
     const snapshot = await getAggregateFromServer(collection(db, "users"), { totalMoney: sum("wallet") });
     document.getElementById("platformTotal").textContent = money(snapshot.data().totalMoney || 0);
-
     document.getElementById("statusText").textContent = "À jour";
   } catch(err) {
     document.getElementById("statusText").textContent = "Erreur de chargement";
@@ -486,156 +318,157 @@ async function loadFinance(){
 }
 document.getElementById("refreshBtn").onclick = loadFinance;
 
-// NOUVEAU SCRIPT : EXPORT RENTRÉES/SORTIES ADMIN
+/* BLOC 1 : GÉNÉRATION DU PDF ADMINISTRATEUR GLOBAL */
 document.getElementById("downloadAdminBtn").onclick = async () => {
   const btn = document.getElementById("downloadAdminBtn");
-  btn.textContent = "⏳ Génération...";
-  btn.disabled = true;
+  btn.textContent = "⏳ Génération PDF..."; btn.disabled = true;
 
   try {
-    // On télécharge TOUTES les transactions de la plateforme triées par date
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const adminSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const adminName = adminSnap.exists() ? (adminSnap.data().name || adminSnap.data().username || auth.currentUser.uid) : "Administrateur";
+    
+    // Générer Numéro Unique
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0,10).replace(/-/g,'');
+    const reportId = `HC-${dateStr}-${Math.floor(Math.random()*1000000).toString().padStart(6,'0')}`;
+    const generationDate = now.toLocaleString("fr-FR", {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+
+    // Fetch Transactions
     const q = query(collection(db, "walletTransactions"), orderBy("createdAt", "desc"));
     const snaps = await getDocs(q);
 
-    let csv = "Date,Utilisateur_ID,Type,Montant,Direction,Statut,Transaction_ID\n";
-    let count = 0;
+    let totalTx = 0, nbRecharges = 0, nbRetraits = 0;
+    let montantRecharges = 0, montantRetraits = 0;
+    let usersSet = new Set();
+    let tableData = [];
 
     snaps.forEach(docSnap => {
-      const tx = docSnap.data();
-      const date = tx.createdAt ? new Date(tx.createdAt.seconds * 1000).toLocaleString("fr-FR").replace(',', '') : "-";
-      const type = tx.type || "Inconnu";
-      const amount = tx.amount || 0;
-      const direction = tx.direction || "-";
-      const status = tx.status || "-";
-      const uid = tx.userId || "-";
+      let tx = docSnap.data();
+      totalTx++;
+      usersSet.add(tx.userId);
+      let amt = parseFloat(tx.amount || 0);
+      let isDep = (tx.type === "deposit" || tx.type === "recharge");
+      let isWith = (tx.type === "withdrawal" || tx.type === "retrait");
       
-      csv += `"${date}","${uid}","${type}","${amount}","${direction}","${status}","${docSnap.id}"\n`;
-      count++;
+      if(isDep) { nbRecharges++; montantRecharges += amt; }
+      if(isWith) { nbRetraits++; montantRetraits += amt; }
+
+      tableData.push([
+        formatDateOnly(tx.createdAt), formatTimeOnly(tx.createdAt),
+        tx.type || "-", money(amt), tx.method || "-", tx.status || "-", docSnap.id.substring(0,8)
+      ]);
     });
 
-    if(count === 0) {
-      alert("Aucune transaction trouvée sur la plateforme.");
-    } else {
-      downloadCSV(csv, `rapport_complet_entrees_sorties_${new Date().toISOString().split('T')[0]}.csv`);
-    }
+    let volumeTotal = montantRecharges + montantRetraits;
+
+    // --- EN-TÊTE ---
+    drawLogo(doc, 14, 15);
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(10).setFont(undefined, 'normal');
+    doc.text("Rapport de transactions", 14, 30);
+    
+    // Aligné à droite
+    doc.setFontSize(9);
+    doc.text(`Date : ${generationDate}`, 196, 17, { align: "right" });
+    doc.text(`Rapport N° : ${reportId}`, 196, 22, { align: "right" });
+    doc.text(`Généré par : ${adminName}`, 196, 27, { align: "right" });
+
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, 35, 196, 35);
+
+    // --- INFORMATIONS GÉNÉRALES ---
+    doc.setTextColor(0, 0, 0).setFontSize(12).setFont(undefined, 'bold');
+    doc.text("Informations générales", 14, 45);
+    
+    doc.autoTable({
+      startY: 50,
+      theme: 'plain',
+      styles: { fontSize: 10, cellPadding: 2 },
+      columnStyles: { 0: { fontStyle: 'bold', textColor: [80,80,80] }, 2: { fontStyle: 'bold', textColor: [80,80,80] } },
+      body: [
+        ["Total transactions :", totalTx, "Total recharges :", nbRecharges],
+        ["Total retraits :", nbRetraits, "Volume total :", money(volumeTotal)],
+        ["Montant total rechargé :", money(montantRecharges), "Montant total retiré :", money(montantRetraits)],
+        ["Période concernée :", "Depuis la création", "Utilisateurs uniques :", usersSet.size]
+      ]
+    });
+
+    // --- TABLEAU DES TRANSACTIONS ---
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 10,
+      head: [['Date', 'Heure', 'Type', 'Montant', 'Méthode', 'Statut', 'Référence']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [255, 0, 80], textColor: [255,255,255], fontStyle: 'bold' },
+      styles: { fontSize: 8 },
+      alternateRowStyles: { fillColor: [245, 245, 245] }
+    });
+
+    doc.save(`HaytiClips_Rapport_${dateStr}.pdf`);
   } catch(e) {
     console.error(e);
-    alert("Erreur lors de la génération du rapport.");
+    alert("Erreur lors de la génération du PDF.");
   }
-  
-  btn.textContent = "📥 Exporter Entrées/Sorties";
-  btn.disabled = false;
+  btn.textContent = "📄 Exporter Rapport PDF"; btn.disabled = false;
 };
 
 /* ================= RECHERCHE EN TEMPS RÉEL ================= */
 let currentUserObj = null;
 let searchTimer = null;
-
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
 
 searchInput.oninput = () => {
   clearTimeout(searchTimer);
   const val = searchInput.value.trim();
-  
-  if(!val) {
-    searchResults.style.display = "none";
-    searchResults.innerHTML = "";
-    document.getElementById("userResultArea").style.display = "none";
-    document.getElementById("userEmptyArea").style.display = "none";
-    return;
-  }
-
-  // Petite pause de 250ms pour éviter de trop solliciter Firestore à chaque frappe rapide
-  searchTimer = setTimeout(() => {
-    performSearch(val);
-  }, 250);
+  if(!val) { searchResults.style.display = "none"; searchResults.innerHTML = ""; document.getElementById("userResultArea").style.display = "none"; document.getElementById("userEmptyArea").style.display = "none"; return; }
+  searchTimer = setTimeout(() => { performSearch(val); }, 250);
 };
 
 async function performSearch(val) {
   const cleanVal = val.replace('@','').toLowerCase();
-  searchResults.style.display = "block";
-  searchResults.innerHTML = `<div class="empty">Recherche en cours...</div>`;
-  
-  document.getElementById("userResultArea").style.display = "none";
-  document.getElementById("userEmptyArea").style.display = "none";
+  searchResults.style.display = "block"; searchResults.innerHTML = `<div class="empty">Recherche en cours...</div>`;
+  document.getElementById("userResultArea").style.display = "none"; document.getElementById("userEmptyArea").style.display = "none";
 
   try {
     let usersList = [];
-
-    // 1. Recherche par préfixe sur le usernameLower
-    const q = query(
-      collection(db, "users"),
-      where("usernameLower", ">=", cleanVal),
-      where("usernameLower", "<=", cleanVal + "\uf8ff"),
-      limit(8)
-    );
+    const q = query(collection(db, "users"), where("usernameLower", ">=", cleanVal), where("usernameLower", "<=", cleanVal + "\uf8ff"), limit(8));
     const querySnap = await getDocs(q);
-    querySnap.forEach(docSnap => {
-      usersList.push({ uid: docSnap.id, ...docSnap.data() });
-    });
+    querySnap.forEach(docSnap => { usersList.push({ uid: docSnap.id, ...docSnap.data() }); });
 
-    // 2. Si aucun résultat et que la valeur ressemble à un ID exact
     if(usersList.length === 0) {
       const docSnap = await getDoc(doc(db, "users", val));
-      if(docSnap.exists()){
-        usersList.push({ uid: docSnap.id, ...docSnap.data() });
-      }
+      if(docSnap.exists()){ usersList.push({ uid: docSnap.id, ...docSnap.data() }); }
     }
 
-    if(usersList.length === 0) {
-      searchResults.innerHTML = `<div class="empty">Aucun utilisateur trouvé pour "${val}"</div>`;
-      return;
-    }
+    if(usersList.length === 0) { searchResults.innerHTML = `<div class="empty">Aucun utilisateur trouvé pour "${val}"</div>`; return; }
 
-    // Affichage des cartes sous forme de liste
     searchResults.innerHTML = "";
     usersList.forEach(u => {
-      const item = document.createElement("div");
-      item.className = "user-search-item";
-      
+      const item = document.createElement("div"); item.className = "user-search-item";
       const avatar = u.avatar || u.photoURL || "https://via.placeholder.com/80";
-      const bioText = u.bio || u.merchantBio || "Aucune biographie";
-      
-      item.innerHTML = `
-        <img src="${avatar}" class="user-search-avatar">
-        <div class="user-search-info">
-          <div class="user-search-name">${u.name || u.username || "Inconnu"}</div>
-          <div class="user-search-username">@${u.username || "inconnu"}</div>
-          <div class="user-search-bio">${bioText}</div>
-        </div>
-        <div style="font-size:18px; color:#ff0050;">➔</div>
-      `;
-
+      item.innerHTML = `<img src="${avatar}" class="user-search-avatar"><div class="user-search-info"><div class="user-search-name">${u.name || u.username || "Inconnu"}</div><div class="user-search-username">@${u.username || "inconnu"}</div></div><div style="font-size:18px; color:#ff0050;">➔</div>`;
       item.onclick = () => displayUserProfile(u);
       searchResults.appendChild(item);
     });
-
-  } catch(e) {
-    console.error(e);
-    searchResults.innerHTML = `<div class="empty">Erreur de recherche</div>`;
-  }
+  } catch(e) { searchResults.innerHTML = `<div class="empty">Erreur de recherche</div>`; }
 }
 
 function displayUserProfile(u) {
   currentUserObj = u;
-  const uid = u.uid;
-
-  // Masquer la liste des résultats
   searchResults.style.display = "none";
-
-  // --- EN-TÊTE PROFIL ---
   document.getElementById("uAvatar").src = u.avatar || u.photoURL || "https://via.placeholder.com/80";
   document.getElementById("uName").textContent = u.name || u.username || "Inconnu";
   document.getElementById("uUsername").textContent = u.username || "inconnu";
-  document.getElementById("uId").textContent = uid;
+  document.getElementById("uId").textContent = u.uid;
   document.getElementById("uVerifBadge").style.display = u.verification === "verified" ? "inline-block" : "none";
   
   const statusBadge = document.getElementById("uStatusBadge");
   if(u.suspended) { statusBadge.className="badge frozen"; statusBadge.textContent="🔴 Compte Suspendu"; }
   else { statusBadge.className="badge active"; statusBadge.textContent="🟢 Compte Actif"; }
 
-  // --- INFOS WALLET ---
   document.getElementById("uBalance").textContent = money(u.wallet);
   document.getElementById("uFrozen").textContent = money(u.frozenWallet);
   document.getElementById("uTotalDep").textContent = money(u.totalDeposited || 0);
@@ -643,7 +476,6 @@ function displayUserProfile(u) {
   document.getElementById("uGiftsRec").textContent = money(u.totalGiftsReceived || 0);
   document.getElementById("uGiftsSent").textContent = money(u.totalGiftsSent || 0);
 
-  // --- PARAMETRES & SÉCURITÉ ---
   document.getElementById("uHasPin").textContent = (u.pin && u.pin.length > 0) ? "Oui ✅" : "Non ❌";
   document.getElementById("uCanWithdraw").innerHTML = u.withdrawBlocked ? "<span class='red'>Désactivés ❌</span>" : "<span class='green'>Activés ✅</span>";
   document.getElementById("uCanDeposit").innerHTML = u.depositBlocked ? "<span class='red'>Désactivées ❌</span>" : "<span class='green'>Activées ✅</span>";
@@ -656,200 +488,221 @@ function displayUserProfile(u) {
   document.getElementById("uLastIp").textContent = u.lastIp || "Non enregistrée";
   document.getElementById("uLastDevice").textContent = u.lastDevice || "Inconnu";
 
-  // --- BOUTON D'ACTION ---
   updateActionButtonsUI();
-
   document.getElementById("userResultArea").style.display = "block";
-  loadUserTransactions(uid);
-  loadAuditLogs(uid);
+  loadUserTransactions(u.uid);
+  loadAuditLogs(u.uid);
 }
 
 function updateActionButtonsUI() {
   const isLocked = currentUserObj.walletLocked === true;
   const bFreeze = document.getElementById("btnToggleFreeze");
   const badgeWallet = document.getElementById("uWalletStateBadge");
-
   if(isLocked){
-    bFreeze.textContent = "🔓 Dégeler le Wallet";
-    bFreeze.className = "secondary";
-    badgeWallet.className = "badge frozen";
-    badgeWallet.textContent = "❄️ Wallet Gelé";
+    bFreeze.textContent = "🔓 Dégeler le Wallet"; bFreeze.className = "secondary";
+    badgeWallet.className = "badge frozen"; badgeWallet.textContent = "❄️ Wallet Gelé";
   } else {
-    bFreeze.textContent = "🔒 Geler le Wallet (Vider)";
-    bFreeze.className = "danger";
-    badgeWallet.className = "badge active";
-    badgeWallet.textContent = "💳 Wallet Actif";
+    bFreeze.textContent = "🔒 Geler le Wallet (Vider)"; bFreeze.className = "danger";
+    badgeWallet.className = "badge active"; badgeWallet.textContent = "💳 Wallet Actif";
   }
 }
 
-/* ================= ACTIONS ADMIN (AVEC AUDIT) ================= */
 async function executeAdminAction(actionName, updatesToApply, confirmMessage, notifType = null) {
   if(!currentUserObj) return;
   const motifInput = document.getElementById("adminMotif");
   const motif = motifInput.value.trim();
-  
-  if(!motif) return alert("⚠️ Le champ Motif est obligatoire avant d'exécuter cette action.");
+  if(!motif) return alert("⚠️ Le champ Motif est obligatoire.");
   if(!confirm(`${confirmMessage}\n\nMotif : ${motif}`)) return;
 
   try {
     const userRef = doc(db, "users", currentUserObj.uid);
-    
-    // 1. Mise à jour du User
     await updateDoc(userRef, updatesToApply);
-
-    // 2. Enregistrement Audit
-    await addDoc(collection(db, "auditLogs"), {
-      adminUid: auth.currentUser.uid,
-      targetUid: currentUserObj.uid,
-      action: actionName,
-      motif: motif,
-      createdAt: serverTimestamp()
-    });
-
-    // 3. Notification (Optionnel)
-    if(notifType) {
-      await addDoc(collection(db, "notifications"), {
-        from: auth.currentUser.uid,
-        to: currentUserObj.uid,
-        type: notifType,
-        read: false,
-        createdAt: serverTimestamp()
-      });
-    }
-
-    motifInput.value = ""; // Clear motif
-    alert("Action effectuée avec succès.");
+    await addDoc(collection(db, "auditLogs"), { adminUid: auth.currentUser.uid, targetUid: currentUserObj.uid, action: actionName, motif: motif, createdAt: serverTimestamp() });
     
-    // Recharger le profil localement
+    motifInput.value = ""; 
+    alert("Action effectuée.");
     const updatedSnap = await getDoc(userRef);
-    if(updatedSnap.exists()) {
-      displayUserProfile({ uid: currentUserObj.uid, ...updatedSnap.data() });
-    }
-
-  } catch(e) {
-    console.error(e);
-    alert("Erreur lors de l'exécution : " + e.message);
-  }
+    if(updatedSnap.exists()) { displayUserProfile({ uid: currentUserObj.uid, ...updatedSnap.data() }); }
+  } catch(e) { alert("Erreur : " + e.message); }
 }
 
-// Geler / Dégeler
 document.getElementById("btnToggleFreeze").onclick = () => {
   const isLocked = currentUserObj.walletLocked === true;
   let updates = { walletLocked: !isLocked };
-  
-  if (!isLocked) {
-    updates.frozenWallet = currentUserObj.wallet || 0;
-    updates.wallet = 0;
-  } else {
-    updates.wallet = currentUserObj.frozenWallet || 0;
-    updates.frozenWallet = 0;
-  }
-
-  const msg = !isLocked ? "Voulez-vous GELER ce compte et vider sa balance ?" : "Voulez-vous DÉGELER et restaurer l'argent ?";
-  executeAdminAction(!isLocked ? "Gel du wallet" : "Dégel du wallet", updates, msg, !isLocked ? "wallet_frozen" : "wallet_unfrozen");
+  if (!isLocked) { updates.frozenWallet = currentUserObj.wallet || 0; updates.wallet = 0; } 
+  else { updates.wallet = currentUserObj.frozenWallet || 0; updates.frozenWallet = 0; }
+  executeAdminAction(!isLocked ? "Gel du wallet" : "Dégel du wallet", updates, !isLocked ? "Voulez-vous GELER ce compte ?" : "Voulez-vous DÉGELER ce compte ?");
 };
 
-/* ================= HISTORIQUES ================= */
 async function loadUserTransactions(uid){
-  const txList = document.getElementById("userTxList");
-  txList.innerHTML = "Chargement...";
+  const txList = document.getElementById("userTxList"); txList.innerHTML = "Chargement...";
   try {
     const q = query(collection(db, "walletTransactions"), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(20));
     const snaps = await getDocs(q);
-    
-    if(snaps.empty) return txList.innerHTML = `<div class="empty">Aucune transaction trouvée.</div>`;
-    
+    if(snaps.empty) return txList.innerHTML = `<div class="empty">Aucune transaction.</div>`;
     txList.innerHTML = "";
     snaps.forEach(docSnap => {
       const tx = docSnap.data();
       const isOut = tx.direction === "out" || tx.type === "sendGift" || tx.type === "achat_badge"; 
-      txList.innerHTML += `
-        <div class="tx-card">
-          <div class="tx-info">
-            <div class="tx-type">${tx.type || "Transaction"} ${tx.status === 'failed' ? '(Échoué)' : ''}</div>
-            <div class="tx-date">${formatDate(tx.createdAt)}</div>
-          </div>
-          <div class="tx-amount ${isOut ? "red" : "green"}">${isOut ? "-" : "+"}${money(tx.amount)}</div>
-        </div>
-      `;
+      txList.innerHTML += `<div class="tx-card"><div class="tx-info"><div class="tx-type">${tx.type || "Transaction"}</div><div class="tx-date">${formatDate(tx.createdAt)}</div></div><div class="tx-amount ${isOut ? "red" : "green"}">${isOut ? "-" : "+"}${money(tx.amount)}</div></div>`;
     });
-  } catch(e) { txList.innerHTML = `<div class="empty">Erreur de lecture.</div>`; }
+  } catch(e) { txList.innerHTML = `<div class="empty">Erreur.</div>`; }
 }
 
-// NOUVEAU SCRIPT : EXPORT TRANSACTIONS UTILISATEUR
-document.getElementById("downloadUserTxBtn").onclick = async () => {
-  if(!currentUserObj) return;
-  const uid = currentUserObj.uid;
-  const btn = document.getElementById("downloadUserTxBtn");
-  btn.textContent = "⏳...";
-  btn.disabled = true;
-
-  try {
-    // On requête toutes les transactions de cet utilisateur sans limit(20)
-    const q = query(collection(db, "walletTransactions"), where("userId", "==", uid), orderBy("createdAt", "desc"));
-    const snaps = await getDocs(q);
-
-    if(snaps.empty) {
-      alert("Aucune transaction à télécharger pour cet utilisateur.");
-      btn.textContent = "📥 Tout Exporter";
-      btn.disabled = false;
-      return;
-    }
-
-    let csv = "Date,Type,Montant,Direction,Statut,Transaction_ID\n";
-    snaps.forEach(docSnap => {
-      const tx = docSnap.data();
-      const date = tx.createdAt ? new Date(tx.createdAt.seconds * 1000).toLocaleString("fr-FR").replace(',', '') : "-";
-      const type = tx.type || "Inconnu";
-      const amount = tx.amount || 0;
-      const direction = tx.direction || "-";
-      const status = tx.status || "-";
-      
-      csv += `"${date}","${type}","${amount}","${direction}","${status}","${docSnap.id}"\n`;
-    });
-
-    downloadCSV(csv, `transactions_${currentUserObj.username || uid}.csv`);
-  } catch(e) {
-    console.error(e);
-    alert("Erreur lors du téléchargement.");
-  }
-  
-  btn.textContent = "📥 Tout Exporter";
-  btn.disabled = false;
-};
-
 async function loadAuditLogs(uid){
-  const auditList = document.getElementById("userAuditList");
-  auditList.innerHTML = "Chargement...";
+  const auditList = document.getElementById("userAuditList"); auditList.innerHTML = "Chargement...";
   try {
     const q = query(collection(db, "auditLogs"), where("targetUid", "==", uid), orderBy("createdAt", "desc"), limit(15));
     const snaps = await getDocs(q);
-    
-    if(snaps.empty) return auditList.innerHTML = `<div class="empty">Aucun audit enregistré pour ce compte.</div>`;
-    
+    if(snaps.empty) return auditList.innerHTML = `<div class="empty">Aucun audit.</div>`;
     auditList.innerHTML = "";
     snaps.forEach(docSnap => {
       const log = docSnap.data();
-      auditList.innerHTML += `
-        <div class="audit-card">
-          <div style="font-weight:700; font-size:14px; color:#ff0050;">Opération : ${log.action}</div>
-          <div style="font-size:13px; color:#ddd;">Motif : <i>${log.motif}</i></div>
-          <div style="font-size:12px; color:#888;">Le ${formatDate(log.createdAt)} par Admin (${log.adminUid.substring(0,6)}...)</div>
-        </div>
-      `;
+      auditList.innerHTML += `<div class="audit-card"><div style="font-weight:700; font-size:14px; color:#ff0050;">Opération : ${log.action}</div><div style="font-size:13px; color:#ddd;">Motif : <i>${log.motif}</i></div><div style="font-size:12px; color:#888;">Le ${formatDate(log.createdAt)} par Admin</div></div>`;
     });
-  } catch(e) { auditList.innerHTML = `<div class="empty">Erreur / Index manquant pour Audit.</div>`; }
+  } catch(e) { auditList.innerHTML = `<div class="empty">Erreur.</div>`; }
 }
+
+/* BLOC 2 : GÉNÉRATION DU PDF UTILISATEUR COMPLET */
+document.getElementById("downloadUserTxBtn").onclick = async () => {
+  if(!currentUserObj) return;
+  const btn = document.getElementById("downloadUserTxBtn");
+  btn.textContent = "⏳ Génération..."; btn.disabled = true;
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const u = currentUserObj;
+
+    // Récupérer toutes les transactions de l'utilisateur
+    const q = query(collection(db, "walletTransactions"), where("userId", "==", u.uid), orderBy("createdAt", "desc"));
+    const snaps = await getDocs(q);
+
+    let nbRecharges = 0, nbRetraits = 0;
+    let amtRecharges = 0, amtRetraits = 0;
+    let montantEnAttente = 0;
+    let lastDep = "-", lastWith = "-";
+    let tableData = [];
+
+    snaps.forEach(docSnap => {
+      let tx = docSnap.data();
+      let amt = parseFloat(tx.amount || 0);
+      let isDep = (tx.type === "deposit" || tx.type === "recharge");
+      let isWith = (tx.type === "withdrawal" || tx.type === "retrait");
+
+      if(isDep) { nbRecharges++; amtRecharges += amt; if(lastDep==="-") lastDep = formatDate(tx.createdAt); }
+      if(isWith) { nbRetraits++; amtRetraits += amt; if(lastWith==="-") lastWith = formatDate(tx.createdAt); }
+      if(tx.status === "pending") { montantEnAttente += amt; }
+
+      tableData.push([
+        formatDateOnly(tx.createdAt), formatTimeOnly(tx.createdAt),
+        tx.type || "-", money(amt), tx.method || "-", tx.status || "-", docSnap.id.substring(0,8)
+      ]);
+    });
+
+    // --- IDENTITÉ (En-tête) ---
+    drawLogo(doc, 160, 15);
+    
+    // Essayer de charger l'avatar
+    let avatarUrl = u.avatar || u.photoURL || "https://via.placeholder.com/80";
+    let b64Avatar = await getBase64Image(avatarUrl);
+    if(b64Avatar) { doc.addImage(b64Avatar, "PNG", 14, 15, 24, 24); } 
+    else { doc.setFillColor(200,200,200); doc.rect(14, 15, 24, 24, "F"); }
+
+    doc.setTextColor(0,0,0).setFontSize(16).setFont(undefined, 'bold');
+    doc.text(u.name || u.username || "Inconnu", 42, 22);
+    doc.setFontSize(11).setTextColor(255,0,80);
+    doc.text(`@${u.username || "inconnu"}`, 42, 28);
+    
+    let statutTxt = u.suspended ? "Suspendu" : (u.walletLocked ? "Gelé" : "Actif");
+    let badgeTxt = u.verification === "verified" ? " | Vérifié" : "";
+
+    doc.autoTable({
+      startY: 42,
+      theme: 'plain', styles: { fontSize: 9, cellPadding: 1.5 },
+      columnStyles: { 0: { fontStyle: 'bold', textColor: [100,100,100], cellWidth: 40 } },
+      body: [
+        ["UID :", u.uid, "Pays :", u.country || "Non spécifié"],
+        ["Inscrit le :", formatDateOnly(u.createdAt), "Statut :", statutTxt + badgeTxt]
+      ]
+    });
+
+    // --- STATISTIQUES DU COMPTE ---
+    doc.setFontSize(12).setTextColor(0,0,0).setFont(undefined, 'bold');
+    doc.text("Statistiques du compte", 14, doc.lastAutoTable.finalY + 10);
+    
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 14, theme: 'grid', styles: { fontSize: 9, cellPadding: 3 },
+      head: [['Indicateur', 'Valeur', 'Indicateur', 'Valeur']],
+      headStyles: { fillColor: [240, 240, 240], textColor: [0,0,0], fontStyle: 'bold' },
+      body: [
+        ["Solde Wallet", money(u.wallet), "Vidéos", u.videosCount || 0],
+        ["Gains totaux", money(u.totalEarnings || 0), "Vues", u.viewsCount || 0],
+        ["Cadeaux reçus", money(u.totalGiftsReceived || 0), "Likes", u.likesCount || 0],
+        ["Cadeaux envoyés", money(u.totalGiftsSent || 0), "Commentaires", u.commentsCount || 0],
+        ["Abonnés", u.followersCount || 0, "Partages", u.sharesCount || 0],
+        ["Abonnements", u.followingCount || 0, "", ""]
+      ]
+    });
+
+    // --- ACTIVITÉ FINANCIÈRE ---
+    doc.setFontSize(12).setTextColor(0,0,0).setFont(undefined, 'bold');
+    doc.text("Activité financière", 14, doc.lastAutoTable.finalY + 10);
+
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 14, theme: 'grid', styles: { fontSize: 9 },
+      head: [['Total Recharges (Qte)', 'Total Retraits (Qte)', 'Montant Rechargé', 'Montant Retiré', 'En Attente']],
+      headStyles: { fillColor: [255, 0, 80], textColor: [255,255,255], fontStyle: 'bold' },
+      body: [[nbRecharges, nbRetraits, money(amtRecharges), money(amtRetraits), money(montantEnAttente)]]
+    });
+
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 4, theme: 'plain', styles: { fontSize: 9 },
+      body: [["Dernière recharge :", lastDep, "Dernier retrait :", lastWith]]
+    });
+
+    // --- INFORMATIONS TECHNIQUES ---
+    doc.setFontSize(12).setTextColor(0,0,0).setFont(undefined, 'bold');
+    doc.text("Informations techniques (Admin)", 14, doc.lastAutoTable.finalY + 10);
+    
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 14, theme: 'plain', styles: { fontSize: 9, cellPadding: 2 },
+      columnStyles: { 0: { fontStyle: 'bold', textColor: [100,100,100] }, 2: { fontStyle: 'bold', textColor: [100,100,100] } },
+      body: [
+        ["Adresse IP :", u.lastIp || "Inconnue", "E-mail :", u.email || "Non renseigné"],
+        ["Dernière connexion :", formatDate(u.lastLogin), "Téléphone :", u.phone || "Non renseigné"],
+        ["Appareil :", u.lastDevice || "Inconnu", "Navigateur :", u.lastBrowser || "Inconnu"],
+        ["Version App :", u.appVersion || "-", "", ""]
+      ]
+    });
+
+    // --- HISTORIQUE DES TRANSACTIONS ---
+    doc.addPage();
+    doc.setFontSize(14).setTextColor(255,0,80).setFont(undefined, 'bold');
+    doc.text("Historique des transactions", 14, 20);
+
+    doc.autoTable({
+      startY: 25,
+      head: [['Date', 'Heure', 'Type', 'Montant', 'Méthode', 'Statut', 'Référence']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [40, 40, 40], textColor: [255,255,255] },
+      styles: { fontSize: 8 }
+    });
+
+    doc.save(`HaytiClips_Dossier_${u.username || u.uid}.pdf`);
+  } catch(e) {
+    console.error(e);
+    alert("Erreur lors du téléchargement du PDF.");
+  }
+  btn.textContent = "📄 Dossier PDF Utilisateur"; btn.disabled = false;
+};
 
 /* ================= AUTHENTIFICATION ================= */
 onAuthStateChanged(auth, async(user)=>{
   if(!user) return window.location.href = "login.html";
   const snap = await getDoc(doc(db,"users",user.uid));
-  if(!snap.exists() || snap.data().role !== "admin"){
-    alert("Accès refusé");
-    window.location.href = "feed.html";
-    return;
-  }
+  if(!snap.exists() || snap.data().role !== "admin"){ alert("Accès refusé"); window.location.href = "feed.html"; return; }
   loadFinance();
 });
 </script>
