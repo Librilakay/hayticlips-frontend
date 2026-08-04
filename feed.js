@@ -240,19 +240,20 @@ function formatCaption(text) {
 
 function buildCaption(text) {
   const cleanText = String(text || "").trim();
+  const LIMIT = 80; // Nombre de caractères avant de couper
 
-  if (cleanText.length <= 50) {
+  if (cleanText.length <= LIMIT) {
     return `<div class="caption">${formatCaption(cleanText)}</div>`;
   }
 
-  const shortText = cleanText.slice(0, 90);
+  const shortText = cleanText.slice(0, LIMIT).trim();
 
   return `
     <div class="caption caption-collapsed"
       data-full="${escapeHTML(cleanText)}"
       data-short="${escapeHTML(shortText)}">
-      ${formatCaption(shortText)}...
-      <span class="caption-toggle">Voir plus</span>
+      <span>${formatCaption(shortText)}...</span>
+      <span class="caption-toggle" style="color:#aaa;font-weight:bold;cursor:pointer;margin-left:4px;">Voir plus</span>
     </div>
   `;
 }
@@ -866,10 +867,10 @@ function loadComments(videoId) {
             <div class="reply-btn" data-comment="${d.id}" style="font-size:13px;color:black;cursor:pointer;margin-top:4px;">
               Répondre
             </div>
-            <div class="replies" id="replies-${d.id}" style="margin-left:40px;margin-top:6px;color:black;"></div>
-            <div class="toggle-replies" data-comment="${d.id}" style="font-size:13px;color:black;cursor:pointer;margin-top:4px;">
-              Voir les réponses
-            </div>
+            <div class="replies" id="replies-${d.id}" style="margin-left:35px;margin-top:6px;display:none;"></div>
+<div class="toggle-replies" id="toggle-replies-${d.id}" data-comment="${d.id}" style="font-size:12px;color:#888;font-weight:bold;cursor:pointer;margin-top:4px;margin-left:35px;display:none;">
+  Voir les réponses
+</div>
 <div class="comment-like ${c.likes?.[currentUser?.uid] ? 'active' : ''}" data-comment="${d.id}" style="display:flex; align-items:center; gap:4px; cursor:pointer;">
               <svg viewBox="0 0 24 24" width="14" height="14" class="heart-icon" fill="#888" style="transition: 0.2s;">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
@@ -939,11 +940,31 @@ function loadComments(videoId) {
       });
       activeCommentListeners.push(unsubCommentCount);
 
-      // --- ÉCOUTE 4 : Les réponses au commentaire ---
+// --- ÉCOUTE 4 : Les réponses au commentaire ---
       const repliesRef = collection(db, "videos", videoId, "comments", d.id, "replies");
       const unsubReplies = onSnapshot(repliesRef, snapReplies => {
         const repliesDiv = document.getElementById(`replies-${d.id}`);
-        if (!repliesDiv) return;
+        const toggleBtn = document.getElementById(`toggle-replies-${d.id}`);
+        if (!repliesDiv || !toggleBtn) return;
+
+        const count = snapReplies.size;
+
+        // Si 0 réponse, on cache le bouton et le conteneur
+        if (count === 0) {
+          toggleBtn.style.display = "none";
+          repliesDiv.style.display = "none";
+          return;
+        }
+
+        // Sinon on affiche le bouton toggle
+        toggleBtn.style.display = "block";
+        
+        // Mise à jour dynamique du texte
+        if (repliesDiv.style.display === "none") {
+          toggleBtn.textContent = `—— Voir ${count} réponse${count > 1 ? 's' : ''}`;
+        } else {
+          toggleBtn.textContent = "—— Masquer les réponses";
+        }
 
         repliesDiv.innerHTML = "";
 
@@ -965,21 +986,20 @@ function loadComments(videoId) {
             }
 
             let existingReply = repliesDiv.querySelector(`[data-reply-id="${r.id}"]`);
-            const isMyReply = reply.uid === currentUser?.uid; // Vérifie si c'est MA réponse
+            const isMyReply = reply.uid === currentUser?.uid;
             
             if (!existingReply) {
               repliesDiv.insertAdjacentHTML("beforeend", `
-                <div class="reply-item" data-reply-id="${r.id}" data-parent-id="${d.id}">
-                  <div class="reply-username" style="cursor:pointer;" data-uid="${reply.uid}">
-                       <strong>${userData.username}</strong>
-                      ${badgeHTML}
-                 </div> :
-                  ${reply.text}
+                <div class="reply-item" data-reply-id="${r.id}" data-parent-id="${d.id}" style="margin-top:4px;">
+                  <span class="reply-username" style="cursor:pointer;font-weight:bold;" data-uid="${reply.uid}">
+                    ${userData.username} ${badgeHTML}
+                  </span> :
+                  <span>${reply.text}</span>
                   ${isMyReply ? `<span class="delete-reply" style="cursor:pointer;color:#ff4d4d;font-size:11px;margin-left:8px;">✕</span>` : ''}
                 </div>
               `);
             } else {
-              existingReply.querySelector('.reply-username').innerHTML = `<strong>${userData.username}</strong>${badgeHTML}`;
+              existingReply.querySelector('.reply-username').innerHTML = `${userData.username} ${badgeHTML}`;
             }
           });
           
@@ -1064,12 +1084,16 @@ document.getElementById("commentsList").addEventListener("click", e => {
   const replies = document.getElementById(`replies-${id}`);
   if (!replies) return;
 
-  replies.classList.toggle("hidden");
+  const isHidden = replies.style.display === "none";
 
-  toggleBtn.textContent =
-    replies.classList.contains("hidden")
-      ? "Voir les réponses"
-      : "Masquer les réponses";
+  if (isHidden) {
+    replies.style.display = "block";
+    toggleBtn.textContent = "—— Masquer les réponses";
+  } else {
+    replies.style.display = "none";
+    const replyCount = replies.querySelectorAll(".reply-item").length;
+    toggleBtn.textContent = `—— Voir ${replyCount} réponse${replyCount > 1 ? 's' : ''}`;
+  }
 });
 
 
@@ -1641,16 +1665,16 @@ document.addEventListener("click", (e) => {
     caption.classList.add("caption-collapsed");
 
     caption.innerHTML = `
-      ${formatCaption(short)}...
-      <span class="caption-toggle">Voir plus</span>
+      <span>${formatCaption(short)}...</span>
+      <span class="caption-toggle" style="color:#aaa;font-weight:bold;cursor:pointer;margin-left:4px;">Voir plus</span>
     `;
   } else {
     caption.classList.remove("caption-collapsed");
     caption.classList.add("caption-expanded");
 
     caption.innerHTML = `
-      ${formatCaption(full)}
-      <span class="caption-toggle"> Voir moins</span>
+      <span>${formatCaption(full)}</span>
+      <span class="caption-toggle" style="color:#aaa;font-weight:bold;cursor:pointer;margin-left:4px;">Voir moins</span>
     `;
   }
 });
