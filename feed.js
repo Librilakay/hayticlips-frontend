@@ -68,6 +68,7 @@ let replyingToCommentId = null;
 let selectedReportReason = null;
 let lastDoc = null;
 let loading = false;
+let hasMoreDocs = true;
 const userCache = {};
 
 // 🔑 AUTH
@@ -256,36 +257,40 @@ function buildCaption(text) {
   `;
 }
 
+/* ================= LOAD FEED ================= */
 async function loadFeed() {
   console.log("load feed start");
   const feed = document.getElementById("feed");
   
   if (!feed) {
-  console.error("❌ DIV #feed introuvable");
-  return;
-}
+    console.error("❌ DIV #feed introuvable");
+    return;
+  }
+
+  // 🛑 Sécurité : On stoppe si on a déjà tout chargé
+  if (!hasMoreDocs) return;
 
   if (!lastDoc) {
-  feed.innerHTML = "";
-}
+    feed.innerHTML = "";
+  }
 
   try {
-const q = lastDoc
-  ? query(
-      collection(db,"videos"),
-      where("archived","==",false),
-      where("moderationStatus","==","clean"), // 👈 LE FILTRE EST ICI
-      orderBy("score","desc"),
-      startAfter(lastDoc),
-      limit(5)
-    )
-  : query(
-      collection(db,"videos"),
-      where("archived","==",false),
-      where("moderationStatus","==","clean"), // 👈 LE FILTRE EST ICI
-      orderBy("score","desc"),
-      limit(5)
-    );
+    const q = lastDoc
+      ? query(
+          collection(db,"videos"),
+          where("archived","==",false),
+          where("moderationStatus","==","clean"),
+          orderBy("score","desc"),
+          startAfter(lastDoc),
+          limit(5)
+        )
+      : query(
+          collection(db,"videos"),
+          where("archived","==",false),
+          where("moderationStatus","==","clean"),
+          orderBy("score","desc"),
+          limit(5)
+        );
 
     const snap = await getDocs(q);
     const docs = snap.docs;
@@ -295,23 +300,19 @@ const q = lastDoc
 
     let orderedDocs = [...docs];
 
-    // 🔥 Seulement au premier chargement (pour ne pas bloquer le scroll infini)
+    // 🔥 On gère la vidéo partagée
     if (targetVideoId && !lastDoc) {
       const index = orderedDocs.findIndex(d => d.id === targetVideoId);
       
       if (index !== -1) {
-        // La vidéo est déjà dans le top 5, on la remonte tout en haut
         const targetDoc = orderedDocs.splice(index, 1)[0];
         orderedDocs.unshift(targetDoc);
       } else {
-        // La vidéo n'est pas dans le top 5, on la télécharge manuellement
         try {
           const targetSnap = await getDoc(doc(db, "videos", targetVideoId));
-          // On vérifie qu'elle existe, n'est pas archivée et est clean
           if (targetSnap.exists() && 
               targetSnap.data().archived === false && 
               targetSnap.data().moderationStatus === "clean") {
-            // On la force en première position du feed
             orderedDocs.unshift(targetSnap);
           }
         } catch (err) {
@@ -320,133 +321,116 @@ const q = lastDoc
       }
     }
 
-// 🛑 GESTION DE LA FIN DES VIDÉOS
+    // 🛑 GESTION DE LA FIN DES VIDÉOS (Corrigée)
     if (docs.length === 0) {
-      if (!lastDoc) {
-        // C'est le tout premier chargement et la base de données est vide
+      hasMoreDocs = false; // On ferme le robinet
+      
+      if (!lastDoc && orderedDocs.length === 0) {
         feed.innerHTML = `<div style="color:#999;text-align:center;padding:50px">
           Aucune vidéo. <a href="upload.html" style="color:#ff0050">Publiez la première !</a>
         </div>`;
       }
-      return; 
+      if (orderedDocs.length === 0) return; 
     }
 
-    // On met à jour le lastDoc AVANT le mélange pour ne pas casser la pagination (CRUCIAL)
+    // Mise à jour du lastDoc
     lastDoc = docs[docs.length - 1];
 
-    // MÉLANGER LE FEED : Évite d'avoir toujours exactement le même ordre d'affichage
     if (!targetVideoId) {
       orderedDocs = orderedDocs.sort(() => Math.random() - 0.5);
     }
 
-   for (const d of orderedDocs) {
+    // 🔥 OPTIMISATION VITESSE : On charge tous les utilisateurs manquants EN MÊME TEMPS (Parallèle)
+    const missingUserIds = [...new Set(orderedDocs.map(d => d.data().userId).filter(uid => !userCache[uid]))];
+    if (missingUserIds.length > 0) {
+      await Promise.all(missingUserIds.map(async (uid) => {
+        const snapUser = await getDoc(doc(db,"users",uid));
+        if (snapUser.exists()) {
+          userCache[uid] = snapUser.data();
+        } else {
+          userCache[uid] = { suspended: false, username: "Utilisateur" };
+        }
+      }));
+    }
+
+    let addedVideosCount = 0; // On compte combien de vidéos passent les filtres
+
+    for (const d of orderedDocs) {
       const v = { id: d.id, ...d.data() };
       
-      // DEBUG: Vérifier les données
       console.log("📊 VIDÉO CHARGÉE:", v.id, "likesCount:", v.likesCount);
       
-/* ================= SMART SCORE ================= */
+      /* ================= SMART SCORE ================= */
+      function calculateSmartScore(v){
+        const likes = Number(v.likesCount || 0);
+        const comments = Number(v.commentsCount || 0);
+        const reposts = Number(v.repostsCount || 0);
+        const shares = Number(v.sharesCount || 0);
+        const views = Math.max(1, Number(v.viewsCount || 0));
 
-/* ================= SMART SCORE ================= */
+        const createdAt = v.createdAt?.toDate ? v.createdAt.toDate() : new Date();
+        const ageHours = Math.max(0, (Date.now() - createdAt.getTime()) / 3600000);
 
-function calculateSmartScore(v){
-  const likes = Number(v.likesCount || 0);
-  const comments = Number(v.commentsCount || 0);
-  const reposts = Number(v.repostsCount || 0);
-  const shares = Number(v.sharesCount || 0);
-  const views = Math.max(1, Number(v.viewsCount || 0));
+        const engagement = (likes * 4) + (comments * 7) + (reposts * 10) + (shares * 8);
+        const engagementRate = engagement / views;
 
-  const createdAt = v.createdAt?.toDate ? v.createdAt.toDate() : new Date();
-  const ageHours = Math.max(0, (Date.now() - createdAt.getTime()) / 3600000);
+        let newVideoBoost = 0;
+        if (ageHours < 2) newVideoBoost = 120;
+        else if (ageHours < 12) newVideoBoost = 80;
+        else if (ageHours < 24) newVideoBoost = 50;
+        else if (ageHours < 72) newVideoBoost = 25;
 
-  const engagement =
-    (likes * 4) +
-    (comments * 7) +
-    (reposts * 10) +
-    (shares * 8);
+        let lowViewBoost = 0;
+        if (views < 20) lowViewBoost = 80;
+        else if (views < 100) lowViewBoost = 45;
+        else if (views < 500) lowViewBoost = 20;
 
-  const engagementRate = engagement / views;
+        const watchScore = Math.min(views * 0.8, 300);
+        const decay = Math.max(0.25, 1 - ageHours / 720);
 
-  let newVideoBoost = 0;
-  if (ageHours < 2) newVideoBoost = 120;
-  else if (ageHours < 12) newVideoBoost = 80;
-  else if (ageHours < 24) newVideoBoost = 50;
-  else if (ageHours < 72) newVideoBoost = 25;
+        return Math.round((engagement + engagementRate * 35 + watchScore + newVideoBoost + lowViewBoost) * decay);
+      }
 
-  let lowViewBoost = 0;
-  if (views < 20) lowViewBoost = 80;
-  else if (views < 100) lowViewBoost = 45;
-  else if (views < 500) lowViewBoost = 20;
+      const finalScore = calculateSmartScore(v);
 
-  const watchScore = Math.min(views * 0.8, 300);
+      if (Math.abs(Number(v.score || 0) - finalScore) >= 10) {
+        updateDoc(doc(db, "videos", v.id), {
+          score: finalScore,
+          scoreUpdatedAt: serverTimestamp()
+        }).catch(console.error);
+      }
 
-  const decay = Math.max(0.25, 1 - ageHours / 720);
-
-  return Math.round(
-    (
-      engagement +
-      engagementRate * 35 +
-      watchScore +
-      newVideoBoost +
-      lowViewBoost
-    ) * decay
-  );
-}
-
-// On calcule le score en local uniquement pour l'interface de l'utilisateur
-const finalScore = calculateSmartScore(v);
-
-// 🔥 BOMBE DÉSAMORCÉE : J'ai supprimé ici le bloc updateDoc qui écrivait dans la DB
-// à chaque fois qu'un utilisateur scrollait sur une vidéo.
-
-if (Math.abs(Number(v.score || 0) - finalScore) >= 10) {
-  updateDoc(doc(db, "videos", v.id), {
-    score: finalScore,
-    scoreUpdatedAt: serverTimestamp()
-  }).catch(console.error);
-}
-
-if (!userCache[v.userId]) {
-        const userRef = doc(db,"users",v.userId);
-        const snap = await getDoc(userRef);
-        if(snap.exists()){
-          userCache[v.userId] = snap.data();
+      // ================= FILTRE COMPTE SUSPENDU =================
+      const ownerData = userCache[v.userId];
+      if (ownerData && ownerData.suspended) {
+        const now = new Date();
+        const until = ownerData.suspendUntil?.toDate?.();
+        if (until && until > now) {
+          console.log("Vidéo masquée : le créateur est suspendu", v.userId);
+          continue; // Saute l'affichage de cette vidéo
         }
-     }
+      }
+      // ==================================================================
 
-     // ================= AJOUT : FILTRE COMPTE SUSPENDU =================
-     const ownerData = userCache[v.userId];
-     if (ownerData && ownerData.suspended) {
-       const now = new Date();
-       const until = ownerData.suspendUntil?.toDate?.();
-       
-       // Si le compte est suspendu et que la date de fin est dans le futur
-       if (until && until > now) {
-         console.log("Vidéo masquée : le créateur est suspendu", v.userId);
-         continue; // On annule l'affichage de cette vidéo et on passe à la suivante
-       }
-     }
-     // ==================================================================
+      addedVideosCount++; // Cette vidéo va être affichée
 
       feed.insertAdjacentHTML("beforeend", `
         <div class="video-box" data-id="${v.id}" data-user="${v.userId}" data-score="${finalScore}">
           <div class="video-container">
-<video
-  data-src="${v.mediaUrls?.[0]}"
-  src="${v.mediaUrls?.[0]}"
-  playsinline
-  webkit-playsinline
-  preload="none"
-  loop
-  crossorigin="anonymous"
-  style="width:100%;height:100%;object-fit:contain;background:#000;cursor:pointer;"
-></video>
-
+            <video
+              data-src="${v.mediaUrls?.[0]}"
+              src="${v.mediaUrls?.[0]}"
+              playsinline
+              webkit-playsinline
+              preload="none"
+              loop
+              crossorigin="anonymous"
+              style="width:100%;height:100%;object-fit:contain;background:#000;cursor:pointer;"
+            ></video>
           </div>
           <div class="info">
-        <div class="username" data-uid="${v.userId}">...</div>
-                  ${buildCaption(v.caption || "")}
-
+            <div class="username" data-uid="${v.userId}">...</div>
+            ${buildCaption(v.caption || "")}
           </div>
           <div class="actions">
             <div class="avatar-wrapper">
@@ -455,26 +439,24 @@ if (!userCache[v.userId]) {
               </div>
               <div class="follow-plus">+</div>
             </div>
-<div class="action like">
-  <svg viewBox="0 0 24 24" width="26" height="26" class="heart-icon" fill="white" style="transition: 0.2s;">
-    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-  </svg>
-  <span class="like-count">${formatNumber(v.likesCount || 0)}</span>
-</div>
-
-<div class="action comment-btn" data-role="comment">
-  <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
-    <path d="M21 6a2 2 0 0 0-2-2H5C3.9 4 3 4.9 3 6v9c0 1.1.9 2 2 2h3v3l4-3h7c1.1 0 2-.9 2-2V6z"/>
-  </svg>
-  <span class="comment-count">${formatNumber(v.commentsCount || 0)}</span>
-</div>
-<div class="action gift-btn">
-  <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
-    <path d="M20 7h-2.18C17.93 6.69 18 6.35 18 6c0-1.66-1.34-3-3-3-1.31 0-2.42.84-2.83 2H12c-.41-1.16-1.52-2-2.83-2-1.66 0-3 1.34-3 3 0 .35.07.69.18 1H4c-1.1 0-2 .9-2 2v2h20V9c0-1.1-.9-2-2-2zM9 6c0-.55.45-1 1-1s1 .45 1 1H9zm5 0c0-.55.45-1 1-1s1 .45 1 1h-2zM2 13v6c0 1.1.9 2 2 2h6v-8H2zm10 8h6c1.1 0 2-.9 2-2v-6h-8v8z"/>
-  </svg>
-</div>
-
-<div class="action favorite">
+            <div class="action like">
+              <svg viewBox="0 0 24 24" width="26" height="26" class="heart-icon" fill="white" style="transition: 0.2s;">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+              <span class="like-count">${formatNumber(v.likesCount || 0)}</span>
+            </div>
+            <div class="action comment-btn" data-role="comment">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+                <path d="M21 6a2 2 0 0 0-2-2H5C3.9 4 3 4.9 3 6v9c0 1.1.9 2 2 2h3v3l4-3h7c1.1 0 2-.9 2-2V6z"/>
+              </svg>
+              <span class="comment-count">${formatNumber(v.commentsCount || 0)}</span>
+            </div>
+            <div class="action gift-btn">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+                <path d="M20 7h-2.18C17.93 6.69 18 6.35 18 6c0-1.66-1.34-3-3-3-1.31 0-2.42.84-2.83 2H12c-.41-1.16-1.52-2-2.83-2-1.66 0-3 1.34-3 3 0 .35.07.69.18 1H4c-1.1 0-2 .9-2 2v2h20V9c0-1.1-.9-2-2-2zM9 6c0-.55.45-1 1-1s1 .45 1 1H9zm5 0c0-.55.45-1 1-1s1 .45 1 1h-2zM2 13v6c0 1.1.9 2 2 2h6v-8H2zm10 8h6c1.1 0 2-.9 2-2v-6h-8v8z"/>
+              </svg>
+            </div>
+            <div class="action favorite">
               <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
                 <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
               </svg>
@@ -489,104 +471,71 @@ if (!userCache[v.userId]) {
                 <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6h-7.6z"/>
               </svg>
             </div>
-
           </div>
         </div>
       `);
-            // 🔥 Appliquer immédiatement les données si déjà en cache
-if (userCache[v.userId]) {
-  updateVideosFromUser(v.userId);
-   }
-   }
+
+      if (userCache[v.userId]) {
+        updateVideosFromUser(v.userId);
+      }
+    }
     
+    // Garde ta fonction originale à l'intérieur
     function updateVideosFromUser(uid) {
-
-  const videos = document.querySelectorAll(`.video-box[data-user="${uid}"]`);
-
-  videos.forEach(box => {
-
-    const data = userCache[uid];
-    if (!data) return;
-
-    const usernameEl = box.querySelector(".username");
-    const avatarImg = box.querySelector(".avatar-img");
-
-    /* USERNAME */
-    let badgeHTML = "";
-
-/* GOLD */
-if (data.verification?.type === "gold" && data.verification?.status === "active") {
-  badgeHTML = `
-    <span class="badge badge-gold">
-      <svg viewBox="0 0 24 24" fill="black">
-        <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 
-        1.402 8.177L12 18.896l-7.336 3.874 
-        1.402-8.177L.132 9.211l8.2-1.193z"/>
-      </svg>
-    </span>
-  `;
-}
-
-/* BLUE */
-if (
-  data.verification?.type === "blue" &&
-  data.verification?.expiresAt?.toDate() > new Date()
-) {
-  badgeHTML = `
-    <span class="badge badge-blue">
-      <svg viewBox="0 0 24 24" fill="white">
-        <path d="M20.285 6.709l-11.025 11.025-5.545-5.545 
-        1.414-1.414 4.131 4.131 9.611-9.611z"/>
-      </svg>
-    </span>
-  `;
-}
-
-    if (usernameEl) {
-      usernameEl.innerHTML = `
-  <span>${data.username || "Utilisateur"}</span>
-  ${badgeHTML}
-`;
-
-   usernameEl.style.cursor = "pointer";
-
-usernameEl.onclick = (e) => {
-  e.stopPropagation();
-  window.location.href = `profil.html?uid=${uid}`;
-};
-
+      const videos = document.querySelectorAll(`.video-box[data-user="${uid}"]`);
+      videos.forEach(box => {
+        const data = userCache[uid];
+        if (!data) return;
+        const usernameEl = box.querySelector(".username");
+        const avatarImg = box.querySelector(".avatar-img");
+        
+        let badgeHTML = "";
+        if (data.verification?.type === "gold" && data.verification?.status === "active") {
+          badgeHTML = `<span class="badge badge-gold"><svg viewBox="0 0 24 24" fill="black"><path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/></svg></span>`;
+        }
+        if (data.verification?.type === "blue" && data.verification?.expiresAt?.toDate() > new Date()) {
+          badgeHTML = `<span class="badge badge-blue"><svg viewBox="0 0 24 24" fill="white"><path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/></svg></span>`;
+        }
+        if (usernameEl) {
+          usernameEl.innerHTML = `<span>${data.username || "Utilisateur"}</span>${badgeHTML}`;
+          usernameEl.style.cursor = "pointer";
+          usernameEl.onclick = (e) => {
+            e.stopPropagation();
+            window.location.href = `profil.html?uid=${uid}`;
+          };
+        }
+        if (avatarImg) {
+          avatarImg.src = data.avatar || "default-avatar.png";
+        }
+      });
     }
-
-    /* AVATAR */
-    if (avatarImg) {
-      avatarImg.src = data.avatar || "default-avatar.png";
-    }
-
-  });
-}
 
     initActions();
     initVideoObserver();
     
-    // 🔥 Scroll automatique si videoId présent
-if (targetVideoId) {
-  setTimeout(() => {
-    const targetBox = document.querySelector(`[data-id="${targetVideoId}"]`);
-    if (targetBox) {
-      targetBox.scrollIntoView({ behavior: "instant" });
+    if (targetVideoId) {
+      setTimeout(() => {
+        const targetBox = document.querySelector(`[data-id="${targetVideoId}"]`);
+        if (targetBox) {
+          targetBox.scrollIntoView({ behavior: "instant" });
+        }
+      }, 300);
     }
-  }, 300);
-}
     
-} catch (err) {
-  console.error("❌ ERREUR LOAD FEED:", err);
-
-  feed.innerHTML = `
-    <div style="color:red;text-align:center;padding:50px">
-      ${err.message}
-    </div>
-  `;
- }
+    // 🔥 SÉCURITÉ ANTI-BLOCAGE : Si TOUTES les vidéos chargées étaient d'utilisateurs suspendus,
+    // on relance pour chercher la page suivante, sinon le scroll bloque !
+    if (addedVideosCount === 0 && hasMoreDocs) {
+      return loadFeed();
+    }
+    
+  } catch (err) {
+    console.error("❌ ERREUR LOAD FEED:", err);
+    feed.innerHTML = `
+      <div style="color:red;text-align:center;padding:50px">
+        ${err.message}
+      </div>
+    `;
+  }
 }
 
 
@@ -1662,13 +1611,14 @@ if (userId !== currentUser.uid) {
 const feedContainer = document.getElementById("feed");
 
 feedContainer.addEventListener("scroll", () => {
-  if (loading) return;
+  // On bloque si on est déjà en train de charger OU s'il n'y a plus rien à charger
+  if (loading || !hasMoreDocs) return;
 
-  // On surveille le scroll directement sur la div #feed, pas sur la fenêtre globale !
   if (feedContainer.scrollTop + feedContainer.clientHeight >= feedContainer.scrollHeight - 1000) {
     loading = true;
     
-    loadFeed().then(() => {
+    // finally() assure que "loading" redevienne false même en cas d'erreur internet
+    loadFeed().finally(() => {
       loading = false;
     });
   }
