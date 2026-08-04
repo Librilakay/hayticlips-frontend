@@ -251,7 +251,7 @@ function formatTimeOnly(val){
   return d.toLocaleTimeString("fr-FR", {hour:'2-digit', minute:'2-digit'});
 }
 
-// Outil Image Base64 (Pour inclure la photo de profil dans le PDF)
+// Outil Image Base64
 async function getBase64Image(url) {
   return new Promise((resolve) => {
     let img = new Image();
@@ -262,23 +262,40 @@ async function getBase64Image(url) {
       canvas.height = img.height;
       let ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
+      resolve(canvas.toDataURL("image/jpeg"));
     };
     img.onerror = () => resolve(null);
     img.src = url;
   });
 }
 
-// Rendu Graphique du Logo HaytiClips (Carre Rouge + Texte) dans jsPDF
-function drawLogo(doc, x, y) {
+// Rendu du Logo Officiel (icon-192.jpg) dans jsPDF
+async function drawLogo(doc, x, y) {
+  try {
+    let logoB64 = await getBase64Image("icon-192.jpg");
+    if (!logoB64) {
+      logoB64 = await getBase64Image("/icon-192.jpg");
+    }
+    if (logoB64) {
+      doc.addImage(logoB64, "JPEG", x, y, 14, 14);
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(18).setFont(undefined, 'bold');
+      doc.text("HaytiClips", x + 18, y + 10);
+      return;
+    }
+  } catch(e) {
+    console.warn("Logo icon-192.jpg indisponible, repli graphique.", e);
+  }
+
+  // Repli graphique au cas où l'image est inaccessible
   doc.setFillColor(255, 0, 80);
-  doc.rect(x, y, 10, 10, "F");
+  doc.rect(x, y, 12, 12, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(9).setFont(undefined, 'bold');
-  doc.text("HC", x + 1.5, y + 7);
+  doc.text("HC", x + 2, y + 8);
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(18).setFont(undefined, 'bold');
-  doc.text("HaytiClips", x + 14, y + 8);
+  doc.text("HaytiClips", x + 16, y + 9);
 }
 
 /* ================= ONGLET GLOBAL ================= */
@@ -298,23 +315,67 @@ tabUtilisateur.onclick = () => switchTab('utilisateur');
 
 async function loadFinance(){
   document.getElementById("statusText").textContent = "Chargement...";
+  let inTotal = 0;
+  let outTotal = 0;
+  let loadedFromApi = false;
+
+  // 1. Tenter la récupération via l'API backend
   try {
     const token = await auth.currentUser.getIdToken(true);
     const res = await fetch("https://hayticlip-server.onrender.com/api/admin/finance-summary", {
       headers: { "Authorization": "Bearer " + token }
     });
-    const data = await res.json();
-    if(data.success){
-      document.getElementById("totalIn").textContent = money(data.totalIn);
-      document.getElementById("totalOut").textContent = money(data.totalOut);
-      document.getElementById("netTotal").textContent = money(data.netTotal);
+    if (res.ok) {
+      const data = await res.json();
+      if(data.success){
+        inTotal = data.totalIn || 0;
+        outTotal = data.totalOut || 0;
+        loadedFromApi = true;
+      }
     }
+  } catch(err) {
+    console.warn("Serveur backend indisponible, calcul direct Firestore.", err);
+  }
+
+  // 2. Si le backend échoue ou est hors-ligne, calculer directement depuis Firestore
+  if(!loadedFromApi) {
+    try {
+      const qTx = query(collection(db, "walletTransactions"));
+      const txSnap = await getDocs(qTx);
+      txSnap.forEach(d => {
+        const tx = d.data();
+        const amt = parseFloat(tx.amount || 0);
+        if (tx.type === "deposit" || tx.type === "recharge" || tx.direction === "in") {
+          inTotal += amt;
+        } else if (tx.type === "withdrawal" || tx.type === "retrait" || tx.direction === "out") {
+          outTotal += amt;
+        }
+      });
+    } catch(e) {
+      console.error("Erreur de calcul Firestore", e);
+    }
+  }
+
+  document.getElementById("totalIn").textContent = money(inTotal);
+  document.getElementById("totalOut").textContent = money(outTotal);
+  document.getElementById("netTotal").textContent = money(inTotal - outTotal);
+
+  // Solde total sur la plateforme (Wallet des utilisateurs)
+  try {
     const snapshot = await getAggregateFromServer(collection(db, "users"), { totalMoney: sum("wallet") });
     document.getElementById("platformTotal").textContent = money(snapshot.data().totalMoney || 0);
-    document.getElementById("statusText").textContent = "À jour";
   } catch(err) {
-    document.getElementById("statusText").textContent = "Erreur de chargement";
+    try {
+      const uSnap = await getDocs(collection(db, "users"));
+      let sumW = 0;
+      uSnap.forEach(u => sumW += (parseFloat(u.data().wallet) || 0));
+      document.getElementById("platformTotal").textContent = money(sumW);
+    } catch(e2) {
+      document.getElementById("platformTotal").textContent = "0 Gdes";
+    }
   }
+
+  document.getElementById("statusText").textContent = "À jour";
 }
 document.getElementById("refreshBtn").onclick = loadFinance;
 
@@ -363,11 +424,12 @@ document.getElementById("downloadAdminBtn").onclick = async () => {
 
     let volumeTotal = montantRecharges + montantRetraits;
 
-    // --- EN-TÊTE ---
-    drawLogo(doc, 14, 15);
+    // --- EN-TÊTE AVEC LOGO icon-192.jpg ---
+    await drawLogo(doc, 14, 12);
+    
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(10).setFont(undefined, 'normal');
-    doc.text("Rapport de transactions", 14, 30);
+    doc.text("Rapport de transactions", 14, 32);
     
     // Aligné à droite
     doc.setFontSize(9);
@@ -376,14 +438,14 @@ document.getElementById("downloadAdminBtn").onclick = async () => {
     doc.text(`Généré par : ${adminName}`, 196, 27, { align: "right" });
 
     doc.setDrawColor(200, 200, 200);
-    doc.line(14, 35, 196, 35);
+    doc.line(14, 36, 196, 36);
 
     // --- INFORMATIONS GÉNÉRALES ---
     doc.setTextColor(0, 0, 0).setFontSize(12).setFont(undefined, 'bold');
-    doc.text("Informations générales", 14, 45);
+    doc.text("Informations générales", 14, 46);
     
     doc.autoTable({
-      startY: 50,
+      startY: 51,
       theme: 'plain',
       styles: { fontSize: 10, cellPadding: 2 },
       columnStyles: { 0: { fontStyle: 'bold', textColor: [80,80,80] }, 2: { fontStyle: 'bold', textColor: [80,80,80] } },
@@ -600,13 +662,13 @@ document.getElementById("downloadUserTxBtn").onclick = async () => {
       ]);
     });
 
-    // --- IDENTITÉ (En-tête) ---
-    drawLogo(doc, 160, 15);
+    // --- IDENTITÉ ET LOGO icon-192.jpg ---
+    await drawLogo(doc, 140, 12);
     
-    // Essayer de charger l'avatar
+    // Charger l'avatar
     let avatarUrl = u.avatar || u.photoURL || "https://via.placeholder.com/80";
     let b64Avatar = await getBase64Image(avatarUrl);
-    if(b64Avatar) { doc.addImage(b64Avatar, "PNG", 14, 15, 24, 24); } 
+    if(b64Avatar) { doc.addImage(b64Avatar, "JPEG", 14, 15, 24, 24); } 
     else { doc.setFillColor(200,200,200); doc.rect(14, 15, 24, 24, "F"); }
 
     doc.setTextColor(0,0,0).setFontSize(16).setFont(undefined, 'bold');
