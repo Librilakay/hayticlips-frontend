@@ -406,10 +406,7 @@ window.switchTab = (tabId, btn) => {
 
 /* ================== DÉTECTION COMPTES INCOMPLETS ================== */
 function isUserIncomplete(u) {
-  // Basé sur tes captures d'écran, si profileCompleted est faux, c'est incomplet
   if (u.profileCompleted === false) return true;
-  
-  // Ou s'il manque des champs vitaux comme Nom, Prénom ou les contacts
   if (!u.nom && !u.prenom && !u.username) return true;
   if (!u.email && !u.phone) return true;
   
@@ -420,7 +417,6 @@ function isUserIncomplete(u) {
 function renderUsers(users){
   let html = "";
   
-  // Compter et afficher le bouton de suppression globale si nécessaire
   const incompleteUsers = users.filter(isUserIncomplete);
   if (incompleteUsers.length > 0) {
     html += `
@@ -441,7 +437,6 @@ function renderUsers(users){
     const userPhone = u.phone || "Aucun numéro";
     const displayName = u.nom && u.prenom ? `${u.prenom} ${u.nom}` : (u.username || "Sans nom");
     
-    // Alerte individuelle
     const isIncomplete = isUserIncomplete(u);
     const warningBadge = isIncomplete ? 
       `<div style="font-size:11px; color:#f39c12; margin-top:6px; background:#332200; padding:6px; border-radius:6px; border: 1px solid #f39c1250; display:inline-block;">⚠️ Profil Incomplet</div>` : "";
@@ -499,7 +494,6 @@ window.deleteAllIncompleteUsers = async () => {
   let deletedCount = 0;
   for (const u of incompleteUsers) {
     try {
-      // 1. Nettoyer les vidéos dans Supabase
       const videosSnap = await getDocs(query(collection(db,"videos"), where("userId","==",u.id)));
       for(const v of videosSnap.docs){
         const mediaUrl = v.data().mediaUrls?.[0];
@@ -512,7 +506,6 @@ window.deleteAllIncompleteUsers = async () => {
         await deleteDoc(v.ref);
       }
 
-      // 2. Nettoyer l'avatar dans Supabase
       if (u.avatar && u.avatar.includes("supabase.co")) {
         try {
           let fileName = decodeURIComponent(u.avatar.split(`/${BUCKET_NAME}/`)[1].split('?')[0]);
@@ -520,7 +513,6 @@ window.deleteAllIncompleteUsers = async () => {
         } catch (e) {}
       }
 
-      // 3. Supprimer le document Firestore
       await deleteDoc(doc(db,"users",u.id));
       deletedCount++;
     } catch(err) {
@@ -583,7 +575,8 @@ async function loadReports(){
   let found = false;
   let html = "";
 
-  const aiFlaggedSnap = await getDocs(query(collection(db, "videos"), where("moderationStatus", "==", "flagged")));
+  // RÉCUPÉRATION DES VIDÉOS BLOQUÉES PAR L'IA (pending_ia & flagged)
+  const aiFlaggedSnap = await getDocs(query(collection(db, "videos"), where("moderationStatus", "in", ["pending_ia", "flagged"])));
   aiFlaggedSnap.forEach(videoDoc => {
     found = true;
     const video = videoDoc.data();
@@ -598,9 +591,11 @@ async function loadReports(){
     `;
   });
 
+  // RÉCUPÉRATION DES VIDÉOS SIGNALÉES MANUELLEMENT PAR DES UTILISATEURS
   const videosSnap = await getDocs(collection(db,"videos"));
   for(const videoDoc of videosSnap.docs){
-    if(videoDoc.data().moderationStatus === "flagged") continue; 
+    const modStatus = videoDoc.data().moderationStatus;
+    if(modStatus === "flagged" || modStatus === "pending_ia") continue; 
 
     const reportsSnap = await getDocs(collection(db,"videos",videoDoc.id,"reports"));
     if(reportsSnap.empty) continue;
