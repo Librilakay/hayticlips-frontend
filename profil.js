@@ -181,31 +181,15 @@ function setupOwnerActionButton(isMerchantActive, username, avatarUrl) {
     ownerActionBtn.textContent = "Partager";
     ownerActionBtn.onclick = async () => {
       const profileUrl = `${window.location.origin}/profil.html?uid=${profileUid}`;
-      const shareText = `Découvre ${username || ''} sur hayticlips!!`;
+      const shareText = `Découvre ${username || 'ce profil'} sur HaytiClips!!`;
 
       if (navigator.share) {
         try {
-          const shareData = {
-            title: `Découvre ${username || ''} sur HaytiClips`,
+          await navigator.share({
+            title: `Découvre ${username || 'ce profil'} sur HaytiClips`,
             text: shareText,
             url: profileUrl
-          };
-
-          // Récupération de la photo du profil (ou de l'icône icon-192.png par défaut)
-          try {
-            const imgToFetch = avatarUrl || "icon-192.png";
-            const response = await fetch(imgToFetch);
-            const blob = await response.blob();
-            const file = new File([blob], "profile.png", { type: blob.type || "image/png" });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              shareData.files = [file];
-            }
-          } catch (e) {
-            console.log("Partage direct d'image non supporté ou erreur de chargement", e);
-          }
-
-          await navigator.share(shareData);
+          });
         } catch (err) {
           console.log("Partage annulé", err);
         }
