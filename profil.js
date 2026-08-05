@@ -169,7 +169,7 @@ onAuthStateChanged(auth, async (currentUser) => {
 
   await restore2FAState(currentUser);
     
-function setupOwnerActionButton(isMerchantActive){
+function setupOwnerActionButton(isMerchantActive, username, avatarUrl) {
   if(!ownerActionBtn) return;
 
   if(isMerchantActive){
@@ -177,23 +177,40 @@ function setupOwnerActionButton(isMerchantActive){
     ownerActionBtn.onclick = () => {
       window.location.href = "merchant-products.html";
     };
-  }else{
+  } else {
     ownerActionBtn.textContent = "Partager";
     ownerActionBtn.onclick = async () => {
       const profileUrl = `${window.location.origin}/profil.html?uid=${profileUid}`;
+      const shareText = `Découvre ${username || ''} sur hayticlips!!`;
 
       if (navigator.share) {
         try {
-          await navigator.share({
-            title: "Découvre mon profil sur HaytiClips",
-            text: "Découvre mon profil sur HaytiClips🔥🇭🇹",
+          const shareData = {
+            title: `Découvre ${username || ''} sur HaytiClips`,
+            text: shareText,
             url: profileUrl
-          });
+          };
+
+          // Récupération de la photo du profil (ou de l'icône icon-192.png par défaut)
+          try {
+            const imgToFetch = avatarUrl || "icon-192.png";
+            const response = await fetch(imgToFetch);
+            const blob = await response.blob();
+            const file = new File([blob], "profile.png", { type: blob.type || "image/png" });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              shareData.files = [file];
+            }
+          } catch (e) {
+            console.log("Partage direct d'image non supporté ou erreur de chargement", e);
+          }
+
+          await navigator.share(shareData);
         } catch (err) {
-          console.log("Partage annulé");
+          console.log("Partage annulé", err);
         }
       } else {
-        await navigator.clipboard.writeText(profileUrl);
+        await navigator.clipboard.writeText(`${shareText}\n${profileUrl}`);
         alert("Lien copié !");
       }
     };
@@ -446,7 +463,7 @@ if(merchantCertifiedBadge){
 }
 
 if(isOwner){
-  setupOwnerActionButton(isMerchantActive);
+  setupOwnerActionButton(isMerchantActive, u.username, u.avatar);
 }
 
     document.getElementById("followersCount").textContent = formatNumber(u.followersCount || 0);
