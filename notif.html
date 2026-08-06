@@ -289,6 +289,13 @@ function closeAllNotifListeners() {
 // Function d'activation des Notifications Push
 async function setupPushNotifications(user) {
   try {
+    // 👇 1. AJOUT DE LA VÉRIFICATION ICI 👇
+    if (!("Notification" in window)) {
+      console.warn("Ce navigateur ou appareil ne supporte pas les notifications Web Push.");
+      return; // On arrête la fonction ici pour éviter le crash
+    }
+    // 👆 FIN DE LA VÉRIFICATION 👆
+
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       // Enregistre le service worker
