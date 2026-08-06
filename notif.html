@@ -48,6 +48,69 @@ body {
   z-index:10;
 }
 
+/* ================= BANNIÈRE WARNING NOTIFICATION ================= */
+#pushWarningBanner {
+  background: linear-gradient(135deg, #1a050b, #0d0d0d);
+  border-bottom: 1px solid #ff005050;
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  animation: fadeIn 0.3s ease;
+}
+
+.push-warning-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.push-warning-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.push-warning-text {
+  font-size: 13px;
+  color: #ddd;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.push-warning-text strong {
+  color: #ff0050;
+  display: block;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.push-action-btn {
+  background: #ff0050;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: 0.2s;
+}
+
+.push-action-btn:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ================= LISTE DES NOTIFICATIONS ================= */
 .notifications{
   flex: 1;
@@ -220,6 +283,18 @@ body {
   </div>
 </div>
 
+<!-- BANNIÈRE D'AVERTISSEMENT PUSH (Masquée par défaut, s'affiche si pas de token) -->
+<div id="pushWarningBanner" style="display: none;">
+  <div class="push-warning-content">
+    <div class="push-warning-icon">🔔</div>
+    <div class="push-warning-text">
+      <strong>Activez les notifications</strong>
+      Ne ratez aucun message ni like !
+    </div>
+  </div>
+  <button class="push-action-btn" id="enablePushBtn">Activer</button>
+</div>
+
 <div class="notifications" id="notificationsContainer"></div>
 
 <div class="nav">
@@ -251,6 +326,7 @@ import {
   orderBy,
   onSnapshot,
   doc,
+  getDoc,
   updateDoc,
   getDocs,
   writeBatch,
@@ -272,12 +348,12 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const messaging = getMessaging(app);
 
-// 🔔 CONFIGURATION CLÉ VAPID FIREBASE
-// Remplace cette clé par la VAPID KEY de ta console Firebase Cloud Messaging
 const VAPID_KEY = "BGg-uKOpPvj6zFPfJ7MBW2Yopg_SixHzhXh2H9x5zRn6kBuUIj8BlK-2MU-yn8hlNTZFhegaHcqDWySIaop7m9c"; 
 
 const container = document.getElementById("notificationsContainer");
 const notifIcon = document.getElementById("notifIcon");
+const pushWarningBanner = document.getElementById("pushWarningBanner");
+const enablePushBtn = document.getElementById("enablePushBtn");
 
 let activeNotifListeners = [];
 
@@ -286,19 +362,37 @@ function closeAllNotifListeners() {
   activeNotifListeners = [];
 }
 
-// Function d'activation des Notifications Push
-async function setupPushNotifications(user) {
-  try {
-    // 👇 1. AJOUT DE LA VÉRIFICATION ICI 👇
-    if (!("Notification" in window)) {
-      console.warn("Ce navigateur ou appareil ne supporte pas les notifications Web Push.");
-      return; // On arrête la fonction ici pour éviter le crash
-    }
-    // 👆 FIN DE LA VÉRIFICATION 👆
+// Vérification de l'état du Token FCM dans Firestore pour afficher ou masquer la bannière
+async function checkPushStatus(user) {
+  if (!("Notification" in window)) {
+    pushWarningBanner.style.display = "none";
+    return;
+  }
 
+  try {
+    const userDocRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userDocRef);
+
+    if (userSnap.exists() && userSnap.data().fcmToken && Notification.permission === 'granted') {
+      // S'il a déjà son token et la permission, on cache la bannière
+      pushWarningBanner.style.display = "none";
+    } else {
+      // Sinon, on affiche l'avertissement à chaque fois qu'il arrive sur l'écran
+      pushWarningBanner.style.display = "flex";
+    }
+  } catch (err) {
+    console.error("Erreur vérification statut push :", err);
+  }
+}
+
+// Clic sur le bouton Activer de la bannière
+enablePushBtn.onclick = async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      // Enregistre le service worker
       const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
       
       const currentToken = await getToken(messaging, { 
@@ -307,31 +401,36 @@ async function setupPushNotifications(user) {
       });
 
       if (currentToken) {
-        console.log("Token FCM obtenu:", currentToken);
-        // Sauvegarde du token dans Firestore sous le document utilisateur
         await setDoc(doc(db, "users", user.uid), {
           fcmToken: currentToken
         }, { merge: true });
+        
+        // Cache la bannière immédiatement après activation réussie
+        pushWarningBanner.style.display = "none";
+        alert("✅ Notifications activées avec succès !");
       }
+    } else {
+      alert("Permission refusée. Vous pourrez l'activer plus tard.");
     }
   } catch (error) {
-    console.error("Erreur d'activation des notifications push :", error);
+    console.error("Erreur d'activation :", error);
+    alert("Impossible d'activer les notifications sur cet appareil.");
   }
-}
+};
 
-// Écoute des notifications en temps réel si l'application est ouverte à l'écran
+// Écoute des notifications en premier plan
 onMessage(messaging, (payload) => {
   console.log("Notification reçue en premier plan :", payload);
 });
 
-onAuthStateChanged(auth,(user)=>{
+onAuthStateChanged(auth, async (user) => {
   if(!user){
     location.href="login.html";
     return;
   }
 
-  // Activer FCM Push
-  setupPushNotifications(user);
+  // Vérifier si on doit afficher le warning
+  await checkPushStatus(user);
 
   const q = query(
     collection(db,"notifications"),
