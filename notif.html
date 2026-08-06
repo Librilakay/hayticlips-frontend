@@ -15,7 +15,7 @@
   box-sizing:border-box;
   font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;
   -webkit-tap-highlight-color: transparent;
-  touch-action: pan-y; /* Empêche le pinch-to-zoom natif */
+  touch-action: pan-y;
 }
 
 html, body {
@@ -23,8 +23,8 @@ html, body {
   height: 100%;
   background: #000000;
   color: #ffffff;
-  overflow: hidden; /* Empêche le scroll sur toute la page */
-  overscroll-behavior-y: none; /* Bloque l'effet de rebond sur iOS */
+  overflow: hidden;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -51,16 +51,16 @@ body {
 /* ================= LISTE DES NOTIFICATIONS ================= */
 .notifications{
   flex: 1;
-  overflow-y: auto; /* Active le scroll uniquement ici */
+  overflow-y: auto;
   padding: 15px;
-  overscroll-behavior-y: contain; /* Garde le scroll fluide et enfermé */
+  overscroll-behavior-y: contain;
   padding-bottom: 20px;
 }
 
-.notifications::-webkit-scrollbar { width: 0; } /* Cache la scrollbar */
+.notifications::-webkit-scrollbar { width: 0; }
 
 .card{
-  background:#080808; /* Noir très foncé, pas de gris */
+  background:#080808;
   border:1px solid #1a1a1a;
   border-radius:14px;
   padding:14px;
@@ -87,10 +87,9 @@ body {
   flex-shrink: 0;
 }
 
-/* ===== CORRECTION DU TEXTE QUI DÉBORDE ===== */
 .content{
   flex: 1;
-  min-width: 0; /* CRUCIAL : Force Flexbox à respecter les limites de l'écran */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -99,7 +98,6 @@ body {
 .text{
   font-size:14px;
   line-height: 1.3;
-  /* Empêche le titre de déborder */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis; 
@@ -109,7 +107,6 @@ body {
   font-size:13px;
   color:#aaa;
   margin-top:4px;
-  /* Coupe proprement le message trop long avec "..." */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -128,7 +125,6 @@ body {
   font-size: 15px;
 }
 
-/* ===== TYPES DE CARTES ===== */
 .card.message{
   border-left:4px solid #ff0050;
 }
@@ -151,7 +147,7 @@ body {
   border:2px solid #000;
 }
 
-/* ================= NAV BAR MOBILE (Identique au Profil) ================= */
+/* ================= NAV BAR MOBILE ================= */
 .nav{
   height:90px;
   background:#000000;
@@ -226,29 +222,19 @@ body {
 
 <div class="notifications" id="notificationsContainer"></div>
 
-<!-- Menu de Navigation 100% Fixe -->
 <div class="nav">
-  <!-- Accueil (Maison pleine) -->
   <div class="nav-btn" onclick="go('feed.html')">
     <svg viewBox="0 0 24 24"><path d="M12 3L4 9v12h5v-7h6v7h5V9z"/></svg>
   </div>
-  
-  <!-- Recherche -->
   <div class="nav-btn" onclick="go('search.html')">
     <svg viewBox="0 0 24 24"><path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
   </div>
-  
-  <!-- Upload (Carré blanc, croix noire) -->
   <div class="nav-btn upload" onclick="go('upload.html')">
     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="black" stroke-width="2.5" stroke-linecap="round"/></svg>
   </div>
-  
-  <!-- Notifications (Cloche pleine) -->
   <div class="nav-btn" onclick="go('notif.html')" id="notifIcon">
     <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
   </div>
-  
-  <!-- Profil (Utilisateur plein) -->
   <div class="nav-btn" onclick="go('profil.html')">
     <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
   </div>
@@ -267,18 +253,28 @@ import {
   doc,
   updateDoc,
   getDocs,
-  writeBatch
+  writeBatch,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
 
 const firebaseConfig = {
-  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-  authDomain:"tstx-58474.firebaseapp.com",
-  projectId:"tstx-58474"
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const messaging = getMessaging(app);
+
+// 🔔 CONFIGURATION CLÉ VAPID FIREBASE
+// Remplace cette clé par la VAPID KEY de ta console Firebase Cloud Messaging
+const VAPID_KEY = "BGg-uKOpPvj6zFPfJ7MBW2Yopg_SixHzhXh2H9x5zRn6kBuUIj8BlK-2MU-yn8hlNTZFhegaHcqDWySIaop7m9c"; 
 
 const container = document.getElementById("notificationsContainer");
 const notifIcon = document.getElementById("notifIcon");
@@ -290,11 +286,45 @@ function closeAllNotifListeners() {
   activeNotifListeners = [];
 }
 
+// Function d'activation des Notifications Push
+async function setupPushNotifications(user) {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      // Enregistre le service worker
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      
+      const currentToken = await getToken(messaging, { 
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: registration 
+      });
+
+      if (currentToken) {
+        console.log("Token FCM obtenu:", currentToken);
+        // Sauvegarde du token dans Firestore sous le document utilisateur
+        await setDoc(doc(db, "users", user.uid), {
+          fcmToken: currentToken
+        }, { merge: true });
+      }
+    }
+  } catch (error) {
+    console.error("Erreur d'activation des notifications push :", error);
+  }
+}
+
+// Écoute des notifications en temps réel si l'application est ouverte à l'écran
+onMessage(messaging, (payload) => {
+  console.log("Notification reçue en premier plan :", payload);
+});
+
 onAuthStateChanged(auth,(user)=>{
   if(!user){
     location.href="login.html";
     return;
   }
+
+  // Activer FCM Push
+  setupPushNotifications(user);
 
   const q = query(
     collection(db,"notifications"),
@@ -350,8 +380,6 @@ onAuthStateChanged(auth,(user)=>{
 
       container.appendChild(card);
 
-      // Listener profil pour mise à jour de l'avatar et du pseudo
-// Listener profil pour mise à jour de l'avatar et du pseudo
       if (
         data.from && 
         data.type !== "transfer_rejected" && 
@@ -362,7 +390,6 @@ onAuthStateChanged(auth,(user)=>{
       ) {
         const userRef = doc(db, "users", data.from);
         const unsubUser = onSnapshot(userRef, userSnap => {
-          // ... le reste de ton code reste identique
           if (!userSnap.exists()) return;
           const userData = userSnap.data();
           
@@ -385,8 +412,8 @@ onAuthStateChanged(auth,(user)=>{
 
 function getNotificationAvatar(data){
   if(data.type === "transfer_rejected") return "https://cdn-icons-png.flaticon.com/512/564/564619.png"; 
-  if(data.type === "wallet_frozen") return "https://cdn-icons-png.flaticon.com/512/2913/2913133.png"; // Icône cadenas rouge
-  if(data.type === "wallet_unfrozen") return "https://cdn-icons-png.flaticon.com/512/2913/2913520.png"; // Icône cadenas ouvert vert
+  if(data.type === "wallet_frozen") return "https://cdn-icons-png.flaticon.com/512/2913/2913133.png"; 
+  if(data.type === "wallet_unfrozen") return "https://cdn-icons-png.flaticon.com/512/2913/2913520.png"; 
   if(data.type === "blue_approved" || data.type === "blue_expired") return data.userAvatar || data.toAvatar || "default-avatar.png";
   return data.fromAvatar || "default-avatar.png";
 }
@@ -418,7 +445,6 @@ function buildMessage(data){
     case "message": return `<strong>${data.fromUsername}</strong> vous a envoyé un message`;
     case "transfer_rejected": return `<strong style="color:#e74c3c;">Transaction Refusée</strong><br><span style="font-size:13px;opacity:0.9;">${data.message}</span>`;
     
-    // NOUVELLES NOTIFICATIONS DE GEL ICI 👇
     case "wallet_frozen": return `<strong style="color:#e74c3c;">Compte Gelé </strong><br><span style="font-size:13px;opacity:0.9;">Votre wallet a été bloqué et votre balance a été mise en sécurité.</span>`;
     case "wallet_unfrozen": return `<strong style="color:#2ecc71;">Compte Dégelé </strong><br><span style="font-size:13px;opacity:0.9;">Votre wallet est à nouveau actif et votre argent a été restauré.</span>`;
     
@@ -464,7 +490,7 @@ document.getElementById("markAllReadBtn").onclick = async () => {
     );
     const snap = await getDocs(q);
     
-    if (snap.empty) return; // Si tout est déjà lu, on ne fait rien
+    if (snap.empty) return;
 
     const batch = writeBatch(db);
     snap.forEach(docSnap => {

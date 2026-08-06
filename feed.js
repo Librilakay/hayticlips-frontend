@@ -71,6 +71,27 @@ let loading = false;
 let hasMoreDocs = true;
 const userCache = {};
 
+/* ================= PUSH NOTIFICATIONS ================= */
+async function triggerPushNotification(targetUid, title, body, extraData = {}) {
+  // On n'envoie pas de push à soi-même
+  if (!auth.currentUser || targetUid === auth.currentUser.uid) return;
+  
+  try {
+    const token = await auth.currentUser.getIdToken();
+    await fetch("https://hayticlip-server.onrender.com/api/send-push", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ targetUid, title, body, extraData })
+    });
+  } catch (e) {
+    console.error("Erreur déclenchement push :", e);
+  }
+}
+
+
 // 🔑 AUTH
 
 onAuthStateChanged(auth, async user => {
@@ -614,7 +635,7 @@ async function initActions() {
       followBtn.classList.remove("following");
     }
   });
-        // 🔔 NOTIFICATION FOLLOW
+// 🔔 NOTIFICATION FOLLOW
 if (userId !== currentUser.uid) {
   await addDoc(collection(db,"notifications"),{
     type:"follow",
@@ -625,7 +646,10 @@ if (userId !== currentUser.uid) {
     read:false,
     createdAt:serverTimestamp()
   });
-  }
+  
+  // 👇 AJOUT DU PUSH
+  await triggerPushNotification(userId, "Nouveau Follower 🎉", `${currentUser.username} a commencé à vous suivre !`, { type: "follow" });
+}
 
 });
 
@@ -693,7 +717,7 @@ likeBtn.addEventListener("click", async (e) => {
 
     });
     
-            // 🔔 NOTIFICATION LIKE
+// 🔔 NOTIFICATION LIKE
 if (userId !== currentUser.uid) {
   await addDoc(collection(db,"notifications"),{
     type:"like",
@@ -705,6 +729,9 @@ if (userId !== currentUser.uid) {
     read:false,
     createdAt:serverTimestamp()
   });
+
+  // 👇 AJOUT DU PUSH
+  await triggerPushNotification(userId, "Nouveau Like ❤️", `${currentUser.username} a aimé votre vidéo.`, { type: "like", videoId: videoId });
 }
 
   } catch (err) {
@@ -1156,24 +1183,27 @@ sendBtn.onclick = async () => {
         }
       );
       
-      // 2. 🔔 AJOUT : NOTIFICATION DE RÉPONSE
-      const parentCommentSnap = await getDoc(doc(db, "videos", currentVideoId, "comments", replyingToCommentId));
-      if (parentCommentSnap.exists()) {
-        const parentOwner = parentCommentSnap.data().uid;
-        if (parentOwner !== currentUser.uid) {
-          await addDoc(collection(db, "notifications"), {
-            type: "reply",
-            from: currentUser.uid,
-            fromUsername: currentUser.username,
-            fromAvatar: currentUser.avatar || null,
-            to: parentOwner,
-            videoId: currentVideoId,
-            preview: text.substring(0, 100),
-            read: false,
-            createdAt: serverTimestamp()
-          });
-        }
-      }
+// 2. 🔔 AJOUT : NOTIFICATION DE RÉPONSE
+const parentCommentSnap = await getDoc(doc(db, "videos", currentVideoId, "comments", replyingToCommentId));
+if (parentCommentSnap.exists()) {
+  const parentOwner = parentCommentSnap.data().uid;
+  if (parentOwner !== currentUser.uid) {
+    await addDoc(collection(db, "notifications"), {
+      type: "reply",
+      from: currentUser.uid,
+      fromUsername: currentUser.username,
+      fromAvatar: currentUser.avatar || null,
+      to: parentOwner,
+      videoId: currentVideoId,
+      preview: text.substring(0, 100),
+      read: false,
+      createdAt: serverTimestamp()
+    });
+
+    // 👇 AJOUT DU PUSH
+    await triggerPushNotification(parentOwner, "Nouvelle Réponse 💬", `${currentUser.username} a répondu à votre commentaire.`, { type: "reply", videoId: currentVideoId });
+  }
+}
 
       console.log("✅ RÉPONSE ENVOYÉE");
       input.value = "";
@@ -1227,6 +1257,9 @@ if (videoOwner !== currentUser.uid) {
     read:false,
     createdAt:serverTimestamp()
   });
+
+  // 👇 AJOUT DU PUSH
+  await triggerPushNotification(videoOwner, "Nouveau Commentaire 💬", `${currentUser.username} a commenté : ${text.substring(0, 30)}...`, { type: "comment", videoId: currentVideoId });
 }
 
     }

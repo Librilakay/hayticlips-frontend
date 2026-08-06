@@ -151,6 +151,25 @@ twofaToggle.checked = data.security?.enabled === true;
 
 }
 
+/* ================= PUSH NOTIFICATIONS ================= */
+async function triggerPushNotification(targetUid, title, body, extraData = {}) {
+  if (!auth.currentUser || targetUid === auth.currentUser.uid) return;
+  
+  try {
+    const token = await auth.currentUser.getIdToken();
+    await fetch("https://hayticlip-server.onrender.com/api/send-push", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ targetUid, title, body, extraData })
+    });
+  } catch (e) {
+    console.error("Erreur déclenchement push :", e);
+  }
+}
+
 /* AUTH */
 onAuthStateChanged(auth, async (currentUser) => {
 
@@ -508,18 +527,32 @@ if (!followSnap.exists() && myFollowing >= 8000){
           }
         });
         
-        // 🔔 NOTIFICATION FOLLOW (PROFIL)
+// 🔔 NOTIFICATION FOLLOW (PROFIL)
 if (profileUid !== currentUser.uid) {
 
+  // 1. Récupérer les infos de l'utilisateur courant pour éviter les appels multiples
+  const currentUserSnap = await getDoc(doc(db,"users",currentUser.uid));
+  const currentUsername = currentUserSnap.exists() ? currentUserSnap.data().username : "Quelqu'un";
+  const currentUserAvatar = currentUserSnap.exists() ? currentUserSnap.data().avatar : null;
+
+  // 2. Enregistrer la notification dans Firestore
   await addDoc(collection(db,"notifications"),{
     type:"follow",
     from:currentUser.uid,
-    fromUsername: (await getDoc(doc(db,"users",currentUser.uid))).data().username,
-    fromAvatar: (await getDoc(doc(db,"users",currentUser.uid))).data().avatar || null,
+    fromUsername: currentUsername,
+    fromAvatar: currentUserAvatar,
     to:profileUid,
     read:false,
     createdAt:serverTimestamp()
   });
+
+  // 3. Déclencher la notification Push
+  await triggerPushNotification(
+    profileUid, 
+    "Nouveau Follower 🎉", 
+    `${currentUsername} a commencé à vous suivre !`, 
+    { type: "follow", uid: currentUser.uid }
+  );
 
 }
         
