@@ -933,7 +933,7 @@ const myAvatar = meData.avatar || null;
 
 localStorage.setItem("lastUploadTime", Date.now());
     console.log("✅ Publication réussie !");
-    alert("🎉 Ta vidéo est en ligne ! Notre serveur l'analyse et l'optimise actuellement. Elle apparaîtra bientôt dans le Feed public.");
+    alert("Publication réussie!");
     window.location.href = `profil.html?uid=${currentUser.uid}`;
 
   } catch (error) {

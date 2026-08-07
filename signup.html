@@ -225,9 +225,9 @@ input.error {
     <span id="bannerIcon">▼</span>
   </div>
   <div class="banner-content" id="bannerContent">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/512px-Gmail_icon_%282020%29.svg.png" alt="Gmail App" class="gmail-icon">
+    <img src="gmail.jpeg" alt="Gmail App" class="gmail-icon">
     <div class="banner-text">
-      <p>L'application <strong>Gmail</strong> est obligatoire pour recevoir le lien de vérification et activer votre compte sur HaytiClips.</p>
+      <p>L'application <strong>Gmail</strong> est <strong>obligatoire</strong> pour recevoir le lien de vérification et activer votre compte sur HaytiClips.</p>
     </div>
   </div>
 </div>
@@ -494,7 +494,7 @@ signupBtn.addEventListener("click", async () => {
       url: "https://hayticlips.com/verify.html"
     });
 
-    alert("🎉 Inscription réussie ! Nous vous avons envoyé un lien de vérification. Ouvrez l’application Gmail et cliquez sur le lien.");
+    alert("🎉 Inscription réussie ! Nous vous avons envoyé un lien de vérification.");
     window.location.href = "login.html"; 
 
   } catch (error) {

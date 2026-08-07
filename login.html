@@ -275,7 +275,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
 
     if(!cred.user.emailVerified){
-      alert("Va dans l’application Gmail, clique sur le lien que nous vous avons envoyé pour vérifier votre adresse e-mail, puis revenez ici pour vous connecter.");
+      alert("Clique sur le lien que nous vous avons envoyé pour vérifier votre adresse e-mail, puis revenez ici pour vous connecter.");
       await signOut(auth);
       return;
     }
