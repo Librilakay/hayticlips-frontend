@@ -21,8 +21,80 @@ body {
   align-items: center;
   justify-content: center;
   color: #fff;
-  min-height:30vh;
+  min-height: 30vh;
+  position: relative; /* Ajouté pour la bannière absolue */
 }
+
+/* ================= BANNIÈRE GMAIL ================= */
+.gmail-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #121212;
+  border-bottom: 2px solid #ff0050;
+  z-index: 100;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+}
+
+.banner-header {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  background: #1a1a1a;
+  color: #fff;
+  transition: background 0.2s;
+}
+
+.banner-header:active {
+  background: #222;
+}
+
+#bannerIcon {
+  transition: transform 0.4s ease;
+  display: inline-block;
+  font-size: 12px;
+}
+
+.banner-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease, padding 0.5s ease;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #121212;
+}
+
+/* Classe ajoutée par JS pour ouvrir la bannière */
+.banner-content.open {
+  max-height: 150px; 
+  padding: 15px 20px;
+}
+
+.gmail-icon {
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.banner-text p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #ccc;
+}
+
+.banner-text strong {
+  color: #ff0050;
+}
+/* ================= FIN BANNIÈRE ================= */
 
 .container {
   width: 90%;
@@ -30,6 +102,7 @@ body {
   background: #121212;
   padding: 25px;
   border-radius: 16px;
+  margin-top: 40px; /* Laisse respirer sous la bannière */
 }
 
 h1 {
@@ -145,6 +218,20 @@ input.error {
 
 <body>
 
+<!-- BANNIÈRE D'INFORMATION GMAIL -->
+<div class="gmail-banner">
+  <div class="banner-header" id="bannerHeader">
+    <span style="display:flex; align-items:center; gap:8px;">⚠️ <span>Information importante</span></span>
+    <span id="bannerIcon">▼</span>
+  </div>
+  <div class="banner-content" id="bannerContent">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/512px-Gmail_icon_%282020%29.svg.png" alt="Gmail App" class="gmail-icon">
+    <div class="banner-text">
+      <p>L'application <strong>Gmail</strong> est obligatoire pour recevoir le lien de vérification et activer votre compte sur HaytiClips.</p>
+    </div>
+  </div>
+</div>
+
 <div class="container">
   <h1>Créer un compte</h1>
 
@@ -174,7 +261,35 @@ input.error {
   </div>
 </div>
         
-        
+<!-- SCRIPT POUR L'ANIMATION DE LA BANNIÈRE -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const header = document.getElementById("bannerHeader");
+    const content = document.getElementById("bannerContent");
+    const icon = document.getElementById("bannerIcon");
+
+    function toggleBanner() {
+      content.classList.toggle("open");
+      if (content.classList.contains("open")) {
+        icon.style.transform = "rotate(180deg)";
+      } else {
+        icon.style.transform = "rotate(0deg)";
+      }
+    }
+
+    // Ouvre et ferme au clic
+    header.addEventListener("click", toggleBanner);
+
+    // Déploiement automatique et fluide 0.5s après le chargement de la page
+    setTimeout(() => {
+      if (!content.classList.contains("open")) {
+        toggleBanner();
+      }
+    }, 500);
+  });
+</script>
+
+<!-- TON SCRIPT FIREBASE D'ORIGINE -->     
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
@@ -182,14 +297,14 @@ import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
   deleteUser,
-  signInWithEmailAndPassword, // Ajouté pour récupérer les comptes fantômes
-  signOut // Ajouté pour sécuriser les vrais comptes
+  signInWithEmailAndPassword, 
+  signOut 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
   getFirestore, 
   doc, 
   getDoc 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; // Ajouté pour vérifier l'existence du profil
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; 
 
 const firebaseConfig = {
   apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
@@ -202,15 +317,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app); // Initialisation de Firestore
+const db = getFirestore(app); 
 
 const signupBtn = document.getElementById("signupBtn");
 const emailInput = document.getElementById("email");
 const phoneInput = document.getElementById("phone");
-
-// ==========================================
-// 🪄 AUTO-COMPLÉTION EMAIL & TÉLÉPHONE
-// ==========================================
 
 function formatEmail(val) {
   let cleaned = val.trim().toLowerCase();
@@ -244,7 +355,6 @@ phoneInput.addEventListener("input", (e) => {
     phoneInput.value = phoneInput.value.slice(0, 13);
   }
 });
-// ==========================================
 
 function setButtonState(disabled) {
   signupBtn.disabled = disabled;
@@ -328,43 +438,35 @@ signupBtn.addEventListener("click", async () => {
       return;
     }
 
-    // 1️⃣ Création ou Récupération du compte Auth
     let userCredential;
     try {
       userCredential = await createUserWithEmailAndPassword(auth, finalEmail, password);
     } catch (authError) {
-      // 🚨 FIX : Mécanisme d'auto-réparation pour les comptes fantômes
       if (authError.code === "auth/email-already-in-use") {
         try {
-          // On tente de le connecter pour voir si c'est son propre compte inachevé
           userCredential = await signInWithEmailAndPassword(auth, finalEmail, password);
           
-          // On vérifie si un document existe pour lui
           const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
           
           if (userDoc.exists()) {
-            // C'est un vrai compte complet. On le déconnecte pour sa sécurité et on le redirige.
             await signOut(auth);
             throw new Error("Vous avez déjà un compte. Veuillez vous connecter dans la page de connexion.");
           } else {
-            // C'est un compte fantôme (pas de profil). On continue vers l'étape 2 !
             console.log("Compte fantôme détecté et récupéré. Finalisation du profil...");
           }
         } catch (recoveryError) {
           if (recoveryError.message.includes("déjà un compte")) {
-            throw recoveryError; // Relais de l'erreur du vrai compte
+            throw recoveryError; 
           }
-          // Si le mot de passe est faux (le compte appartient à quelqu'un d'autre)
           throw new Error("Cette adresse email est déjà utilisée. Si c'est votre compte, connectez-vous.");
         }
       } else {
-        throw authError; // Autre erreur Firebase (ex: mot de passe invalide)
+        throw authError; 
       }
     }
     
     const user = userCredential.user;
 
-    // 2️⃣ Envoi au Backend pour créer le document Firestore
     try {
       const token = await user.getIdToken(true);
       const response = await fetch("https://hayticlip-server.onrender.com/api/initUserProfile", {
@@ -383,13 +485,11 @@ signupBtn.addEventListener("click", async () => {
       }
 
     } catch (backendError) {
-      // Si le backend échoue encore, on supprime le compte fantôme proprement car l'utilisateur est bien authentifié
       console.error("Erreur serveur, nettoyage du compte Auth...", backendError);
       await deleteUser(user).catch(err => console.error("Impossible de supprimer le compte fantôme:", err));
       throw new Error("L'inscription a échoué : " + backendError.message);
     }
 
-    // 3️⃣ Envoi de l'email de vérification
     await sendEmailVerification(user, {
       url: "https://hayticlips.com/verify.html"
     });
