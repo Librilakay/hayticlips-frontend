@@ -183,7 +183,7 @@ button:active{
 
 <div class="pwa-warning" id="pwaWarning">
   <h2>⚠️ Action requise (obligatoire)</h2>
-  <p>Ajoutez HaytiClips à votre écran d'accueil pour pouvoir utiliser l'application.</p>
+  <p>Ajoutez ou install HaytiClips à votre écran d'accueil pour pouvoir utiliser l'application.</p>
   
   <a href="install-guide.html" class="btn-guide">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -219,7 +219,13 @@ button:active{
 </div>
 
 <script>
-  const isPwa = ('standalone' in window.navigator && window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
+  // Vérification élargie des modes d'affichage PWA
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+  const isMinimalUI  = window.matchMedia('(display-mode: minimal-ui)').matches;
+  const isIOSStandalone = ('standalone' in window.navigator) && window.navigator.standalone;
+
+  const isPwa = isStandalone || isFullscreen || isMinimalUI || isIOSStandalone;
   
   if (!isPwa) {
     // Si ce n'est pas dans l'écran d'accueil, on masque le formulaire et on affiche le message
