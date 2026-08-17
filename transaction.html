@@ -467,7 +467,7 @@ btnExportPDF.addEventListener("click", async () => {
     let currentY = 15;
 
     // --- 1. EN-TÊTE ---
-    let b64Logo = await getBase64Image("ticlip.jpg");
+    let b64Logo = await getBase64Image("icon-192.jpg");
     if(b64Logo) {
       doc.addImage(b64Logo, "JPEG", 14, currentY, 15, 15);
     } else {
