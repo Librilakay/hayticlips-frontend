@@ -124,17 +124,18 @@ body{
 .messages{
   flex:1;
   overflow-y:auto;
-  padding:16px 12px 10px;
+  padding:16px 12px 90px; /* 🔥 90px au lieu de 10px pour laisser la place à l'inputBar */
   display:flex;
   flex-direction:column;
   gap:8px;
   scroll-behavior:smooth;
   -webkit-overflow-scrolling:touch;
   background:#000000;
-  overscroll-behavior-y: contain; /* Garde le scroll interne sans remonter sur le parent */
+  overscroll-behavior-y: contain; 
+  min-height: 0; /* 🔥 Force Android à respecter la taille de l'écran */
 }
 
-.messages::-webkit-scrollbar{ width:0; } /* Cache la scrollbar */
+.messages::-webkit-scrollbar{ width:0; }
 
 .message-row{
   display:flex;
@@ -246,13 +247,18 @@ body{
 
 /* ================= INPUT BAR PRO ================= */
 .inputBar{
+  position: fixed; /* 🔥 Ancre la barre tout en bas de l'écran */
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* 🔥 S'assure qu'elle passe au-dessus du reste */
+  
   display:flex;
   align-items:flex-end;
   gap:10px;
   padding:10px 10px calc(10px + env(safe-area-inset-bottom));
   background:#000000;
   border-top:1px solid #1a1a1a;
-  flex-shrink:0;
 }
 
 .attach-btn{
