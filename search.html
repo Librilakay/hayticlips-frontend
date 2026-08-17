@@ -5,7 +5,7 @@
   <meta name="theme-color" content="#000000">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Recherche – HaytiClips</title>
+  <title>Explorer – HaytiClips</title>
 
 <style>
 /* ================= RESET ET BLOCAGE PAGE STATIQUE ================= */
@@ -15,7 +15,7 @@
   box-sizing:border-box;
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   -webkit-tap-highlight-color: transparent;
-  touch-action: pan-y; /* Empêche le pinch-to-zoom natif */
+  touch-action: pan-y;
 }
 
 html, body {
@@ -23,42 +23,14 @@ html, body {
   height: 100%;
   background: #000000;
   color: #ffffff;
-  overflow: hidden; /* Empêche le scroll global sur toute la page */
-  overscroll-behavior-y: none; /* Bloque l'effet de rebond élastique sur iOS */
+  overflow: hidden; 
+  overscroll-behavior-y: none;
 }
 
 body {
   display: flex;
   flex-direction: column;
-  height: 100dvh; /* S'adapte parfaitement à l'écran mobile */
-}
-
-/* ================= HEADER FIXE ================= */
-.header{
-  height:60px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 14px;
-  border-bottom:1px solid #1a1a1a;
-  background:#000000;
-  flex-shrink: 0; /* Empêche le header de s'écraser */
-  z-index:100;
-}
-
-.header-left{
-  font-size:24px;
-  cursor:pointer;
-  width:40px;
-}
-
-.header-center{
-  font-weight:700;
-  font-size:18px;
-}
-
-.header-right{
-  width:40px;
+  height: 100dvh; 
 }
 
 /* ================= CONTENU SCROLLABLE ================= */
@@ -67,146 +39,160 @@ body {
   overflow-y: auto; 
   overscroll-behavior-y: contain; 
   width: 100%;
-  max-width:760px;
-  margin:0 auto;
-  /* 90px à la fin pour laisser la place à la barre de navigation */
-  padding:20px 16px 90px 16px; 
+  max-width: 760px;
+  margin: 0 auto;
+  padding: max(env(safe-area-inset-top, 15px), 15px) 0 90px 0; /* Gère l'encoche mobile */
 }
 
-.page::-webkit-scrollbar { width: 0; } /* Cache la scrollbar */
+.page::-webkit-scrollbar { width: 0; }
 
-/* TITRE */
-.hero{
-  margin-bottom:20px;
+/* ================= BARRE DE RECHERCHE (STYLE INSTAGRAM) ================= */
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  margin-bottom: 12px;
 }
 
-.hero-title{
-  font-size:28px;
-  font-weight:800;
-  margin-bottom:6px;
+.search-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #262626; /* Gris foncé Insta */
+  border-radius: 10px;
+  padding: 0 12px;
+  height: 40px;
+  transition: all 0.3s ease;
 }
 
-.hero-sub{
-  font-size:14px;
-  color:#aaa;
-  line-height:1.5;
+.search-icon {
+  width: 18px;
+  height: 18px;
+  opacity: .7;
+  flex-shrink: 0;
 }
 
-/* TAGS */
-.quick-tags{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-top:14px;
+.search-wrap input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 16px;
 }
 
-.quick-tag{
-  padding:8px 12px;
-  border-radius:999px;
-  background:#111;
-  border:1px solid #333;
-  color:#ddd;
-  font-size:12px;
+.search-wrap input::placeholder {
+  color: #8e8e8e;
 }
 
-/* RECHERCHE */
-.search-wrap{
-  margin-bottom:18px;
+.clear-btn {
+  border: none;
+  background: #444;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
 }
 
-.search-box{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  background:#111;
-  border:1px solid #333;
-  border-radius:12px;
-  padding:0 14px;
-  min-height:52px;
+.clear-btn.show {
+  display: flex;
 }
 
-.search-box:focus-within{
-  border-color:#333; /* Reste gris foncé pour ne pas flasher */
+.cancel-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
 }
 
-.search-icon{
-  width:20px;
-  height:20px;
-  opacity:.8;
-  flex-shrink:0;
+/* ================= GRILLE EXPLORER (VIDÉOS) ================= */
+.explore-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  width: 100%;
 }
 
-.search-box input{
-  width:100%;
-  background:transparent;
-  border:none;
-  outline:none;
-  color:#fff;
-  font-size:16px;
+.explore-item {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16; /* Format Reel/TikTok */
+  background: #111;
+  cursor: pointer;
+  overflow: hidden;
 }
 
-.clear-btn{
-  border:none;
-  background:#1a1a1a;
-  color:#fff;
-  width:28px;
-  height:28px;
-  border-radius:50%;
-  cursor:pointer;
-  display:none;
+.explore-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-.clear-btn.show{
-  display:block;
+.views-count {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+  z-index: 2;
 }
 
-.small-note{
-  color:#777;
-  font-size:12px;
-  margin:8px 2px 0;
-  text-align: center;
+.views-count svg {
+  width: 16px;
+  height: 16px;
+  fill: white;
+  filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.8));
 }
 
-/* RESULTATS */
-.results{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
+/* ================= RESULTATS RECHERCHE USER ================= */
+.results {
+  display: flex;
+  flex-direction: column;
+  padding: 0 14px;
 }
 
 .state-card{
-  background:#111;
-  border:1px solid #333;
-  border-radius:12px;
-  padding:18px 14px;
-  text-align:center;
-  color:#aaa;
-  line-height:1.5;
+  text-align: center;
+  color: #8e8e8e;
+  font-size: 14px;
+  padding: 20px;
 }
 
-/* USER CARD */
 .user-card{
-  background:#111;
-  border:1px solid #222;
-  padding:12px;
-  border-radius:14px;
   display:flex;
   align-items:center;
   gap:12px;
   cursor:pointer;
-  transition:.2s;
+  padding: 10px 0;
 }
 
-.user-card:hover{
-  background:#171717;
+.user-card:active{
+  opacity: 0.7;
 }
 
 .avatar{
-  width:52px;
-  height:52px;
+  width:54px;
+  height:54px;
   border-radius:50%;
   object-fit:cover;
-  border:1px solid #333;
+  border:1px solid #222;
   background:#000;
   flex-shrink:0;
 }
@@ -217,6 +203,7 @@ body {
   justify-content:space-between;
   gap:12px;
   min-width:0;
+  flex: 1;
 }
 
 .user-main{
@@ -225,24 +212,21 @@ body {
 }
 
 .username{
-  font-weight:700;
-  font-size:16px;
+  font-weight:600;
+  font-size:15px;
   display:flex;
   align-items:center;
   gap:6px;
   flex-wrap:wrap;
-  margin-bottom:5px;
+  margin-bottom:2px;
 }
 
 .bio{
-  font-size:13px;
-  color:#aaa;
-  line-height:1.4;
-  word-break:break-word;
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
+  font-size:14px;
+  color:#8e8e8e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* BADGES */
@@ -250,42 +234,15 @@ body {
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:15px;
-  height:15px;
+  width:14px;
+  height:14px;
   border-radius:50%;
   flex-shrink:0;
 }
 
-.badge svg{
-  width:9px;
-  height:9px;
-}
-
-.badge-blue{
-  background:#1da1f2;
-}
-
-.badge-gold{
-  background:linear-gradient(135deg,#ffd700,#ff8c00);
-}
-
-/* VIDEO PREVIEW */
-.preview-box{
-  width:68px;
-  height:88px;
-  border-radius:12px;
-  overflow:hidden;
-  border:1px solid #333;
-  background:#0b0b0b;
-  flex-shrink:0;
-}
-
-.preview-video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
+.badge svg{ width:8px; height:8px; }
+.badge-blue{ background:#1da1f2; }
+.badge-gold{ background:linear-gradient(135deg,#ffd700,#ff8c00); }
 
 /* ================= NAV BAR MOBILE FIXE ================= */
 .nav {
@@ -327,62 +284,39 @@ body {
   height: 22px;
   fill: black;
 }
-
-/* MOBILE */
-@media(max-width:560px){
-  .page{
-    padding:18px 14px;
-  }
-  .hero-title{
-    font-size:24px;
-  }
-  .user-card{
-    padding:12px;
-  }
-  .avatar{
-    width:50px;
-    height:50px;
-  }
-  .preview-box{
-    width:64px;
-    height:84px;
-  }
-}
 </style>
 </head>
 <body>
-  
-<div class="header">
-  <div class="header-left" onclick="history.back()">←</div>
-  <div class="header-center">Recherche</div>
-  <div class="header-right"></div>
-</div>
 
 <div class="page">
-  <div class="search-wrap">
-    <div class="search-box">
+  <!-- Barre de recherche -->
+  <div class="search-container">
+    <div class="search-wrap">
       <svg class="search-icon" viewBox="0 0 24 24">
-        <path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z"
-        stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/>
       </svg>
-      <input type="text" id="searchInput" placeholder="Rechercher un utilisateur...">
+      <input type="text" id="searchInput" placeholder="Rechercher">
       <button id="clearBtn" class="clear-btn" aria-label="Effacer">✕</button>
     </div>
-    <div class="small-note">Recherche par nom d’utilisateur</div>
+    <button id="cancelBtn" class="cancel-btn">Annuler</button>
   </div>
 
-  <div id="results" class="results">
-    <div class="state-card">
-      Commence à taper pour rechercher un utilisateur.
-    </div>
+  <!-- Grille par défaut (Explorer) -->
+  <div id="exploreGrid" class="explore-grid"></div>
+
+  <!-- Résultats de recherche -->
+  <div id="results" class="results" style="display: none;">
+    <div class="state-card">Tapez un nom pour rechercher.</div>
   </div>
 </div>
 
+<!-- Navigation -->
 <div class="nav">
   <div class="nav-btn" onclick="go('feed.html')">
     <svg viewBox="0 0 24 24"><path d="M12 3L4 9v12h5v-7h6v7h5V9z"/></svg>
   </div>
   <div class="nav-btn" onclick="go('search.html')">
+    <!-- Icone avec un petit point rouge pour indiquer qu'on est sur cette page -->
     <svg viewBox="0 0 24 24"><path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
   </div>
   <div class="nav-btn upload" onclick="go('upload.html')">
@@ -400,15 +334,7 @@ body {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  query, 
-  where,
-  orderBy,
-  limit,
-  startAt,
-  endAt
+  getFirestore, collection, getDocs, query, where, orderBy, limit, startAt, endAt
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -422,8 +348,10 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const searchInput = document.getElementById("searchInput");
-const results = document.getElementById("results");
 const clearBtn = document.getElementById("clearBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const results = document.getElementById("results");
+const exploreGrid = document.getElementById("exploreGrid");
 
 let currentUser = null;
 let searchTimeout = null;
@@ -434,84 +362,114 @@ onAuthStateChanged(auth, (user) => {
     return;
   }
   currentUser = user;
+  loadExploreVideos(); // Charger la grille de vidéos au démarrage
 });
 
-function renderState(message, type = "normal"){
-  let extraStyle = "";
-  if(type === "error"){
-    extraStyle = 'style="color:#ff4d4f;"';
+// ================= GESTION DE L'INTERFACE =================
+
+// Quand on clique sur la barre de recherche
+searchInput.addEventListener("focus", () => {
+  cancelBtn.style.display = "block";
+  exploreGrid.style.display = "none";
+  results.style.display = "flex";
+});
+
+// Quand on clique sur Annuler
+cancelBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  cancelBtn.style.display = "none";
+  clearBtn.classList.remove("show");
+  results.style.display = "none";
+  exploreGrid.style.display = "grid";
+  results.innerHTML = `<div class="state-card">Tapez un nom pour rechercher.</div>`;
+});
+
+// Vider l'input avec la croix
+clearBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  clearBtn.classList.remove("show");
+  searchInput.focus();
+  results.innerHTML = `<div class="state-card">Tapez un nom pour rechercher.</div>`;
+});
+
+// ================= CHARGEMENT GRILLE VIDÉOS =================
+async function loadExploreVideos() {
+  try {
+    // On va chercher une limite de vidéos récentes (ex: 21 pour remplir 7 lignes de 3)
+    const videosQuery = query(collection(db, "videos"), limit(21));
+    const snap = await getDocs(videosQuery);
+    
+    exploreGrid.innerHTML = "";
+
+    snap.docs.forEach(docSnap => {
+      const v = docSnap.data();
+      const mediaUrl = v.mediaUrls && v.mediaUrls[0] ? v.mediaUrls[0] : '';
+      if (!mediaUrl) return;
+
+      // Création de vues fictives pour le style (ou réelles si tu les stockes)
+      const views = v.viewsCount || (Math.floor(Math.random() * 900) + 10) + " K"; 
+
+      const item = document.createElement("div");
+      item.className = "explore-item";
+      
+      item.innerHTML = `
+        <video src="${mediaUrl}#t=0.1" class="explore-video" preload="metadata" muted playsinline loop></video>
+        <div class="views-count">
+          <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          ${views}
+        </div>
+      `;
+
+      // Clic pour aller voir la vidéo
+      item.onclick = () => {
+        window.location.href = `feed.html?videoId=${docSnap.id}`;
+      };
+
+      // Auto-play silencieux au survol (utile pour version web, désactivé sur mobile natif)
+      const vidTag = item.querySelector('video');
+      item.addEventListener("mouseenter", () => vidTag.play().catch(e=>null));
+      item.addEventListener("mouseleave", () => vidTag.pause());
+
+      exploreGrid.appendChild(item);
+    });
+
+  } catch (err) {
+    console.log("Erreur chargement explorer:", err);
   }
-  results.innerHTML = `<div class="state-card" ${extraStyle}>${message}</div>`;
+}
+
+
+// ================= RECHERCHE D'UTILISATEURS =================
+function renderState(message){
+  results.innerHTML = `<div class="state-card">${message}</div>`;
 }
 
 function getBadgeHTML(user){
   if (!user.verification) return "";
-
   if (user.verification.type === "gold" && user.verification.status === "active") {
-    return `
-      <span class="badge badge-gold">
-        <svg viewBox="0 0 24 24" fill="black">
-          <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/>
-        </svg>
-      </span>`;
+    return `<span class="badge badge-gold"><svg viewBox="0 0 24 24" fill="black"><path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 1.402 8.177L12 18.896l-7.336 3.874 1.402-8.177L.132 9.211l8.2-1.193z"/></svg></span>`;
   }
-
-  if (user.verification.type === "blue" && user.verification.expiresAt) {
-    const expireDate = user.verification.expiresAt.toDate();
-    if (expireDate > new Date()) {
-      return `
-        <span class="badge badge-blue">
-          <svg viewBox="0 0 24 24" fill="white">
-            <path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/>
-          </svg>
-        </span>`;
-    }
+  if (user.verification.type === "blue") {
+    return `<span class="badge badge-blue"><svg viewBox="0 0 24 24" fill="white"><path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z"/></svg></span>`;
   }
-
   return "";
 }
-
-function escapeHTML(str = ""){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-clearBtn.addEventListener("click", ()=>{
-  searchInput.value = "";
-  clearBtn.classList.remove("show");
-  renderState("Commence à taper pour rechercher un utilisateur.");
-  searchInput.focus();
-});
 
 searchInput.addEventListener("input", () => {
   clearTimeout(searchTimeout);
 
   const rawValue = searchInput.value.trim();
-  if(rawValue){
-    clearBtn.classList.add("show");
-  }else{
-    clearBtn.classList.remove("show");
-  }
+  if(rawValue) clearBtn.classList.add("show");
+  else clearBtn.classList.remove("show");
 
   searchTimeout = setTimeout(async () => {
     const value = searchInput.value.toLowerCase().trim();
-    results.innerHTML = "";
-
-    if (!currentUser) {
-      renderState("Connexion requise");
-      return;
-    }
+    if (!currentUser) return;
 
     if (value === "") {
-      renderState("Commence à taper pour rechercher un utilisateur.");
+      renderState("Tapez un nom pour rechercher.");
       return;
     }
-
-    renderState("Recherche en cours...");
 
     try {
       const usersQuery = query(
@@ -525,81 +483,37 @@ searchInput.addEventListener("input", () => {
       const usersSnap = await getDocs(usersQuery);
 
       if (usersSnap.empty) {
-        renderState("Aucun utilisateur trouvé");
+        renderState("Aucun résultat trouvé.");
         return;
       }
 
       results.innerHTML = "";
 
       for (const userDoc of usersSnap.docs) {
-        const user = {
-          id: userDoc.id,
-          ...userDoc.data()
-        };
-
-        let randomVideo = null;
-
-        try {
-          const videoQuery = query(
-            collection(db, "videos"),
-            where("userId", "==", user.id),
-            limit(3)
-          );
-
-          const videoSnap = await getDocs(videoQuery);
-
-          if (!videoSnap.empty) {
-            const videos = videoSnap.docs;
-            const randomIndex = Math.floor(Math.random() * videos.length);
-            randomVideo = videos[randomIndex].data();
-          }
-
-        } catch (err) {
-          console.log("Erreur video", err);
-        }
-
+        const user = { id: userDoc.id, ...userDoc.data() };
         const badgeHTML = getBadgeHTML(user);
 
         const div = document.createElement("div");
         div.className = "user-card";
+        div.onclick = () => window.location.href = `profil.html?uid=${user.id}`;
 
         div.innerHTML = `
           <img src="${user.avatar || 'https://i.pravatar.cc/150?u=' + user.id}" class="avatar">
-
-          <div class="meta-row" style="flex:1;">
+          <div class="meta-row">
             <div class="user-main">
               <div class="username">
-                <span>${escapeHTML(user.username || "Sans nom")}</span>
-                ${badgeHTML}
+                ${user.username || "Sans nom"} ${badgeHTML}
               </div>
               <div class="bio">
-                ${escapeHTML(user.bio || "Aucune bio")}
+                ${user.fullName || user.bio || ""}
               </div>
             </div>
-
-            ${
-              randomVideo && randomVideo.mediaUrls?.[0]
-                ? `<div class="preview-box">
-                    <video src="${randomVideo.mediaUrls[0]}"
-                           class="preview-video"
-                           muted
-                           playsinline></video>
-                  </div>`
-                : ``
-            }
           </div>
         `;
-
-        div.onclick = () => {
-          window.location.href = `profil.html?uid=${user.id}`;
-        };
-
         results.appendChild(div);
       }
-
     } catch (err) {
       console.error("Erreur recherche:", err);
-      renderState("Erreur de recherche ou permissions insuffisantes", "error");
     }
   }, 300);
 });
