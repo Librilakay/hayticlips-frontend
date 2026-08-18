@@ -46,7 +46,7 @@ body {
 
 .page::-webkit-scrollbar { width: 0; }
 
-/* ================= BARRE DE RECHERCHE (STYLE INSTAGRAM) ================= */
+/* ================= BARRE DE RECHERCHE ================= */
 .search-container {
   display: flex;
   align-items: center;
@@ -60,7 +60,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #262626; /* Gris foncé Insta */
+  background: #262626;
   border-radius: 10px;
   padding: 0 12px;
   height: 40px;
@@ -116,7 +116,7 @@ body {
   padding: 0;
 }
 
-/* ================= GRILLE EXPLORER (VIDÉOS) ================= */
+/* ================= GRILLE EXPLORER ================= */
 .explore-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -127,7 +127,7 @@ body {
 .explore-item {
   position: relative;
   width: 100%;
-  aspect-ratio: 9 / 16; /* Format Reel/TikTok */
+  aspect-ratio: 9 / 16;
   background: #111;
   cursor: pointer;
   overflow: hidden;
@@ -138,27 +138,6 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
-}
-
-.views-count {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  color: white;
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-  z-index: 2;
-}
-
-.views-count svg {
-  width: 16px;
-  height: 16px;
-  fill: white;
-  filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.8));
 }
 
 /* ================= RESULTATS RECHERCHE USER ================= */
@@ -316,7 +295,6 @@ body {
     <svg viewBox="0 0 24 24"><path d="M12 3L4 9v12h5v-7h6v7h5V9z"/></svg>
   </div>
   <div class="nav-btn" onclick="go('search.html')">
-    <!-- Icone avec un petit point rouge pour indiquer qu'on est sur cette page -->
     <svg viewBox="0 0 24 24"><path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
   </div>
   <div class="nav-btn upload" onclick="go('upload.html')">
@@ -334,7 +312,7 @@ body {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
-  getFirestore, collection, getDocs, query, where, orderBy, limit, startAt, endAt
+  getFirestore, collection, getDocs, query, orderBy, limit, startAt, endAt
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -362,19 +340,17 @@ onAuthStateChanged(auth, (user) => {
     return;
   }
   currentUser = user;
-  loadExploreVideos(); // Charger la grille de vidéos au démarrage
+  loadExploreVideos();
 });
 
 // ================= GESTION DE L'INTERFACE =================
 
-// Quand on clique sur la barre de recherche
 searchInput.addEventListener("focus", () => {
   cancelBtn.style.display = "block";
   exploreGrid.style.display = "none";
   results.style.display = "flex";
 });
 
-// Quand on clique sur Annuler
 cancelBtn.addEventListener("click", () => {
   searchInput.value = "";
   cancelBtn.style.display = "none";
@@ -384,7 +360,6 @@ cancelBtn.addEventListener("click", () => {
   results.innerHTML = `<div class="state-card">Tapez un nom pour rechercher.</div>`;
 });
 
-// Vider l'input avec la croix
 clearBtn.addEventListener("click", () => {
   searchInput.value = "";
   clearBtn.classList.remove("show");
@@ -395,49 +370,61 @@ clearBtn.addEventListener("click", () => {
 // ================= CHARGEMENT GRILLE VIDÉOS =================
 async function loadExploreVideos() {
   try {
-    // On va chercher une limite de vidéos récentes (ex: 21 pour remplir 7 lignes de 3)
-    const videosQuery = query(collection(db, "videos"), limit(21));
+    // Récupérer un lot de vidéos
+    const videosQuery = query(collection(db, "videos"), limit(60));
     const snap = await getDocs(videosQuery);
     
-    exploreGrid.innerHTML = "";
+    const excludedStatuses = ["flagged", "pending_ia", "archived"];
+    let candidateVideos = [];
 
     snap.docs.forEach(docSnap => {
       const v = docSnap.data();
       const mediaUrl = v.mediaUrls && v.mediaUrls[0] ? v.mediaUrls[0] : '';
+      
+      // Filtre l'absence d'URL media et les statuts exclus
       if (!mediaUrl) return;
+      if (v.status && excludedStatuses.includes(v.status)) return;
 
-      // Création de vues fictives pour le style (ou réelles si tu les stockes)
-      const views = v.viewsCount || (Math.floor(Math.random() * 900) + 10) + " K"; 
+      candidateVideos.push({
+        id: docSnap.id,
+        mediaUrl: mediaUrl
+      });
+    });
 
+    // Mélange aléatoire (Fisher-Yates shuffle)
+    for (let i = candidateVideos.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidateVideos[i], candidateVideos[j]] = [candidateVideos[j], candidateVideos[i]];
+    }
+
+    // Sélectionner uniquement les 9 premières vidéos après mélange
+    const randomVideos = candidateVideos.slice(0, 9);
+
+    exploreGrid.innerHTML = "";
+
+    randomVideos.forEach(video => {
       const item = document.createElement("div");
       item.className = "explore-item";
       
       item.innerHTML = `
-        <video src="${mediaUrl}#t=0.1" class="explore-video" preload="metadata" muted playsinline loop></video>
-        <div class="views-count">
-          <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-          ${views}
-        </div>
+        <video src="${video.mediaUrl}#t=0.1" class="explore-video" preload="metadata" muted playsinline loop></video>
       `;
 
-      // Clic pour aller voir la vidéo
       item.onclick = () => {
-        window.location.href = `feed.html?videoId=${docSnap.id}`;
+        window.location.href = `feed.html?videoId=${video.id}`;
       };
 
-      // Auto-play silencieux au survol (utile pour version web, désactivé sur mobile natif)
       const vidTag = item.querySelector('video');
-      item.addEventListener("mouseenter", () => vidTag.play().catch(e=>null));
+      item.addEventListener("mouseenter", () => vidTag.play().catch(e => null));
       item.addEventListener("mouseleave", () => vidTag.pause());
 
       exploreGrid.appendChild(item);
     });
 
   } catch (err) {
-    console.log("Erreur chargement explorer:", err);
+    console.error("Erreur chargement explorer:", err);
   }
 }
-
 
 // ================= RECHERCHE D'UTILISATEURS =================
 function renderState(message){
