@@ -41,7 +41,7 @@ body {
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
-  padding: max(env(safe-area-inset-top, 15px), 15px) 0 90px 0; /* Gère l'encoche mobile */
+  padding: max(env(safe-area-inset-top, 15px), 15px) 0 90px 0;
 }
 
 .page::-webkit-scrollbar { width: 0; }
@@ -370,19 +370,23 @@ clearBtn.addEventListener("click", () => {
 // ================= CHARGEMENT GRILLE VIDÉOS =================
 async function loadExploreVideos() {
   try {
-    // Récupérer un lot de vidéos
     const videosQuery = query(collection(db, "videos"), limit(60));
     const snap = await getDocs(videosQuery);
     
-    const excludedStatuses = ["flagged", "pending_ia", "archived"];
+    const excludedStatuses = ["flagged", "pending_ia"];
     let candidateVideos = [];
 
     snap.docs.forEach(docSnap => {
       const v = docSnap.data();
       const mediaUrl = v.mediaUrls && v.mediaUrls[0] ? v.mediaUrls[0] : '';
       
-      // Filtre l'absence d'URL media et les statuts exclus
+      // 1. Filtre l'absence d'URL media
       if (!mediaUrl) return;
+
+      // 2. Filtre si la vidéo est archivée (champ booléen archived = true)
+      if (v.archived === true) return;
+
+      // 3. Filtre les statuts spécifiés (flagged, pending_ia)
       if (v.status && excludedStatuses.includes(v.status)) return;
 
       candidateVideos.push({
@@ -391,13 +395,13 @@ async function loadExploreVideos() {
       });
     });
 
-    // Mélange aléatoire (Fisher-Yates shuffle)
+    // Mélange aléatoire (Fisher-Yates)
     for (let i = candidateVideos.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [candidateVideos[i], candidateVideos[j]] = [candidateVideos[j], candidateVideos[i]];
     }
 
-    // Sélectionner uniquement les 9 premières vidéos après mélange
+    // Prendre 9 vidéos au hasard
     const randomVideos = candidateVideos.slice(0, 9);
 
     exploreGrid.innerHTML = "";
