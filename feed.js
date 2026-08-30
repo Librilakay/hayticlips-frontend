@@ -451,11 +451,11 @@ async function loadFeed() {
             ></video>
           </div>
           <!-- Les infos et actions sont en position absolue, elles ne dépendent plus de la hauteur de la vidéo -->
-          <div class="info" style="position: absolute; z-index: 2; bottom: 15px; left: 15px; width: calc(100% - 70px); text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">
+          <div class="info" style="position: absolute; z-index: 2; bottom: 105px; left: 15px; width: calc(100% - 70px); text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">
             <div class="username" data-uid="${v.userId}" style="font-weight: bold;">...</div>
             ${buildCaption(v.caption || "")}
           </div>
-          <div class="actions" style="position: absolute; z-index: 2; bottom: 20px; right: 10px; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+          <div class="actions" style="position: absolute; z-index: 2; bottom: 200px; right: 5px; display: flex; flex-direction: column; align-items: center; gap: 18px;">
             <div class="avatar-wrapper">
               <div class="avatar">
                  <img class="avatar-img" data-uid="${v.userId}" width="48" height="48" style="border-radius: 50%;">
