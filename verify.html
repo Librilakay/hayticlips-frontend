@@ -2,139 +2,98 @@
 <html lang="fr">
 <head>
   <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#ff0050">
-<meta charset="UTF-8">
+  <meta name="theme-color" content="#ff0050">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Vérification Email</title>
+  <title>Vérification Email</title>
 
 <style>
-
-*{
-box-sizing:border-box;
-font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+* {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
 }
 
-body{
-margin:0;
-height:100vh;
-background:#000;
-color:#fff;
-display:flex;
-align-items:center;
-justify-content:center;
+body {
+  margin: 0;
+  height: 100vh;
+  background: #000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.container{
-width:90%;
-max-width:420px;
-background:#111;
-padding:30px;
-border-radius:16px;
-border:1px solid #222;
-text-align:center;
+.container {
+  width: 90%;
+  max-width: 420px;
+  background: #111;
+  padding: 30px;
+  border-radius: 16px;
+  border: 1px solid #222;
+  text-align: center;
 }
 
-.logo{
-display:flex;
-justify-content:center;
-align-items:center;
-margin-bottom:25px;
+h2 {
+  margin-bottom: 10px;
 }
 
-.logo img{
-width:140px;
-height:auto;
-object-fit:contain;
-filter: drop-shadow(0 0 10px rgba(255,0,80,0.6));
+p {
+  color: #aaa;
+  font-size: 15px;
+  margin-bottom: 25px;
+  line-height: 1.5;
 }
 
-h2{
-margin-bottom:10px;
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: #ff0050;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  display: none; /* Masqué par défaut */
 }
 
-p{
-color:#aaa;
-font-size:14px;
-margin-bottom:25px;
+button:active {
+  transform: scale(.98);
 }
 
-.code-box{
-display:flex;
-justify-content:space-between;
-margin-bottom:25px;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 0, 80, 0.3);
+  border-top-color: #ff0050;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px auto;
 }
 
-.code-box input{
-width:50px;
-height:60px;
-font-size:24px;
-text-align:center;
-border-radius:10px;
-border:none;
-background:#000;
-color:#fff;
-border:1px solid #333;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
-
-.code-box input:focus{
-border-color:#ff0050;
-outline:none;
-}
-
-button{
-width:100%;
-padding:14px;
-border-radius:10px;
-border:none;
-background:#ff0050;
-color:#fff;
-font-size:16px;
-cursor:pointer;
-}
-
-button:active{
-transform:scale(.98);
-}
-
-.resend{
-margin-top:15px;
-font-size:14px;
-}
-
-.resend a{
-color:#ff0050;
-text-decoration:none;
-}
-
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
-
-
-<h2>Vérification email</h2>
-
-
-
-<button id="verifyBtn">Vérifier</button>
-
-
-
+  <div id="loadingSpinner" class="spinner"></div>
+  <h2 id="statusTitle">Vérification en cours...</h2>
+  <p id="statusMessage">Veuillez patienter pendant que nous confirmons votre adresse e-mail.</p>
+  
+  <button id="actionBtn">Continuer</button>
 </div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-  getAuth,
-  applyActionCode
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, applyActionCode } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-  authDomain:"tstx-58474.firebaseapp.com",
-  projectId:"tstx-58474"
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -144,39 +103,57 @@ const params = new URLSearchParams(window.location.search);
 const mode = params.get("mode");
 const oobCode = params.get("oobCode");
 
-// 🔐 Mot de passe oublié → envoyer vers reset.html
-if (mode === "resetPassword" && oobCode) {
-  window.location.href = `reset.html?mode=resetPassword&oobCode=${encodeURIComponent(oobCode)}`;
-}
+const statusTitle = document.getElementById("statusTitle");
+const statusMessage = document.getElementById("statusMessage");
+const actionBtn = document.getElementById("actionBtn");
+const loadingSpinner = document.getElementById("loadingSpinner");
 
-// ✅ Vérification email
-if (mode === "verifyEmail" && oobCode) {
-  try {
-    await applyActionCode(auth, oobCode);
-    alert("✅ Email vérifié avec succès !");
-  } catch (err) {
-    console.error(err);
-    alert("Lien invalide ou expiré.");
-  }
-}
-
-document.getElementById("verifyBtn").onclick = async () => {
-  const user = auth.currentUser;
-
-  if(!user){
-    alert("Ouvrez l’application que vous avez ajoutée à votre écran d’accueil pour vous connecter.");
-    window.location.href = "login.html";
+// Fonction asynchrone pour éviter le top-level await
+async function processVerification() {
+  // 1. Redirection mot de passe oublié
+  if (mode === "resetPassword" && oobCode) {
+    window.location.href = `reset.html?mode=resetPassword&oobCode=${encodeURIComponent(oobCode)}`;
     return;
   }
 
-  await user.reload();
-
-  if(user.emailVerified){
-    window.location.href = "interest.html";
+  // 2. Vérification automatique de l'e-mail
+  if (mode === "verifyEmail" && oobCode) {
+    try {
+      // Validation du code sans dépendre de auth.currentUser (idéal pour navigateurs internes)
+      await applyActionCode(auth, oobCode);
+      
+      loadingSpinner.style.display = "none";
+      statusTitle.innerText = "✅ Email vérifié !";
+      statusMessage.innerText = "Ton compte est maintenant activé. Tu peux fermer cette page ou retourner à l'application.";
+      
+      actionBtn.innerText = "Se connecter";
+      actionBtn.style.display = "block";
+      actionBtn.onclick = () => window.location.href = "login.html";
+      
+    } catch (err) {
+      console.error(err);
+      loadingSpinner.style.display = "none";
+      statusTitle.innerText = "❌ Lien invalide";
+      statusMessage.innerText = "Ce lien a déjà été utilisé ou a expiré. Connecte-toi pour renvoyer un lien si nécessaire.";
+      
+      actionBtn.innerText = "Aller à la connexion";
+      actionBtn.style.display = "block";
+      actionBtn.onclick = () => window.location.href = "login.html";
+    }
   } else {
-    alert("Ton email n'est pas encore vérifié.");
+    // Si aucun paramètre n'est présent
+    loadingSpinner.style.display = "none";
+    statusTitle.innerText = "Erreur";
+    statusMessage.innerText = "Aucun code de vérification trouvé.";
+    
+    actionBtn.innerText = "Retour";
+    actionBtn.style.display = "block";
+    actionBtn.onclick = () => window.location.href = "login.html";
   }
-};
+}
+
+// Exécution au chargement de la page
+processVerification();
 </script>
 
 </body>
