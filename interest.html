@@ -2,17 +2,17 @@
 <html lang="fr">
 <head>
   <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#ff0050">
-<meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#ff0050">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
-<title>Centres d’intérêt</title>
+  <title>Centres d’intérêt</title>
 
 <style>
 * {
   box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -56,6 +56,7 @@ p {
   border: 2px solid #222;
   cursor: pointer;
   transition: 0.2s;
+  user-select: none;
 }
 
 .item.active {
@@ -77,6 +78,8 @@ button {
 
 button:disabled {
   background: #444;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
 </head>
@@ -104,108 +107,117 @@ button:disabled {
 </div>
 
 <!-- FIREBASE -->
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import {
-    getAuth,
-    onAuthStateChanged,
-    setPersistence,
-    browserLocalPersistence
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    getDoc,
-    setDoc
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  /* FIREBASE */
-  const firebaseConfig = {
-    apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-    authDomain: "tstx-58474.firebaseapp.com",
-    projectId: "tstx-58474",
-    storageBucket: "tstx-58474.firebasestorage.app",
-    messagingSenderId: "1010020144942",
-    appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-await setPersistence(auth, browserLocalPersistence);
+// Application de la persistance sans top-level await
+setPersistence(auth, browserLocalPersistence).catch(console.error);
 
-  // 🔒 PERSISTENCE (IMPORTANT)
-  
+const selected = new Set();
+const btn = document.getElementById("continueBtn");
 
-  const selected = new Set();
-  const btn = document.getElementById("continueBtn");
+// UI Sélection
+document.querySelectorAll(".item").forEach(item => {
+  item.addEventListener("click", () => {
+    const val = item.innerText.trim();
+    if (selected.has(val)) {
+      selected.delete(val);
+      item.classList.remove("active");
+    } else {
+      selected.add(val);
+      item.classList.add("active");
+    }
 
-  // UI sélection
-  document.querySelectorAll(".item").forEach(item => {
-    item.addEventListener("click", () => {
-      item.classList.toggle("active");
-
-      if (selected.has(item.innerText)) {
-        selected.delete(item.innerText);
-      } else {
-        selected.add(item.innerText);
-      }
-
-      btn.disabled = selected.size < 3;
-    });
+    btn.disabled = selected.size < 3;
   });
+});
 
-  let currentUser = null;
+let currentUser = null;
 
-  // AUTH
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      window.location.href = "login.html";
-      return;
-    }
-    if(!user.emailVerified){
-     window.location.href = "verify.html";
+// AUTH
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
     return;
-    }
-    currentUser = user;
-    
+  }
 
-    // 🔍 Vérifier que le user existe bien dans Firestore
+  if (!user.emailVerified) {
+    window.location.href = "verify.html";
+    return;
+  }
+
+  currentUser = user;
+
+  try {
     const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
-        if(snap.data().profileCompleted){
-window.location.href = "feed.html";
-return;
-}
-        
-        
-    if (!snap.exists()) {
+
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data && data.profileCompleted) {
+        window.location.href = "feed.html";
+        return;
+      }
+    } else {
       alert("Compte incomplet. Reconnecte-toi.");
       window.location.href = "login.html";
     }
-  });
+  } catch (err) {
+    console.error("Erreur vérification utilisateur:", err);
+  }
+});
 
-  // CLICK CONTINUER (UNE SEULE FOIS)
-  btn.addEventListener("click", async () => {
-    if (!currentUser) return;
+// BOUTON CONTINUER
+btn.addEventListener("click", async () => {
+  if (!currentUser || selected.size < 3) return;
 
-    try {
-await setDoc(
-  doc(db, "users", currentUser.uid),
-  {
-    interests: Array.from(selected),
-    profileCompleted:true
-  },
-  { merge: true }
-);
+  btn.disabled = true;
+  btn.innerText = "Enregistrement...";
 
-      window.location.href = "feed.html";
-    } catch (e) {
-  alert("Erreur : " + e.code + " - " + e.message);
-  console.error("ERREUR FIRESTORE :", e);
-}
-  });
-  </script>
+  try {
+    await setDoc(
+      doc(db, "users", currentUser.uid),
+      {
+        interests: Array.from(selected),
+        profileCompleted: true
+      },
+      { merge: true }
+    );
+
+    window.location.href = "feed.html";
+  } catch (e) {
+    btn.disabled = false;
+    btn.innerText = "Continuer";
+    alert("Erreur : " + (e.message || e));
+    console.error("ERREUR FIRESTORE :", e);
+  }
+});
+</script>
+
 </body>
 </html>
