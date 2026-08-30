@@ -437,8 +437,8 @@ async function loadFeed() {
       addedVideosCount++; // Cette vidéo va être affichée
 
       feed.insertAdjacentHTML("beforeend", `
-        <div class="video-box" data-id="${v.id}" data-user="${v.userId}" data-score="${finalScore}">
-          <div class="video-container">
+        <div class="video-box" data-id="${v.id}" data-user="${v.userId}" data-score="${finalScore}" style="position: relative; width: 100%; height: 100vh; height: 100dvh; scroll-snap-align: start; flex: 0 0 auto; overflow: hidden; background: #000;">
+          <div class="video-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
             <video
               data-src="${v.mediaUrls?.[0]}"
               src="${v.mediaUrls?.[0]}"
@@ -447,49 +447,50 @@ async function loadFeed() {
               preload="none"
               loop
               crossorigin="anonymous"
-              style="width:100%;height:100%;object-fit:contain;background:#000;cursor:pointer;"
+              style="width: 100%; height: 100%; object-fit: contain; cursor: pointer; display: block;"
             ></video>
           </div>
-          <div class="info">
-            <div class="username" data-uid="${v.userId}">...</div>
+          <!-- Les infos et actions sont en position absolue, elles ne dépendent plus de la hauteur de la vidéo -->
+          <div class="info" style="position: absolute; z-index: 2; bottom: 15px; left: 15px; width: calc(100% - 70px); text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">
+            <div class="username" data-uid="${v.userId}" style="font-weight: bold;">...</div>
             ${buildCaption(v.caption || "")}
           </div>
-          <div class="actions">
+          <div class="actions" style="position: absolute; z-index: 2; bottom: 20px; right: 10px; display: flex; flex-direction: column; align-items: center; gap: 15px;">
             <div class="avatar-wrapper">
               <div class="avatar">
-                 <img class="avatar-img" data-uid="${v.userId}" width="48" height="48">
+                 <img class="avatar-img" data-uid="${v.userId}" width="48" height="48" style="border-radius: 50%;">
               </div>
               <div class="follow-plus">+</div>
             </div>
             <div class="action like">
-              <svg viewBox="0 0 24 24" width="26" height="26" class="heart-icon" fill="white" style="transition: 0.2s;">
+              <svg viewBox="0 0 24 24" width="26" height="26" class="heart-icon" fill="white" style="transition: 0.2s; filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.6));">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
               </svg>
-              <span class="like-count">${formatNumber(v.likesCount || 0)}</span>
+              <span class="like-count" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8); font-size: 13px;">${formatNumber(v.likesCount || 0)}</span>
             </div>
             <div class="action comment-btn" data-role="comment">
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white" style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.6));">
                 <path d="M21 6a2 2 0 0 0-2-2H5C3.9 4 3 4.9 3 6v9c0 1.1.9 2 2 2h3v3l4-3h7c1.1 0 2-.9 2-2V6z"/>
               </svg>
-              <span class="comment-count">${formatNumber(v.commentsCount || 0)}</span>
+              <span class="comment-count" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8); font-size: 13px;">${formatNumber(v.commentsCount || 0)}</span>
             </div>
             <div class="action gift-btn">
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white" style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.6));">
                 <path d="M20 7h-2.18C17.93 6.69 18 6.35 18 6c0-1.66-1.34-3-3-3-1.31 0-2.42.84-2.83 2H12c-.41-1.16-1.52-2-2.83-2-1.66 0-3 1.34-3 3 0 .35.07.69.18 1H4c-1.1 0-2 .9-2 2v2h20V9c0-1.1-.9-2-2-2zM9 6c0-.55.45-1 1-1s1 .45 1 1H9zm5 0c0-.55.45-1 1-1s1 .45 1 1h-2zM2 13v6c0 1.1.9 2 2 2h6v-8H2zm10 8h6c1.1 0 2-.9 2-2v-6h-8v8z"/>
               </svg>
             </div>
             <div class="action favorite">
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white" style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.6));">
                 <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
               </svg>
             </div>
             <div class="action share-btn">
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white" style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.6));">
                 <path d="M21 12l-7-7v4C7 10 4 15 3 20c2.5-3.5 6-5.1 11-5.1V19l7-7z"/>
               </svg>
             </div>
             <div class="action report-btn">
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="white" style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.6));">
                 <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6h-7.6z"/>
               </svg>
             </div>
@@ -1559,9 +1560,10 @@ function initVideoObserver() {
       if (!video) return;
 
       if (entry.isIntersecting) {
-        // ANTI-LAG : Restaurer la vidéo si elle avait été déchargée de la RAM
-        if (!video.src && video.dataset.src) {
-          video.src = video.dataset.src;
+        // ANTI-LAG : Restaurer la vidéo correctement
+        if (!video.getAttribute("src") && video.dataset.src) {
+          video.setAttribute("src", video.dataset.src);
+          video.load();
         }
 
         video.muted = globalMuted; 
@@ -1582,12 +1584,16 @@ function initVideoObserver() {
         }
 
       } else {
-        video.pause();
+        if (!video.paused) {
+          video.pause();
+        }
         video.currentTime = 0; 
 
-        // ANTI-LAG EXTRÊME : Vider la source vidéo pour libérer la RAM (évite les crashs)
-        video.removeAttribute("src");
-        video.load();
+        // ANTI-LAG EXTRÊME SÉCURISÉ : Vider la source sans casser l'UI
+        if (video.getAttribute("src")) {
+          video.removeAttribute("src");
+          video.load();
+        }
       }
     });
   }, {
@@ -1671,7 +1677,8 @@ feedContainer.addEventListener("scroll", () => {
   // On bloque si on est déjà en train de charger OU s'il n'y a plus rien à charger
   if (loading || !hasMoreDocs) return;
 
-  if (feedContainer.scrollTop + feedContainer.clientHeight >= feedContainer.scrollHeight - 1000) {
+  // Le threshold est passé de 1000 à 300 pour éviter la boucle folle de requêtes
+  if (feedContainer.scrollTop + feedContainer.clientHeight >= feedContainer.scrollHeight - 300) {
     loading = true;
     
     // finally() assure que "loading" redevienne false même en cas d'erreur internet
