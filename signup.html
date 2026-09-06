@@ -289,22 +289,16 @@ input.error {
   });
 </script>
 
-<!-- TON SCRIPT FIREBASE D'ORIGINE -->     
+<!-- TON SCRIPT FIREBASE MIS À JOUR (CÔTÉ SERVEUR) -->     
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getAuth,
   createUserWithEmailAndPassword,
   sendEmailVerification,
-  deleteUser,
-  signInWithEmailAndPassword, 
-  signOut 
+  deleteUser
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { 
-  getFirestore, 
-  doc, 
-  getDoc 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; 
+// Plus besoin d'importer Firestore ici, tout se passe sur le serveur !
 
 const firebaseConfig = {
   apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
@@ -317,7 +311,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app); 
 
 const signupBtn = document.getElementById("signupBtn");
 const emailInput = document.getElementById("email");
@@ -444,15 +437,23 @@ signupBtn.addEventListener("click", async () => {
     } catch (authError) {
       if (authError.code === "auth/email-already-in-use") {
         try {
-          userCredential = await signInWithEmailAndPassword(auth, finalEmail, password);
+          // APPEL AU SERVEUR POUR VÉRIFIER ET NETTOYER L'EMAIL
+          const response = await fetch("https://hayticlip-server.onrender.com/api/check-and-clean-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: finalEmail })
+          });
           
-          const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-          
-          if (userDoc.exists()) {
-            await signOut(auth);
-            throw new Error("Vous avez déjà un compte. Veuillez vous connecter dans la page de connexion.");
+          const resData = await response.json();
+
+          if (resData.cleaned) {
+            // Le compte orphelin a été supprimé
+            alert("Votre connexion est instable, veuillez recréer votre compte.");
+            setButtonState(false);
+            return; // Arrête la fonction pour forcer l'utilisateur à recliquer (création propre)
           } else {
-            console.log("Compte fantôme détecté et récupéré. Finalisation du profil...");
+            // Le document existe vraiment sur Firestore
+            throw new Error("Vous avez déjà un compte. Veuillez vous connecter dans la page de connexion.");
           }
         } catch (recoveryError) {
           if (recoveryError.message.includes("déjà un compte")) {
