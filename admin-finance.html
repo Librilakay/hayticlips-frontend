@@ -140,6 +140,39 @@ textarea{ resize: vertical; min-height: 80px; font-family: inherit; }
 
   <!-- ONGLET UTILISATEUR -->
   <div class="tab-content" id="contentUtilisateur">
+
+    <!-- DASHBOARD UTILISATEURS GELÉS ET RESTREINTS -->
+    <div style="margin-bottom: 24px; background: #111; border: 1px solid #222; border-radius: 16px; padding: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="font-size: 15px; font-weight: 800; color: #ff0050;">🧊 Dashboard — Comptes Gelés & Restreints</h3>
+        <button class="secondary" id="btnRefreshFrozenDashboard" style="width: auto; padding: 6px 12px; font-size: 12px;">🔄 Actualiser</button>
+      </div>
+
+      <div class="grid-2" style="margin-bottom: 0;">
+        <!-- COLONNE 1 : COMPTES GELÉS / SUSPENDUS -->
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: #ff4d4f; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <span>🔒 Wallets / Comptes Gelés</span>
+            <span id="countFrozenAccounts" class="badge frozen">0</span>
+          </div>
+          <div id="listFrozenAccounts" class="tx-list" style="max-height: 220px; background: #000; padding: 8px; border-radius: 12px; border: 1px solid #222;">
+            <div class="empty" style="padding: 15px;">Chargement...</div>
+          </div>
+        </div>
+
+        <!-- COLONNE 2 : COMPTES AVEC FONDS GELÉS -->
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: #f39c12; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <span>💰 Comptes avec Fonds Gelés (> 0 Gdes)</span>
+            <span id="countFrozenFunds" class="badge" style="background:#f39c1222; color:#f39c12; border:1px solid #f39c12;">0</span>
+          </div>
+          <div id="listFrozenFunds" class="tx-list" style="max-height: 220px; background: #000; padding: 8px; border-radius: 12px; border: 1px solid #222;">
+            <div class="empty" style="padding: 15px;">Chargement...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="search-box">
       <input type="text" id="searchInput" placeholder="Tapez un nom d'utilisateur (@username) ou ID...">
     </div>
@@ -235,19 +268,30 @@ const db = getFirestore(app);
 
 // Utilitaires
 function money(n){ return `${Number(n || 0).toLocaleString("fr-FR")} Gdes`; }
+
+function safeDate(val) {
+  if(!val) return null;
+  try {
+    if(val.seconds !== undefined) return new Date(val.seconds * 1000);
+    if(typeof val.toDate === 'function') return val.toDate();
+    let d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+  } catch(e) { return null; }
+}
+
 function formatDate(val){
-  if(!val) return "-";
-  let d = val.seconds ? new Date(val.seconds * 1000) : new Date(val);
+  let d = safeDate(val);
+  if(!d) return "-";
   return d.toLocaleString("fr-FR", {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
 function formatDateOnly(val){
-  if(!val) return "-";
-  let d = val.seconds ? new Date(val.seconds * 1000) : new Date(val);
+  let d = safeDate(val);
+  if(!d) return "-";
   return d.toLocaleDateString("fr-FR");
 }
 function formatTimeOnly(val){
-  if(!val) return "-";
-  let d = val.seconds ? new Date(val.seconds * 1000) : new Date(val);
+  let d = safeDate(val);
+  if(!d) return "-";
   return d.toLocaleTimeString("fr-FR", {hour:'2-digit', minute:'2-digit'});
 }
 
@@ -307,8 +351,12 @@ const contentUtilisateur = document.getElementById("contentUtilisateur");
 function switchTab(tab) {
   tabGlobal.classList.remove("active"); tabUtilisateur.classList.remove("active");
   contentGlobal.classList.remove("active"); contentUtilisateur.classList.remove("active");
-  if(tab === 'global') { tabGlobal.classList.add("active"); contentGlobal.classList.add("active"); } 
-  else { tabUtilisateur.classList.add("active"); contentUtilisateur.classList.add("active"); }
+  if(tab === 'global') { 
+    tabGlobal.classList.add("active"); contentGlobal.classList.add("active"); 
+  } else { 
+    tabUtilisateur.classList.add("active"); contentUtilisateur.classList.add("active"); 
+    loadFrozenDashboard(); // Charger le dashboard à l'ouverture de l'onglet
+  }
 }
 tabGlobal.onclick = () => switchTab('global');
 tabUtilisateur.onclick = () => switchTab('utilisateur');
@@ -379,7 +427,7 @@ async function loadFinance(){
 }
 document.getElementById("refreshBtn").onclick = loadFinance;
 
-/* BLOC 1 : GÉNÉRATION DU PDF ADMINISTRATEUR GLOBAL */
+/* BLOC 1 : GÉNÉRATION DU PDF ADMINISTRATEUR GLOBAL (CORRIGÉE) */
 document.getElementById("downloadAdminBtn").onclick = async () => {
   const btn = document.getElementById("downloadAdminBtn");
   btn.textContent = "⏳ Génération PDF..."; btn.disabled = true;
@@ -387,18 +435,32 @@ document.getElementById("downloadAdminBtn").onclick = async () => {
   try {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const adminSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
-    const adminName = adminSnap.exists() ? (adminSnap.data().name || adminSnap.data().username || auth.currentUser.uid) : "Administrateur";
+
+    let adminName = "Administrateur";
+    try {
+      if (auth.currentUser) {
+        const adminSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+        if (adminSnap.exists()) {
+          adminName = adminSnap.data().name || adminSnap.data().username || auth.currentUser.uid;
+        }
+      }
+    } catch(e) { console.warn("Erreur récupération nom admin:", e); }
     
-    // Générer Numéro Unique
     const now = new Date();
     const dateStr = now.toISOString().slice(0,10).replace(/-/g,'');
     const reportId = `HC-${dateStr}-${Math.floor(Math.random()*1000000).toString().padStart(6,'0')}`;
-    const generationDate = now.toLocaleString("fr-FR", {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+    const generationDate = formatDate(now);
 
-    // Fetch Transactions
-    const q = query(collection(db, "walletTransactions"), orderBy("createdAt", "desc"));
-    const snaps = await getDocs(q);
+    // Fetch Transactions avec fallback
+    let snaps;
+    try {
+      const q = query(collection(db, "walletTransactions"), orderBy("createdAt", "desc"), limit(500));
+      snaps = await getDocs(q);
+    } catch(errOrder) {
+      console.warn("Fallback sans orderBy pour walletTransactions:", errOrder);
+      const qSimple = query(collection(db, "walletTransactions"), limit(500));
+      snaps = await getDocs(qSimple);
+    }
 
     let totalTx = 0, nbRecharges = 0, nbRetraits = 0;
     let montantRecharges = 0, montantRetraits = 0;
@@ -408,7 +470,7 @@ document.getElementById("downloadAdminBtn").onclick = async () => {
     snaps.forEach(docSnap => {
       let tx = docSnap.data();
       totalTx++;
-      usersSet.add(tx.userId);
+      if (tx.userId) usersSet.add(tx.userId);
       let amt = parseFloat(tx.amount || 0);
       let isDep = (tx.type === "deposit" || tx.type === "recharge");
       let isWith = (tx.type === "withdrawal" || tx.type === "retrait");
@@ -424,14 +486,13 @@ document.getElementById("downloadAdminBtn").onclick = async () => {
 
     let volumeTotal = montantRecharges + montantRetraits;
 
-    // --- EN-TÊTE AVEC LOGO icon-192.jpg ---
+    // --- EN-TÊTE AVEC LOGO ---
     await drawLogo(doc, 14, 12);
     
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(10).setFont(undefined, 'normal');
     doc.text("Rapport de transactions", 14, 32);
     
-    // Aligné à droite
     doc.setFontSize(9);
     doc.text(`Date : ${generationDate}`, 196, 17, { align: "right" });
     doc.text(`Rapport N° : ${reportId}`, 196, 22, { align: "right" });
@@ -453,15 +514,17 @@ document.getElementById("downloadAdminBtn").onclick = async () => {
         ["Total transactions :", totalTx, "Total recharges :", nbRecharges],
         ["Total retraits :", nbRetraits, "Volume total :", money(volumeTotal)],
         ["Montant total rechargé :", money(montantRecharges), "Montant total retiré :", money(montantRetraits)],
-        ["Période concernée :", "Depuis la création", "Utilisateurs uniques :", usersSet.size]
+        ["Période concernée :", "Dernières transactions", "Utilisateurs uniques :", usersSet.size]
       ]
     });
 
+    const nextY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 10 : 90;
+
     // --- TABLEAU DES TRANSACTIONS ---
     doc.autoTable({
-      startY: doc.lastAutoTable.finalY + 10,
+      startY: nextY,
       head: [['Date', 'Heure', 'Type', 'Montant', 'Méthode', 'Statut', 'Référence']],
-      body: tableData,
+      body: tableData.length > 0 ? tableData : [['-', '-', '-', '0 Gdes', '-', '-', '-']],
       theme: 'grid',
       headStyles: { fillColor: [255, 0, 80], textColor: [255,255,255], fontStyle: 'bold' },
       styles: { fontSize: 8 },
@@ -470,11 +533,112 @@ document.getElementById("downloadAdminBtn").onclick = async () => {
 
     doc.save(`HaytiClips_Rapport_${dateStr}.pdf`);
   } catch(e) {
-    console.error(e);
-    alert("Erreur lors de la génération du PDF.");
+    console.error("Erreur Génération PDF Global:", e);
+    alert("Erreur lors de la génération du PDF : " + e.message);
+  } finally {
+    btn.textContent = "📄 Exporter Rapport PDF"; btn.disabled = false;
   }
-  btn.textContent = "📄 Exporter Rapport PDF"; btn.disabled = false;
 };
+
+/* ================= DASHBOARD COMPTES GELÉS & RESTREINTS ================= */
+async function loadFrozenDashboard() {
+  const listFrozenAccounts = document.getElementById("listFrozenAccounts");
+  const listFrozenFunds = document.getElementById("listFrozenFunds");
+  const countFrozenAccounts = document.getElementById("countFrozenAccounts");
+  const countFrozenFunds = document.getElementById("countFrozenFunds");
+
+  listFrozenAccounts.innerHTML = `<div class="empty" style="padding:15px; font-size:12px;">Chargement...</div>`;
+  listFrozenFunds.innerHTML = `<div class="empty" style="padding:15px; font-size:12px;">Chargement...</div>`;
+
+  try {
+    // 1. Wallets gelés / suspendus
+    const qLocked = query(collection(db, "users"), where("walletLocked", "==", true));
+    const snapLocked = await getDocs(qLocked);
+    
+    let frozenList = [];
+    let seenUids = new Set();
+
+    snapLocked.forEach(d => {
+      frozenList.push({ uid: d.id, ...d.data() });
+      seenUids.add(d.id);
+    });
+
+    try {
+      const qSusp = query(collection(db, "users"), where("suspended", "==", true));
+      const snapSusp = await getDocs(qSusp);
+      snapSusp.forEach(d => {
+        if(!seenUids.has(d.id)) {
+          frozenList.push({ uid: d.id, ...d.data() });
+          seenUids.add(d.id);
+        }
+      });
+    } catch(e) {}
+
+    countFrozenAccounts.textContent = frozenList.length;
+
+    if (frozenList.length === 0) {
+      listFrozenAccounts.innerHTML = `<div class="empty" style="padding:15px; font-size:12px;">Aucun compte gelé.</div>`;
+    } else {
+      listFrozenAccounts.innerHTML = "";
+      frozenList.forEach(u => {
+        const item = document.createElement("div");
+        item.className = "user-search-item";
+        item.style.padding = "8px 10px";
+        const avatar = u.avatar || u.photoURL || "https://via.placeholder.com/80";
+        item.innerHTML = `
+          <img src="${avatar}" class="user-search-avatar" style="width:36px; height:36px;">
+          <div class="user-search-info">
+            <div class="user-search-name" style="font-size:13px;">${u.name || u.username || "Inconnu"}</div>
+            <div class="user-search-username" style="font-size:11px;">@${u.username || "inconnu"}</div>
+          </div>
+          <div style="font-size:12px; font-weight:700; color:#ff4d4f;">${money(u.frozenWallet || 0)}</div>
+        `;
+        item.onclick = () => displayUserProfile(u);
+        listFrozenAccounts.appendChild(item);
+      });
+    }
+
+    // 2. Comptes avec fonds gelés (> 0 Gdes)
+    const qFunds = query(collection(db, "users"), where("frozenWallet", ">", 0));
+    const snapFunds = await getDocs(qFunds);
+
+    let fundsList = [];
+    snapFunds.forEach(d => {
+      fundsList.push({ uid: d.id, ...d.data() });
+    });
+
+    countFrozenFunds.textContent = fundsList.length;
+
+    if (fundsList.length === 0) {
+      listFrozenFunds.innerHTML = `<div class="empty" style="padding:15px; font-size:12px;">Aucun fond gelé.</div>`;
+    } else {
+      listFrozenFunds.innerHTML = "";
+      fundsList.forEach(u => {
+        const item = document.createElement("div");
+        item.className = "user-search-item";
+        item.style.padding = "8px 10px";
+        const avatar = u.avatar || u.photoURL || "https://via.placeholder.com/80";
+        item.innerHTML = `
+          <img src="${avatar}" class="user-search-avatar" style="width:36px; height:36px;">
+          <div class="user-search-info">
+            <div class="user-search-name" style="font-size:13px;">${u.name || u.username || "Inconnu"}</div>
+            <div class="user-search-username" style="font-size:11px;">@${u.username || "inconnu"}</div>
+          </div>
+          <div style="font-size:12px; font-weight:700; color:#f39c12;">${money(u.frozenWallet)}</div>
+        `;
+        item.onclick = () => displayUserProfile(u);
+        listFrozenFunds.appendChild(item);
+      });
+    }
+
+  } catch (err) {
+    console.error("Erreur chargement dashboard gel :", err);
+    listFrozenAccounts.innerHTML = `<div class="empty" style="padding:15px; font-size:12px; color:#ff4d4f;">Erreur de chargement.</div>`;
+    listFrozenFunds.innerHTML = `<div class="empty" style="padding:15px; font-size:12px; color:#ff4d4f;">Erreur de chargement.</div>`;
+  }
+}
+
+document.getElementById("btnRefreshFrozenDashboard").onclick = loadFrozenDashboard;
 
 /* ================= RECHERCHE EN TEMPS RÉEL ================= */
 let currentUserObj = null;
@@ -603,6 +767,9 @@ async function executeAdminAction(actionName, updatesToApply, confirmMessage, no
     motifInput.value = ""; 
     alert("Action effectuée et notification envoyée.");
     
+    // Rafraîchir le Dashboard des comptes gelés
+    loadFrozenDashboard();
+
     const updatedSnap = await getDoc(userRef);
     if(updatedSnap.exists()) { 
       displayUserProfile({ uid: currentUserObj.uid, ...updatedSnap.data() }); 
@@ -624,14 +791,13 @@ document.getElementById("btnToggleFreeze").onclick = () => {
     updates.frozenWallet = 0; 
   }
 
-  // Déterminer le type de notification selon l'état
   const notifType = !isLocked ? "wallet_frozen" : "wallet_unfrozen";
 
   executeAdminAction(
     !isLocked ? "Gel du wallet" : "Dégel du wallet", 
     updates, 
     !isLocked ? "Voulez-vous GELER ce compte ?" : "Voulez-vous DÉGELER ce compte ?",
-    notifType // 👈 Transmission du type de notification
+    notifType
   );
 };
 
@@ -675,7 +841,6 @@ document.getElementById("downloadUserTxBtn").onclick = async () => {
     const doc = new jsPDF();
     const u = currentUserObj;
 
-    // Récupérer toutes les transactions de l'utilisateur
     const q = query(collection(db, "walletTransactions"), where("userId", "==", u.uid), orderBy("createdAt", "desc"));
     const snaps = await getDocs(q);
 
@@ -701,10 +866,9 @@ document.getElementById("downloadUserTxBtn").onclick = async () => {
       ]);
     });
 
-    // --- IDENTITÉ ET LOGO icon-192.jpg ---
+    // --- IDENTITÉ ET LOGO ---
     await drawLogo(doc, 140, 12);
     
-    // Charger l'avatar
     let avatarUrl = u.avatar || u.photoURL || "https://via.placeholder.com/80";
     let b64Avatar = await getBase64Image(avatarUrl);
     if(b64Avatar) { doc.addImage(b64Avatar, "JPEG", 14, 15, 24, 24); } 
@@ -785,7 +949,7 @@ document.getElementById("downloadUserTxBtn").onclick = async () => {
     doc.autoTable({
       startY: 25,
       head: [['Date', 'Heure', 'Type', 'Montant', 'Méthode', 'Statut', 'Référence']],
-      body: tableData,
+      body: tableData.length > 0 ? tableData : [['-', '-', '-', '0 Gdes', '-', '-', '-']],
       theme: 'striped',
       headStyles: { fillColor: [40, 40, 40], textColor: [255,255,255] },
       styles: { fontSize: 8 }
@@ -793,10 +957,11 @@ document.getElementById("downloadUserTxBtn").onclick = async () => {
 
     doc.save(`HaytiClips_Dossier_${u.username || u.uid}.pdf`);
   } catch(e) {
-    console.error(e);
+    console.error("Erreur Génération PDF Utilisateur:", e);
     alert("Erreur lors du téléchargement du PDF.");
+  } finally {
+    btn.textContent = "📄 Dossier PDF Utilisateur"; btn.disabled = false;
   }
-  btn.textContent = "📄 Dossier PDF Utilisateur"; btn.disabled = false;
 };
 
 /* ================= AUTHENTIFICATION ================= */
@@ -805,6 +970,7 @@ onAuthStateChanged(auth, async(user)=>{
   const snap = await getDoc(doc(db,"users",user.uid));
   if(!snap.exists() || snap.data().role !== "admin"){ alert("Accès refusé"); window.location.href = "feed.html"; return; }
   loadFinance();
+  loadFrozenDashboard();
 });
 </script>
 
