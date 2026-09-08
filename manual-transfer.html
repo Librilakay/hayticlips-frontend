@@ -4,7 +4,7 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#ff0050">
   <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Transfert Manuel – HaytiClips</title>
 
   <style>
@@ -154,9 +154,8 @@
       <div class="info-box">
         <strong>Instructions :</strong><br>
         1. Envoyez le montant souhaité sur notre numéro.
-       <li> Nom : ******** </li>
-        <li> MonCash: <strong>+509 3X XX XX XX</strong>.</li>
-        <li> NatCash: <strong>+509 3X XX XX XX</strong>.</li>
+        <li> MonCash: <strong>+509 3X XX XX XX</strong></li>
+        <li> NatCash: <strong>+509 3X XX XX XX</strong></li>
         2. Prenez une capture d'écran du reçu.<br>
         3. Remplissez le formulaire ci-dessous.
       </div>
@@ -183,17 +182,20 @@
       <button class="submit-btn" id="btnSubmitDeposit">Soumettre la Recharge</button>
     </div>
 
-<div class="form-container" id="withdrawForm">
+    <div class="form-container" id="withdrawForm">
       <div class="info-box" style="border-left-color: #2ecc71;">
         <strong>Instructions :</strong><br>
         Le retrait manuel est traité par notre équipe sous 45s à 72h. Assurez-vous que les informations de réception sont correctes.
         <br><br>
-        <strong>Heures de disponibilité (Retraits) :</strong>
+        <strong>Règles & Horaires (Retraits) :</strong>
         <ul style="margin-top: 5px; margin-left: 15px; font-size: 13px; opacity: 0.9;">
+          <li style="margin-bottom: 4px;"><strong>Limite :</strong> Maximum 2 retraits par jour</li>
           <li style="margin-bottom: 4px;"><strong>MonCash :</strong> 4h AM - 9h PM</li>
           <li><strong>NatCash :</strong> 4h AM - 6h AM & 5h PM - 9h PM</li>
         </ul>
       </div>
+
+      <div id="withdrawLimitNotice" style="margin-bottom:15px; font-weight:bold; font-size:13px;"></div>
 
       <div class="notice">
         * Nos frais couvrent uniquement le transfert vers votre compte mobile. Les frais de retrait en espèces chez un agent restent à votre charge.
@@ -206,7 +208,7 @@
       </select>
 
       <label>Montant à déduire de votre solde (HTG)</label>
-      <input type="number" id="withdrawAmount" placeholder="Min: 250gdes " min="250">
+      <input type="number" id="withdrawAmount" placeholder="Min: 150gdes" min="150">
 
       <div class="calc-box">
         <div class="calc-row">
@@ -226,11 +228,11 @@
       <label>Votre numéro de réception</label>
       <input type="text" id="withdrawPhone" placeholder="Le numéro où envoyer l'argent">
 
-<label>Nom sur le compte (MonCash / NatCash)</label>
-<input type="text" id="withdrawAccountName" placeholder="Ex: Jean Dupont">
+      <label>Nom sur le compte (MonCash / NatCash)</label>
+      <input type="text" id="withdrawAccountName" placeholder="Ex: Jean Dupont">
 
-<label>Code PIN de sécurité (6 chiffres)</label>
-<input type="password" id="withdrawPin" placeholder="******" maxlength="6" inputmode="numeric">
+      <label>Code PIN de sécurité (6 chiffres)</label>
+      <input type="password" id="withdrawPin" placeholder="******" maxlength="6" inputmode="numeric">
 
       <button class="submit-btn" id="btnSubmitWithdraw">Demander le Retrait</button>
     </div>
@@ -238,10 +240,11 @@
   </div>
 
   <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-// AJOUTE CETTE LIGNE :
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { 
+      getFirestore, doc, getDoc, collection, query, where, getDocs, limit, Timestamp 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
@@ -277,40 +280,105 @@ import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10
       depositForm.classList.remove("active");
     };
 
-    onAuthStateChanged(auth, async user => {
-  if(!user) {
-    window.location.href = "login.html";
-  } else {
-    try {
-      // On vérifie le statut du compte dans Firestore
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-      
-      if (userSnap.exists() && userSnap.data().walletLocked === true) {
-        // Désactivation du bouton de recharge
-        const btnDeposit = document.getElementById("btnSubmitDeposit");
-        btnDeposit.disabled = true;
-        btnDeposit.textContent = "Opération impossible (Compte Gelé)";
-        btnDeposit.style.background = "#555";
-        btnDeposit.style.cursor = "not-allowed";
+    // --- FONCTION DE VÉRIFICATION DU NOMBRE DE RETRAITS AUJOURD'HUI ---
+    async function getTodayWithdrawalsCount(uid) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
-        // Désactivation du bouton de retrait
-        const btnWithdraw = document.getElementById("btnSubmitWithdraw");
-        btnWithdraw.disabled = true;
-        btnWithdraw.textContent = "Opération impossible (Compte Gelé)";
-        btnWithdraw.style.background = "#555";
-        btnWithdraw.style.cursor = "not-allowed";
+      try {
+        const q = query(
+          collection(db, "walletTransactions"),
+          where("userId", "==", uid),
+          where("type", "in", ["withdraw", "withdrawal", "retrait"]),
+          where("createdAt", ">=", Timestamp.fromDate(startOfDay))
+        );
+        const snap = await getDocs(q);
+        return snap.size;
+      } catch (error) {
+        console.warn("Fallback de vérification de la limite quotidienne:", error);
+        // Fallback côté client si un index composé Firestore manque
+        try {
+          const qSimple = query(
+            collection(db, "walletTransactions"),
+            where("userId", "==", uid),
+            limit(50)
+          );
+          const snapSimple = await getDocs(qSimple);
+          let count = 0;
+          snapSimple.forEach(d => {
+            const tx = d.data();
+            if (["withdraw", "withdrawal", "retrait"].includes(tx.type)) {
+              let txDate = null;
+              if (tx.createdAt?.toDate) txDate = tx.createdAt.toDate();
+              else if (tx.createdAt?.seconds) txDate = new Date(tx.createdAt.seconds * 1000);
+              else if (tx.createdAt) txDate = new Date(tx.createdAt);
+              
+              if (txDate && txDate >= startOfDay) {
+                count++;
+              }
+            }
+          });
+          return count;
+        } catch (e) {
+          return 0;
+        }
       }
-    } catch (error) {
-      console.error("Erreur lors de la vérification du statut du compte:", error);
     }
-  }
-});
 
-    // --- LOGIQUE DE CALCUL DES FRAIS ---
+    onAuthStateChanged(auth, async user => {
+      if(!user) {
+        window.location.href = "login.html";
+      } else {
+        try {
+          // 1. Vérification du statut du compte (Gelé)
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+          
+          if (userSnap.exists() && userSnap.data().walletLocked === true) {
+            const btnDeposit = document.getElementById("btnSubmitDeposit");
+            btnDeposit.disabled = true;
+            btnDeposit.textContent = "Opération impossible (Compte Gelé)";
+            btnDeposit.style.background = "#555";
+            btnDeposit.style.cursor = "not-allowed";
+
+            const btnWithdraw = document.getElementById("btnSubmitWithdraw");
+            btnWithdraw.disabled = true;
+            btnWithdraw.textContent = "Opération impossible (Compte Gelé)";
+            btnWithdraw.style.background = "#555";
+            btnWithdraw.style.cursor = "not-allowed";
+            return;
+          }
+
+          // 2. Vérification de la limite de 2 retraits par jour
+          const withdrawalsToday = await getTodayWithdrawalsCount(user.uid);
+          const limitNotice = document.getElementById("withdrawLimitNotice");
+          const btnWithdraw = document.getElementById("btnSubmitWithdraw");
+
+          if (withdrawalsToday >= 2) {
+            btnWithdraw.disabled = true;
+            btnWithdraw.textContent = "Limite quotidienne atteinte (2/2)";
+            btnWithdraw.style.background = "#555";
+            btnWithdraw.style.cursor = "not-allowed";
+            if (limitNotice) {
+              limitNotice.style.color = "#ff4d4f";
+              limitNotice.textContent = "🚫 Vous avez atteint la limite maximale de 2 retraits par jour.";
+            }
+          } else {
+            if (limitNotice) {
+              limitNotice.style.color = "#2ecc71";
+              limitNotice.textContent = `ℹ️ Retraits effectués aujourd'hui : ${withdrawalsToday} / 2`;
+            }
+          }
+
+        } catch (error) {
+          console.error("Erreur lors de la vérification du statut:", error);
+        }
+      }
+    });
+
     // --- LOGIQUE DE CALCUL DES FRAIS ---
     function calculateFee(amount) {
-      if (amount < 250) return 0; // Au cas où, si un retrait de moins de 250 était forcé
+      if (amount < 150) return 0;
       if (amount <= 999) return 15;
       if (amount <= 1999) return 30;
       if (amount <= 3999) return 40;
@@ -320,7 +388,7 @@ import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10
       if (amount <= 39999) return 80;
       if (amount <= 59999) return 115;
       if (amount <= 74999) return 130;
-      return 150; // De 75000 à 100000+
+      return 150; // De 75000 HTG et plus
     }
 
     const withdrawInput = document.getElementById("withdrawAmount");
@@ -396,66 +464,72 @@ import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10
     };
 
     // --- SOUMISSION RETRAIT ---
-// --- SOUMISSION RETRAIT ---
- document.getElementById("btnSubmitWithdraw").onclick = async () => {
-   const btn = document.getElementById("btnSubmitWithdraw");
-   const method = document.getElementById("withdrawMethod").value;
-   const amount = document.getElementById("withdrawAmount").value;
-   const phone = document.getElementById("withdrawPhone").value;
-   const accountName = document.getElementById("withdrawAccountName").value;
-   const pin = document.getElementById("withdrawPin").value.trim(); // 👈 Récupération du PIN
+    document.getElementById("btnSubmitWithdraw").onclick = async () => {
+      const btn = document.getElementById("btnSubmitWithdraw");
+      const method = document.getElementById("withdrawMethod").value;
+      const amount = document.getElementById("withdrawAmount").value;
+      const phone = document.getElementById("withdrawPhone").value;
+      const accountName = document.getElementById("withdrawAccountName").value;
+      const pin = document.getElementById("withdrawPin").value.trim();
 
-   if(!amount || amount < 250) return alert("Le montant minimum est de 250 HTG.");
-   if(!phone) return alert("Veuillez indiquer le numéro de réception.");
-   if(!accountName.trim()) return alert("Veuillez indiquer le nom exact sur le compte.");
-   if(!pin || pin.length !== 6) return alert("Veuillez entrer votre code PIN à 6 chiffres."); // 👈 Vérification basique
+      if(!amount || amount < 150) return alert("Le montant minimum de retrait est de 150 HTG.");
+      if(!phone) return alert("Veuillez indiquer le numéro de réception.");
+      if(!accountName.trim()) return alert("Veuillez indiquer le nom exact sur le compte.");
+      if(!pin || pin.length !== 6) return alert("Veuillez entrer votre code PIN à 6 chiffres.");
 
-   const parsedAmount = parseFloat(amount);
-   const fee = calculateFee(parsedAmount);
-   const finalToReceive = parsedAmount - fee;
+      // Double vérification de la limite de 2 retraits avant envoi
+      const withdrawalsToday = await getTodayWithdrawalsCount(auth.currentUser.uid);
+      if (withdrawalsToday >= 2) {
+        alert("Vous avez déjà effectué 2 retraits aujourd'hui. Vous ne pouvez plus faire de retrait avant demain.");
+        return;
+      }
 
-   if(finalToReceive <= 0) return alert("Le montant est trop faible par rapport aux frais.");
+      const parsedAmount = parseFloat(amount);
+      const fee = calculateFee(parsedAmount);
+      const finalToReceive = parsedAmount - fee;
 
-   btn.disabled = true;
-   btn.textContent = "Vérification..."; // 👈 Petit changement de texte
+      if(finalToReceive <= 0) return alert("Le montant est trop faible par rapport aux frais.");
 
-   try {
-     const token = await auth.currentUser.getIdToken(true);
+      btn.disabled = true;
+      btn.textContent = "Vérification...";
 
-     const res = await fetch(`${API_BASE}/api/manual-transfer`, {
-       method: "POST",
-       headers: {
-         "Content-Type": "application/json",
-         "Authorization": "Bearer " + token
-       },
-       body: JSON.stringify({
-         type: "withdraw",
-         method: method,
-         amountRequested: parsedAmount,
-         feeApplied: fee,
-         amountToReceive: finalToReceive,
-         phone: phone,
-         accountName: accountName.trim(),
-         pin: pin // 👈 Envoi du PIN au serveur
-       })
-     });
+      try {
+        const token = await auth.currentUser.getIdToken(true);
 
-     const result = await res.json();
+        const res = await fetch(`${API_BASE}/api/manual-transfer`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({
+            type: "withdraw",
+            method: method,
+            amountRequested: parsedAmount,
+            feeApplied: fee,
+            amountToReceive: finalToReceive,
+            phone: phone,
+            accountName: accountName.trim(),
+            pin: pin
+          })
+        });
 
-     if(result.success) {
-       alert("Votre demande de retrait a été envoyée. Elle sera traitée sous peu.");
-       window.location.href = "profil.html";
-     } else {
-       alert(result.error || "Erreur serveur");
-     }
-   } catch (err) {
-     console.error(err);
-     alert("Erreur réseau ou serveur.");
-   } finally {
-     btn.disabled = false;
-     btn.textContent = "Demander le Retrait";
-   }
- };
+        const result = await res.json();
+
+        if(result.success) {
+          alert("Votre demande de retrait a été envoyée. Elle sera traitée sous peu.");
+          window.location.href = "profil.html";
+        } else {
+          alert(result.error || "Erreur serveur");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Erreur réseau ou serveur.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Demander le Retrait";
+      }
+    };
   </script>
 </body>
 </html>
