@@ -579,21 +579,60 @@ async function executeAdminAction(actionName, updatesToApply, confirmMessage, no
   try {
     const userRef = doc(db, "users", currentUserObj.uid);
     await updateDoc(userRef, updatesToApply);
-    await addDoc(collection(db, "auditLogs"), { adminUid: auth.currentUser.uid, targetUid: currentUserObj.uid, action: actionName, motif: motif, createdAt: serverTimestamp() });
     
-    motifInput.value = ""; 
-    alert("Action effectuée.");
-    const updatedSnap = await getDoc(userRef);
-    if(updatedSnap.exists()) { displayUserProfile({ uid: currentUserObj.uid, ...updatedSnap.data() }); }
-  } catch(e) { alert("Erreur : " + e.message); }
-}
+    // 1. Journal d'audit Admin
+    await addDoc(collection(db, "auditLogs"), { 
+      adminUid: auth.currentUser.uid, 
+      targetUid: currentUserObj.uid, 
+      action: actionName, 
+      motif: motif, 
+      createdAt: serverTimestamp() 
+    });
 
+    // 2. Envoi de la notification à l'utilisateur
+    if (notifType) {
+      await addDoc(collection(db, "notifications"), {
+        to: currentUserObj.uid,
+        from: auth.currentUser.uid,
+        type: notifType,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+    }
+
+    motifInput.value = ""; 
+    alert("Action effectuée et notification envoyée.");
+    
+    const updatedSnap = await getDoc(userRef);
+    if(updatedSnap.exists()) { 
+      displayUserProfile({ uid: currentUserObj.uid, ...updatedSnap.data() }); 
+    }
+  } catch(e) { 
+    alert("Erreur : " + e.message); 
+  }
+}
+  
 document.getElementById("btnToggleFreeze").onclick = () => {
   const isLocked = currentUserObj.walletLocked === true;
   let updates = { walletLocked: !isLocked };
-  if (!isLocked) { updates.frozenWallet = currentUserObj.wallet || 0; updates.wallet = 0; } 
-  else { updates.wallet = currentUserObj.frozenWallet || 0; updates.frozenWallet = 0; }
-  executeAdminAction(!isLocked ? "Gel du wallet" : "Dégel du wallet", updates, !isLocked ? "Voulez-vous GELER ce compte ?" : "Voulez-vous DÉGELER ce compte ?");
+  
+  if (!isLocked) { 
+    updates.frozenWallet = currentUserObj.wallet || 0; 
+    updates.wallet = 0; 
+  } else { 
+    updates.wallet = currentUserObj.frozenWallet || 0; 
+    updates.frozenWallet = 0; 
+  }
+
+  // Déterminer le type de notification selon l'état
+  const notifType = !isLocked ? "wallet_frozen" : "wallet_unfrozen";
+
+  executeAdminAction(
+    !isLocked ? "Gel du wallet" : "Dégel du wallet", 
+    updates, 
+    !isLocked ? "Voulez-vous GELER ce compte ?" : "Voulez-vous DÉGELER ce compte ?",
+    notifType // 👈 Transmission du type de notification
+  );
 };
 
 async function loadUserTransactions(uid){
