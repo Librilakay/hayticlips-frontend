@@ -113,7 +113,6 @@ body {
   font-size: 13px;
   cursor: pointer;
   transition: 0.2s;
-  /* Nouvelles lignes pour centrer les SVG avec le texte */
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -123,6 +122,13 @@ body {
   background: #ff0050;
   color: #fff;
   border-color: #ff0050;
+}
+
+.btn-admin-only {
+  background: linear-gradient(135deg, #ff0050, #990033) !important;
+  color: #ffffff !important;
+  border-color: #ff0050 !important;
+  box-shadow: 0 0 10px rgba(255, 0, 80, 0.4);
 }
 
 /* ================== RECHERCHE ================== */
@@ -327,6 +333,16 @@ body {
     Modération
   </button>
 
+  <!-- BOUTON EXCLUSIF ADMIN POUR VOIR TOUTES LES OPÉRATIONS -->
+  <button id="adminAnalyticsBtn" class="btn-admin-only" style="display:none;" onclick="window.location.href='analytics.html'">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"></line>
+      <line x1="12" y1="20" x2="12" y2="4"></line>
+      <line x1="6" y1="20" x2="6" y2="14"></line>
+    </svg>
+    📊 Opérations & Activités
+  </button>
+
   <button onclick="window.location.href='install-guide.html'">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -389,6 +405,7 @@ const totalUsersEl = document.getElementById("totalUsers");
 const onlineUsersEl = document.getElementById("onlineUsers");
 const userList = document.getElementById("userList");
 const searchInput = document.getElementById("searchInput");
+const adminAnalyticsBtn = document.getElementById("adminAnalyticsBtn");
 
 let allUsers = [];
 let currentReportedVideoId = null;
@@ -406,6 +423,11 @@ onAuthStateChanged(auth, async user => {
   if(!me || (me.role !== "admin" && me.role !== "moderator")){
     window.location.href = "feed.html";
     return;
+  }
+
+  // AFFICHER LE BOUTON D'ANALYTICS UNIQUEMENT POUR LES ADMINS
+  if(me.role === "admin" && adminAnalyticsBtn) {
+    adminAnalyticsBtn.style.display = "inline-flex";
   }
 
   allUsers = users;
@@ -618,7 +640,6 @@ async function loadReports(){
   let found = false;
   let html = "";
 
-  // RÉCUPÉRATION DES VIDÉOS BLOQUÉES PAR L'IA (pending_ia & flagged)
   const aiFlaggedSnap = await getDocs(query(collection(db, "videos"), where("moderationStatus", "in", ["pending_ia", "flagged"])));
   aiFlaggedSnap.forEach(videoDoc => {
     found = true;
@@ -634,7 +655,6 @@ async function loadReports(){
     `;
   });
 
-  // RÉCUPÉRATION DES VIDÉOS SIGNALÉES MANUELLEMENT PAR DES UTILISATEURS
   const videosSnap = await getDocs(collection(db,"videos"));
   for(const videoDoc of videosSnap.docs){
     const modStatus = videoDoc.data().moderationStatus;
