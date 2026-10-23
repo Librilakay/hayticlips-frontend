@@ -327,558 +327,2523 @@ button:disabled{
   .products-grid{grid-template-columns:1fr}
   .hero-title{font-size:22px}
 }
+
+[hidden]{display:none!important}
+
+.header-left{
+  border:0;background:transparent;color:#fff;
+  padding:0;min-height:44px;
+}
+.shop-banner{
+  display:block;width:100%;max-height:240px;object-fit:cover;
+  border-radius:12px;margin-bottom:16px;
+}
+.shop-bio{white-space:pre-line;overflow-wrap:anywhere}
+.shop-meta{margin-top:12px;font-size:13px;line-height:1.6;color:#bbb}
+.shop-meta p{white-space:pre-line;overflow-wrap:anywhere}
+.shop-meta summary{cursor:pointer;color:#eee}
+.hero-title,.price{overflow-wrap:anywhere}
+
+.buyer-tabs{
+  display:flex;gap:8px;overflow:auto;
+  margin:18px 0;padding:3px 0 12px;
+}
+.buyer-tabs button{
+  white-space:nowrap;background:#151515;color:#ddd;
+  border:1px solid #333;min-height:44px;
+}
+.buyer-tabs button[aria-selected=true]{
+  color:#ff99b9;border-color:#a92d54;background:#32101d;
+}
+
+.buyer-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;margin:12px 0;
+}
+.buyer-toolbar>*{min-width:0}
+
+.buyer-toolbar input,
+.buyer-toolbar select,
+.buyer-field input,
+.buyer-field textarea,
+.buyer-field select{
+  width:100%;background:#111;color:#fff;border:1px solid #333;
+  border-radius:12px;padding:12px;font-size:16px;min-width:0;
+}
+.buyer-toolbar input{flex:1;min-width:150px}
+.buyer-toolbar select{width:auto;max-width:100%}
+.buyer-field{min-width:0;margin-bottom:14px}
+.buyer-field label{
+  display:block;font-size:13px;color:#bbb;margin-bottom:7px;
+}
+.buyer-field textarea{min-height:90px;resize:vertical}
+.buyer-form-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:0 12px;
+}
+.buyer-span{grid-column:1/-1}
+
+.buyer-message{
+  padding:12px;border-radius:12px;margin:12px 0;
+  font-size:14px;line-height:1.5;overflow-wrap:anywhere;
+}
+.buyer-message:empty{display:none}
+.buyer-message[data-type=success]{background:#123025;color:#91edbf}
+.buyer-message[data-type=error]{
+  background:#3b1724;border:1px solid #713044;color:#ffbbce;
+}
+.buyer-message[data-type=info]{background:#162332;color:#dae8ff}
+
+.buyer-note{
+  padding:12px;border:1px solid #333;border-radius:12px;
+  background:#15151c;color:#bbb;font-size:13px;
+  line-height:1.6;margin:12px 0;overflow-wrap:anywhere;
+}
+.buyer-list{display:grid;gap:12px}
+.buyer-item{
+  border:1px solid #292929;background:#08080d;
+  border-radius:14px;padding:14px;min-width:0;
+}
+.buyer-item h3{
+  font-size:16px;overflow-wrap:anywhere;margin-bottom:7px;
+}
+.buyer-item p{
+  font-size:13px;line-height:1.6;color:#ccc;margin:6px 0;
+  white-space:pre-line;overflow-wrap:anywhere;
+}
+.buyer-ref{
+  font-size:11px!important;color:#999!important;overflow-wrap:anywhere;
+}
+.buyer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.buyer-actions button,.buyer-actions a{min-height:44px}
+.buyer-link{
+  display:inline-flex;align-items:center;justify-content:center;
+  text-decoration:none;border:1px solid #333;border-radius:30px;
+  padding:11px 14px;font-size:13px;font-weight:700;
+  background:#171717;color:white;
+}
+
+.buyer-status{
+  display:inline-flex;padding:5px 10px;border-radius:30px;
+  font-size:11px;font-weight:800;border:1px solid #333;
+  background:#20202b;color:#ddd;
+}
+.buyer-status[data-status=held],
+.buyer-status[data-status=pending],
+.buyer-status[data-status=open]{
+  background:#34290f;color:#ffcf70;
+}
+.buyer-status[data-status=completed],
+.buyer-status[data-status=settled],
+.buyer-status[data-status=resolved]{
+  background:#113023;color:#8debbb;
+}
+.buyer-status[data-status=disputed],
+.buyer-status[data-status=refunded]{
+  background:#381523;color:#ffb2cb;
+}
+
+.product-gallery{
+  display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+  background:#111;
+}
+.product-gallery .product-image{
+  min-width:100%;scroll-snap-align:start;
+}
+.product-desc{white-space:pre-line;overflow-wrap:anywhere}
+.product-body{min-width:0}
+
+.buyer-pager{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:8px;flex-wrap:wrap;font-size:12px;color:#aaa;margin-top:16px;
+}
+.buyer-dialog{
+  width:calc(100% - 24px);max-width:600px;max-height:90dvh;
+  overflow:auto;background:#08080d;color:white;
+  border:1px solid #444;border-radius:18px;padding:20px;
+}
+.buyer-dialog::backdrop{background:rgba(0,0,0,.85)}
+.buyer-dialog h2{font-size:20px}
+.buyer-dialog h3{margin-bottom:10px}
+.buyer-dialog fieldset{border:0;margin:0;padding:0;min-width:0}
+.buyer-total{
+  display:flex;justify-content:space-between;
+  gap:12px;font-size:20px;font-weight:800;margin:16px 0;
+}
+.delivery-code{
+  font:800 25px ui-monospace,monospace;letter-spacing:1px;
+  user-select:all;text-align:center;background:#131a26;
+  border:1px dashed #626c80;border-radius:12px;
+  padding:20px;margin:15px 0;overflow-wrap:anywhere;
+}
+.buyer-proof{
+  display:block;max-width:100%;max-height:65vh;
+  margin:auto;object-fit:contain;
+}
+.buyer-history{border-top:1px solid #333;margin-top:12px;padding-top:8px}
+.buyer-item details{margin-top:10px}
+.buyer-item summary{cursor:pointer;color:#ddd;font-size:13px}
+
+button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+  outline:2px solid #ff759f;outline-offset:3px;
+}
+
+@media(max-width:640px){
+  .buyer-form-grid{grid-template-columns:1fr}
+  .buyer-dialog{padding:16px}
+  .shop-banner{max-height:160px}
+  .delivery-code{font-size:21px}
+  .buyer-actions>*{flex:1}
+}
+  
 </style>
 </head>
 <body>
 
-<div class="page">
-
-  <div class="header">
-  <div class="header-left" onclick="history.back()">←</div>
+<div class="header">
+  <button class="header-left" id="backBtn" aria-label="Retour">←</button>
   <div class="header-center">Boutique</div>
   <div class="header-right">
-    <button id="merchantDashboardBtn" class="top-btn" style="display:none;">Dashboard</button>
+    <a
+      id="merchantDashboardBtn"
+      class="buyer-link"
+      href="merchant-dashboard.html"
+      hidden
+    >Dashboard</a>
   </div>
 </div>
+
+<main class="page" id="shop-root">
 
   <div class="hero">
+    <img
+      id="shopBanner"
+      class="shop-banner"
+      alt="Bannière de la boutique"
+      hidden
+    >
+
     <div class="shop-head">
-      <img id="shopLogo" class="shop-logo" src="https://placehold.co/200x200/png?text=Shop" alt="Shop logo">
-      <div style="min-width:0;flex:1;">
+      <img
+        id="shopLogo"
+        class="shop-logo"
+        alt="Logo de la boutique"
+        hidden
+      >
+
+      <div style="min-width:0;flex:1">
         <div class="shop-name-row">
-  <div class="hero-title" id="shopName">Boutique</div>
+          <h1 class="hero-title" id="shopName">Boutique</h1>
+        </div>
 
- <span class="merchant-badge-mini" title="Marchand">
-  <svg viewBox="0 0 24 24">
-    <path d="M7 7h13l-1.4 5.2a2 2 0 0 1-1.9 1.5H10a2 2 0 0 1-1.9-1.4L6.3 5H3.5a1 1 0 1 1 0-2H7a1 1 0 0 1 .97.76L8.4 5H21a1 1 0 0 1 .97 1.25l-1.83 6.8A4 4 0 0 1 16.27 16H10a4 4 0 0 1-3.86-2.92L4.7 7.5A1 1 0 0 1 4.68 7H7Z"/>
-    <circle cx="10" cy="19" r="1.8"/>
-    <circle cx="17" cy="19" r="1.8"/>
-  </svg>
-</span>
-</div>
+        <p class="hero-sub shop-bio" id="shopBio">Chargement...</p>
 
-<div class="hero-sub" id="shopBio">Chargement...</div>
-
-<div class="meta-row">
-  <span class="pill pill-muted" id="productCountPill">0 produit</span>
-  
-  <button id="shareShopBtn" class="btn-share" title="Partager la boutique">
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="18" cy="5" r="3"></circle>
-      <circle cx="6" cy="12" r="3"></circle>
-      <circle cx="18" cy="19" r="3"></circle>
-      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-    </svg>
-    Partager
-  </button>
-</div>
+        <div class="meta-row">
+          <span class="pill" id="productCountPill">Chargement...</span>
+          <button id="shareShopBtn" class="btn-share" disabled>
+            Partager
+          </button>
+        </div>
       </div>
     </div>
+
+    <details class="shop-meta">
+      <summary>Coordonnées et livraison</summary>
+      <div id="shopContact"></div>
+      <button class="btn-contact" id="contactShopBtn">
+        Contacter le marchand
+      </button>
+    </details>
   </div>
 
-  <div class="controls">
-    <input type="text" id="searchInput" placeholder="Rechercher un produit">
-    <select id="sortSelect">
-      <option value="recent">Plus récents</option>
-      <option value="price_asc">Prix croissant</option>
-      <option value="price_desc">Prix décroissant</option>
-    </select>
+  <div class="buyer-toolbar">
+    <a class="buyer-link" href="wallet.html">Mon portefeuille</a>
+    <button class="btn-contact" id="refreshBtn" data-lock="refresh">
+      Actualiser
+    </button>
   </div>
 
-  <div class="card">
-    <h2>Produits</h2>
-    <p>Produits disponibles dans cette boutique.</p>
-    <div class="products-grid" id="productsGrid"></div>
-  </div>
+  <div
+    class="buyer-message"
+    data-message
+    role="status"
+    aria-live="polite"
+  ></div>
 
-</div>
+  <div id="pendingBox" class="buyer-note" hidden>
+    <p id="pendingText"></p>
+    <div class="buyer-actions">
+      <button
+        class="btn-contact"
+        id="checkPendingBtn"
+        data-lock="checkout"
+      >Vérifier la tentative</button>
 
-<div id="buyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:14px;">
-  <div style="width:100%;max-width:420px;background:#111;border:1px solid #242424;border-radius:18px;padding:16px;">
-    <h3 style="margin-bottom:12px;">Finaliser l'achat</h3>
-
-    <input id="buyNom" placeholder="Nom" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
-    <input id="buyPrenom" placeholder="Prénom" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
-    <input id="buyEmail" placeholder="Email" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
-<input type="text" id="buyPhone" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Contact appel" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
-
-<input type="text" id="buyWhatsapp" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Contact WhatsApp" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
-
-    <select id="buySexe" style="width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;">
-      <option value="">Sexe</option>
-      <option value="M">M</option>
-      <option value="F">F</option>
-    </select>
-
-    <textarea id="buyDetails" placeholder="Autres détails importants" style="width:100%;min-height:90px;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #2b2b2b;background:#0e0e0e;color:#fff;"></textarea>
-
-    <div style="display:flex;gap:8px;">
-      <button id="confirmBuyBtn" class="btn-buy" style="flex:1;">Confirmer</button>
-      <button id="closeBuyBtn" class="btn-contact">Annuler</button>
+      <button
+        class="btn-buy"
+        id="resumePendingBtn"
+        data-lock="checkout"
+      >Reprendre la tentative</button>
     </div>
   </div>
-</div>
+
+  <nav
+    class="buyer-tabs"
+    role="tablist"
+    aria-label="Sections de la boutique"
+  >
+    <button
+      id="tab-catalog"
+      role="tab"
+      aria-controls="panel-catalog"
+      aria-selected="true"
+      data-tab="catalog"
+    >Produits</button>
+
+    <button
+      id="tab-orders"
+      role="tab"
+      aria-controls="panel-orders"
+      aria-selected="false"
+      tabindex="-1"
+      data-tab="orders"
+    >Mes achats</button>
+
+    <button
+      id="tab-disputes"
+      role="tab"
+      aria-controls="panel-disputes"
+      aria-selected="false"
+      tabindex="-1"
+      data-tab="disputes"
+    >Mes réclamations</button>
+  </nav>
+
+  <section
+    id="panel-catalog"
+    role="tabpanel"
+    aria-labelledby="tab-catalog"
+    data-panel="catalog"
+  >
+    <div class="controls">
+      <input
+        id="searchInput"
+        type="search"
+        placeholder="Rechercher un produit"
+        aria-label="Rechercher un produit"
+      >
+
+      <select id="sortSelect" aria-label="Trier les produits">
+        <option value="recent">Plus récents</option>
+        <option value="price_asc">Prix croissant</option>
+        <option value="price_desc">Prix décroissant</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h2>Produits disponibles</h2>
+      <p>
+        Le montant est réservé dans ton portefeuille
+        puis réglé après validation de la livraison.
+      </p>
+
+      <div class="products-grid" id="productsGrid">
+        <div class="empty-state">Chargement...</div>
+      </div>
+
+      <div id="catalogPager"></div>
+    </div>
+  </section>
+
+  <section
+    id="panel-orders"
+    role="tabpanel"
+    aria-labelledby="tab-orders"
+    data-panel="orders"
+    hidden
+  >
+    <p class="buyer-note">
+      Tous tes achats HaytiClips restent consultables ici,
+      même si une boutique est indisponible.
+      Communique ton code uniquement après réception
+      et vérification du produit.
+    </p>
+
+    <div class="buyer-toolbar">
+      <input
+        id="orderSearch"
+        type="search"
+        placeholder="Numéro ou produit"
+        aria-label="Rechercher un achat"
+      >
+
+      <select id="orderFilter" aria-label="Statut des achats">
+        <option value="all">Tous les statuts</option>
+        <option value="pending">En attente</option>
+        <option value="accepted">À préparer</option>
+        <option value="shipping">En livraison</option>
+        <option value="completed">Terminées</option>
+        <option value="disputed">En litige</option>
+        <option value="cancelled">Annulées</option>
+        <option value="rejected">Refusées</option>
+        <option value="refunded">Remboursées</option>
+      </select>
+    </div>
+
+    <div class="buyer-list" id="buyerOrders">
+      <div class="empty-state">Chargement...</div>
+    </div>
+  </section>
+
+  <section
+    id="panel-disputes"
+    role="tabpanel"
+    aria-labelledby="tab-disputes"
+    data-panel="disputes"
+    hidden
+  >
+    <p class="buyer-note">
+      Décris le problème puis ajoute tes photos ou vidéos.
+      Les responsables autorisés examinent les éléments
+      avant toute décision.
+    </p>
+
+    <div class="buyer-list" id="buyerDisputes">
+      <div class="empty-state">Chargement...</div>
+    </div>
+  </section>
+
+</main>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
-  getFirestore,
-  collection,
-  getDocs,
-  getDoc,
-  doc,
-  query,
-  where
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  initializeApp,
+  getApps
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-const firebaseConfig = {
-  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-  authDomain:"tstx-58474.firebaseapp.com",
-  projectId:"tstx-58474",
-  storageBucket:"tstx-58474.firebasestorage.app",
-  messagingSenderId:"1010020144942",
-  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const auth = getAuth(getApps()[0] || initializeApp({
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+}));
+
+const API = "https://hayticlip-server.onrender.com";
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+const esc = v => String(v ?? "").replace(
+  /[&<>"']/g,
+  c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c])
+);
+
+const money = n => Number.isFinite(n)
+  ? new Intl.NumberFormat("fr-HT", {
+      maximumFractionDigits: 2
+    }).format(n) + " HTG"
+  : "—";
+
+const date = n => Number.isFinite(n) && n > 0
+  ? new Intl.DateTimeFormat("fr-FR", {
+      timeZone: "America/Port-au-Prince",
+      dateStyle: "short",
+      timeStyle: "short"
+    }).format(new Date(n))
+  : "—";
+
+const names = {
+  pending: "En attente",
+  accepted: "À préparer",
+  shipping: "En livraison",
+  completed: "Terminée",
+  disputed: "En litige",
+  cancelled: "Annulée",
+  rejected: "Refusée",
+  refunded: "Remboursée",
+  held: "Montant réservé",
+  settled: "Fonds libérés",
+  open: "Ouvert",
+  resolved: "Résolu",
+  failed: "Échoué"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const label = s => Object.prototype.hasOwnProperty.call(names, s)
+  ? names[s]
+  : String(s || "À vérifier");
 
-const shopLogo = document.getElementById("shopLogo");
-const shopName = document.getElementById("shopName");
-const shopBio = document.getElementById("shopBio");
-const productCountPill = document.getElementById("productCountPill");
-const productsGrid = document.getElementById("productsGrid");
-const searchInput = document.getElementById("searchInput");
-const sortSelect = document.getElementById("sortSelect");
-const merchantDashboardBtn = document.getElementById("merchantDashboardBtn");
-const buyModal = document.getElementById("buyModal");
-const buyNom = document.getElementById("buyNom");
-const buyPrenom = document.getElementById("buyPrenom");
-const buyEmail = document.getElementById("buyEmail");
-const buyPhone = document.getElementById("buyPhone");
-const buyWhatsapp = document.getElementById("buyWhatsapp");
-const buySexe = document.getElementById("buySexe");
-const buyDetails = document.getElementById("buyDetails");
-const confirmBuyBtn = document.getElementById("confirmBuyBtn");
-const closeBuyBtn = document.getElementById("closeBuyBtn");
-const shareShopBtn = document.getElementById("shareShopBtn"); // Setup Partage
+const badge = s => `
+  <span class="buyer-status" data-status="${esc(s)}">
+    ${esc(label(s))}
+  </span>
+`;
 
-let merchantUid = null;
-let allProducts = [];
-let merchantData = null;
-let selectedProduct = null;
+const validId = s =>
+  typeof s === "string" &&
+  s.length > 0 &&
+  s.length <= 128 &&
+  !/[\/\x00-\x1f]/.test(s) &&
+  ![".", ".."].includes(s);
 
-function escapeHTML(str=""){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
+function minor(n) {
+  const v = Math.round(n * 100);
 
-function renderEmpty(text){
-  productsGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${text}</div>`;
-}
-
-function getProductMainImage(product){
-  if(Array.isArray(product.images) && product.images.length){
-    return product.images[0];
-  }
-  return product.imageUrl || "https://placehold.co/600x600/png?text=Produit";
-}
-
-function normalizeHaitiPhone(value=""){
-  let digits = String(value).replace(/\D/g, "");
-
-  if(digits.length === 8){
-    digits = "509" + digits;
+  if (
+    typeof n !== "number" ||
+    !Number.isFinite(n) ||
+    !Number.isSafeInteger(v) ||
+    v <= 0 ||
+    v > 100000000000 ||
+    Math.abs(v / 100 - n) > 0.0000001
+  ) {
+    throw new Error("Montant invalide.");
   }
 
-  if(digits.startsWith("509") && digits.length === 11){
-    return digits;
-  }
-
-  return null;
+  return v;
 }
 
-function renderProducts(list){
-  productsGrid.innerHTML = "";
-
-  if(!list.length){
-    renderEmpty("Aucun produit disponible.");
-    return;
+function safeURL(v) {
+  try {
+    const u = new URL(v, location.origin);
+    return u.protocol === "https:" ? u.href : "";
+  } catch {
+    return "";
   }
-
-  // Vérifier si l'utilisateur connecté est le propriétaire de la boutique
-  const currentUserUid = auth.currentUser ? auth.currentUser.uid : null;
-  const isOwner = currentUserUid === merchantUid;
-
-  list.forEach(product=>{
-    const stock = Number(product.stock || 0);
-    // On empêche l'achat si c'est le propriétaire
-    const canBuy = product.isActive === true && stock > 0 && !isOwner;
-    
-    // Texte dynamique pour le bouton
-    let btnText = "Acheter";
-    if(isOwner) {
-      btnText = "Ton produit";
-    } else if(!canBuy) {
-      btnText = "Indisponible";
-    }
-
-    const card = document.createElement("div");
-    card.className = "product-card";
-
-    card.innerHTML = `
-      <img class="product-image" src="${getProductMainImage(product)}" alt="Produit">
-      <div class="product-body">
-        <div class="product-title">${escapeHTML(product.name || "Produit")}</div>
-        <div class="product-desc">${escapeHTML(product.description || "")}</div>
-
-        <div class="product-meta">
-          <div class="price">${Number(product.price || 0)} Gdes</div>
-          <div class="stock">${stock > 0 ? stock + " en stock" : "Rupture"}</div>
-        </div>
-
-        <div class="actions">
-          <button class="btn-buy" ${canBuy ? "" : "disabled"} onclick="buyProduct('${product.id}')">
-            ${btnText}
-          </button>
-          <button class="btn-contact" onclick="contactMerchant('${merchantUid}')">Contacter</button>
-        </div>
-      </div>
-    `;
-
-    productsGrid.appendChild(card);
-  });
 }
 
-function applyFilters(){
-  let filtered = [...allProducts];
-  const search = searchInput.value.toLowerCase().trim();
-  const sort = sortSelect.value;
+function photo(v, alt) {
+  const u = v ? safeURL(v) : "";
 
-  if(search){
-    filtered = filtered.filter(product =>
-      (product.name || "").toLowerCase().includes(search) ||
-      (product.description || "").toLowerCase().includes(search)
+  return u
+    ? `<img
+         class="product-image"
+         src="${esc(u)}"
+         alt="${esc(alt)}"
+         loading="lazy"
+       >`
+    : `<div
+         class="product-image"
+         role="img"
+         aria-label="Photo indisponible"
+       ></div>`;
+}
+
+function field(id, title, o = {}) {
+  return `
+    <div class="buyer-field ${o.wide ? "buyer-span" : ""}">
+      <label for="${id}">${title}</label>
+
+      ${o.area
+        ? `<textarea
+             id="${id}"
+             maxlength="${o.max || 1000}"
+             ${o.required ? "required" : ""}
+           ></textarea>`
+        : `<input
+             id="${id}"
+             type="${o.type || "text"}"
+             ${o.required ? "required" : ""}
+             ${o.max ? `maxlength="${o.max}"` : ""}
+             ${o.min !== undefined ? `min="${o.min}"` : ""}
+             ${o.step ? `step="${o.step}"` : ""}
+             ${o.type === "tel"
+               ? 'inputmode="tel" autocomplete="tel"'
+               : ""}
+           >`}
+    </div>
+  `;
+}
+
+function notice(text = "", type = "info", root = document) {
+  const n = $("[data-message]", root);
+
+  if (n) {
+    n.textContent = text;
+    n.dataset.type = type;
+  }
+}
+
+function empty(n, text) {
+  n.innerHTML = `
+    <div class="empty-state" style="grid-column:1/-1">
+      ${esc(text)}
+    </div>
+  `;
+}
+
+function close(d) {
+  if (d.close) d.close();
+  else d.dispatchEvent(new Event("close"));
+
+  d.remove();
+}
+
+const urls = new Set();
+
+function cleanup() {
+  $$("dialog").forEach(close);
+
+  for (const u of urls) URL.revokeObjectURL(u);
+
+  urls.clear();
+}
+
+function modal(title, body) {
+  $$("dialog").forEach(close);
+
+  const d = document.createElement("dialog");
+  d.className = "buyer-dialog";
+
+  d.innerHTML = `
+    <div class="buyer-toolbar">
+      <h2>${esc(title)}</h2>
+      <button
+        type="button"
+        class="btn-contact"
+        data-close
+        aria-label="Fermer"
+      >✕</button>
+    </div>
+
+    <div
+      class="buyer-message"
+      data-message
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    ${body}
+  `;
+
+  document.body.appendChild(d);
+
+  d.addEventListener("close", () => d.remove(), { once: true });
+  $("[data-close]", d).onclick = () => close(d);
+
+  if (d.showModal) d.showModal();
+  else d.setAttribute("open", "");
+
+  return d;
+}
+
+const initial = $("#shop-root").innerHTML;
+
+let session = 0;
+let teardown = () => {};
+
+$("#backBtn").onclick = () => history.back();
+
+async function boot(user, epoch) {
+  const merchantUid =
+    new URLSearchParams(location.search).get("uid") || user.uid;
+
+  const alive = () =>
+    session === epoch &&
+    auth.currentUser?.uid === user.uid;
+
+  if (!validId(merchantUid)) {
+    throw new Error("Identifiant de boutique invalide.");
+  }
+
+  const storageKey =
+    `hc-merchant-checkout-v3:${user.uid}:${merchantUid}`;
+
+  let me = null;
+  let shop = null;
+  let products = [];
+  let orders = null;
+  let cases = null;
+  let catalogReady = false;
+  let shopVersion = 0;
+  let orderVersion = 0;
+  let caseVersion = 0;
+  let intentError = false;
+
+  const locks = new Set();
+  const pages = { catalog: 1, orders: 1, cases: 1 };
+
+  async function api(path, body, blob = false) {
+    const stale = () => Object.assign(
+      new Error("Session modifiée"),
+      { stale: true }
     );
-  }
 
-  if(sort === "price_asc"){
-    filtered.sort((a,b) => Number(a.price || 0) - Number(b.price || 0));
-  }else if(sort === "price_desc"){
-    filtered.sort((a,b) => Number(b.price || 0) - Number(a.price || 0));
-  }else{
-    filtered.sort((a,b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0));
-  }
-
-  renderProducts(filtered);
-}
-
-async function loadMerchant(){
-  const params = new URLSearchParams(window.location.search);
-  merchantUid = params.get("uid");
-
-  if(!merchantUid && auth.currentUser){
-    merchantUid = auth.currentUser.uid;
-  }
-
-  if(!merchantUid){
-    renderEmpty("Boutique introuvable.");
-    return false;
-  }
-
-  const snap = await getDoc(doc(db,"users",merchantUid));
-
-  if(!snap.exists()){
-    renderEmpty("Boutique introuvable.");
-    return false;
-  }
-
-  merchantData = snap.data();
-
-  const expireDate = merchantData.merchantExpiresAt?.toDate?.() || null;
-const expired = !expireDate || expireDate.getTime() <= Date.now();
-const blocked = merchantData.merchantRenewalBlocked === true;
-
-if(
-  !(
-    merchantData.merchantEnabled === true &&
-    merchantData.merchantStatus === "active" &&
-    !blocked &&
-    !expired
-  )
-){
-  renderEmpty("Cette boutique est temporairement indisponible.");
-  return false;
-}
-
-  shopName.textContent = merchantData.merchantShopName || merchantData.username || "Boutique";
-  shopBio.textContent = merchantData.merchantBio || merchantData.bio || "Aucune description.";
-  shopLogo.src = merchantData.merchantLogo || merchantData.avatar || "https://placehold.co/200x200/png?text=Shop";
-
-  return true;
-}
-
-async function loadProducts(){
-  allProducts = [];
-
-  const q = query(
-    collection(db,"merchantProducts"),
-    where("merchantUid","==",merchantUid)
-  );
-
-  const snap = await getDocs(q);
-
-  snap.forEach(d=>{
-    const data = d.data();
-    allProducts.push({
-      id:d.id,
-      ...data,
-      createdAtMs:data.createdAt?.toMillis?.() || 0
-    });
-  });
-
-  allProducts = allProducts.filter(p => p.isActive === true);
-  productCountPill.textContent = `${allProducts.length} produit${allProducts.length > 1 ? "s" : ""}`;
-  applyFilters();
-}
-
-function resetBuyForm(){
-  buyNom.value = "";
-  buyPrenom.value = "";
-  buyEmail.value = "";
-  buyPhone.value = "";
-  buyWhatsapp.value = "";
-  buySexe.value = "";
-  buyDetails.value = "";
-  selectedProduct = null;
-}
-
-window.buyProduct = async (productId)=>{
-  const user = auth.currentUser;
-  if(!user){
-    window.location.href = "login.html";
-    return;
-  }
-
-  // Sécurité supplémentaire au clic
-  if(user.uid === merchantUid){
-    alert("Vous ne pouvez pas acheter vos propres produits.");
-    return;
-  }
-
-  selectedProduct = allProducts.find(p => p.id === productId);
-
-  if(!selectedProduct){
-    alert("Produit introuvable");
-    return;
-  }
-
-  buyModal.style.display = "flex";
-};
-
-closeBuyBtn.onclick = ()=>{
-  buyModal.style.display = "none";
-  resetBuyForm();
-};
-
-confirmBuyBtn.onclick = async ()=>{
-  try{
-    if(!selectedProduct){
-      alert("Produit introuvable");
-      return;
-    }
-
-    const nom = buyNom.value.trim();
-    const prenom = buyPrenom.value.trim();
-    const email = buyEmail.value.trim().toLowerCase();
-    const phone = buyPhone.value.trim();
-    const whatsapp = buyWhatsapp.value.trim();
-    const sexe = buySexe.value.trim();
-    const details = buyDetails.value.trim();
-
-    if(!nom || !prenom || !email || !phone || !whatsapp || !sexe){
-      alert("Remplis tous les champs obligatoires");
-      return;
-    }
-
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-      alert("Email invalide");
-      return;
-    }
-
-    const cleanPhone = normalizeHaitiPhone(phone);
-const cleanWhatsapp = normalizeHaitiPhone(whatsapp);
-
-if(!cleanPhone){
-  alert("Contact appel invalide");
-  return;
-}
-
-if(!cleanWhatsapp){
-  alert("Contact WhatsApp invalide");
-  return;
-}
+    if (!alive()) throw stale();
 
     const token = await auth.currentUser.getIdToken();
 
-    const res = await fetch("https://hayticlip-server.onrender.com/api/merchant/buy-product",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      },
-      body: JSON.stringify({
-        productId: selectedProduct.id,
-        quantity: 1,
-        customerNom: nom,
-        customerPrenom: prenom,
-        customerEmail: email,
-        customerPhone: cleanPhone,
-        customerWhatsapp: cleanWhatsapp,
-        customerSexe: sexe,
-        customerDetails: details
-      })
-    });
+    if (!alive()) throw stale();
 
-    const result = await res.json();
+    const form = body instanceof FormData;
+    const controller = new AbortController();
 
-    if(!res.ok){
-      throw new Error(result.error || "Erreur achat");
-    }
+    const timer = setTimeout(
+      () => controller.abort(),
+      form ? 120000 : 60000
+    );
 
-    buyModal.style.display = "none";
-
-    buyNom.value = "";
-    buyPrenom.value = "";
-    buyEmail.value = "";
-    buyPhone.value = "";
-    buyWhatsapp.value = "";
-    buySexe.value = "";
-    buyDetails.value = "";
-    selectedProduct = null;
-
-    alert("Commande envoyée");
-    await loadProducts();
-
-  }catch(e){
-    alert(e.message);
-  }
-};
-
-window.contactMerchant = async (uid)=>{
-  const user = auth.currentUser;
-  if(!user){
-    window.location.href = "login.html";
-    return;
-  }
-
-  if(uid === user.uid){
-    alert("C’est votre boutique.");
-    return;
-  }
-
-  const participants = [user.uid, uid].sort();
-  const convoId = participants.join("_");
-  window.location.href = `chat.html?conv=${convoId}`;
-};
-
-// Logique du bouton Partager
-shareShopBtn.addEventListener("click", async () => {
-  if (!merchantData) return;
-  
-  const shopOwner = merchantData.username || "Un marchand";
-  const shareText = `${shopOwner} vous invite à visiter sa boutique sur HaytiClips ! Découvrez ses produits.`;
-  // On construit l'URL exacte de la boutique
-  const shopUrl = window.location.origin + window.location.pathname + "?uid=" + merchantUid;
-
-  if (navigator.share) {
     try {
-      await navigator.share({
-        title: "Boutique sur HaytiClips",
-        text: shareText,
-        url: shopUrl
+      const r = await fetch(API + path, {
+        method: body === undefined ? "GET" : "POST",
+        headers: {
+          Authorization: "Bearer " + token,
+          ...(body !== undefined && !form
+            ? { "Content-Type": "application/json" }
+            : {})
+        },
+        body: body === undefined
+          ? undefined
+          : form
+            ? body
+            : JSON.stringify(body),
+        cache: "no-store",
+        signal: controller.signal
       });
-    } catch (err) {
-      console.log("Partage annulé ou échoué", err);
-    }
-  } else {
-    // Solution de secours pour les navigateurs PC non compatibles
-    try {
-      await navigator.clipboard.writeText(`${shareText}\n${shopUrl}`);
-      alert("Lien de la boutique copié dans le presse-papier !");
-    } catch (err) {
-      alert("Impossible de copier le lien automatiquement.");
+
+      if (!alive()) throw stale();
+
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
+
+        throw Object.assign(
+          new Error(e.error || `Service indisponible (${r.status})`),
+          { status: r.status, code: e.code }
+        );
+      }
+
+      const data = blob ? await r.blob() : await r.json();
+
+      if (!alive()) throw stale();
+
+      if (!blob && data?.success !== true) {
+        throw new Error(
+          data?.error || "Réponse du serveur invalide."
+        );
+      }
+
+      return data;
+
+    } catch (e) {
+      if (!alive()) throw stale();
+
+      if (e.name === "AbortError") {
+        throw new Error(
+          "Réponse non confirmée. Vérifie la tentative avant de recommencer."
+        );
+      }
+
+      throw e;
+
+    } finally {
+      clearTimeout(timer);
     }
   }
-});
 
-searchInput.addEventListener("input", applyFilters);
-sortSelect.addEventListener("change", applyFilters);
+  function error(e, root = document) {
+    if (!alive() || e.stale) return;
 
-
-function bindHaitiPhoneInput(input){
-  if(!input) return;
-
-  input.addEventListener("input", () => {
-    let digits = input.value.replace(/\D/g, "");
-
-    if(digits.length > 11){
-      digits = digits.slice(0, 11);
-    }
-
-    if(digits.length > 8 && !digits.startsWith("509")){
-      digits = "509" + digits.slice(-8);
-    }
-
-    if(digits.length === 8){
-      input.value = "509" + digits;
+    if (e.status === 401) {
+      location.href = "login.html";
       return;
     }
 
-    input.value = digits;
+    notice(
+      e.message || "Connexion au service impossible.",
+      "error",
+      root
+    );
+  }
+
+  function sync() {
+    if (!alive()) return;
+
+    $$("[data-lock]").forEach(n => {
+      n.disabled =
+        locks.has(n.dataset.lock) ||
+        (
+          n.hasAttribute("data-buy") &&
+          (
+            !catalogReady ||
+            !me ||
+            me.suspended === true ||
+            user.uid === merchantUid ||
+            intentError
+          )
+        );
+    });
+
+    $("#merchantDashboardBtn").hidden = !(
+      user.uid === merchantUid &&
+      me?.active === true
+    );
+  }
+
+  async function run(key, fn, root = document) {
+    if (!alive() || locks.has(key)) return;
+
+    locks.add(key);
+    sync();
+
+    try {
+      await fn();
+    } catch (e) {
+      error(e, root);
+    } finally {
+      locks.delete(key);
+      sync();
+    }
+  }
+
+  function button(
+    node,
+    text,
+    key,
+    fn,
+    cls = "btn-contact",
+    opening = false
+  ) {
+    const b = document.createElement("button");
+
+    b.type = "button";
+    b.textContent = text;
+    b.className = cls;
+    b.dataset.lock = key;
+
+    b.onclick = () => opening
+      ? (!locks.has(key) && fn())
+      : run(key, fn);
+
+    node.appendChild(b);
+    return b;
+  }
+
+  function pageRows(rows, key, size = 20) {
+    pages[key] = Math.min(
+      Math.max(1, pages[key]),
+      Math.max(1, Math.ceil(rows.length / size))
+    );
+
+    return rows.slice(
+      (pages[key] - 1) * size,
+      pages[key] * size
+    );
+  }
+
+  function pager(node, rows, key, render, size = 20) {
+    if (rows.length <= size) return;
+
+    const n = document.createElement("div");
+    n.className = "buyer-pager";
+
+    const p = document.createElement("button");
+    const next = document.createElement("button");
+    const text = document.createElement("span");
+
+    p.type = next.type = "button";
+    p.className = next.className = "btn-contact";
+
+    p.textContent = "Précédent";
+    next.textContent = "Suivant";
+
+    p.disabled = pages[key] <= 1;
+    next.disabled = pages[key] * size >= rows.length;
+
+    text.textContent =
+      `Page ${pages[key]} / ${Math.ceil(rows.length / size)}` +
+      ` · ${rows.length} éléments`;
+
+    p.onclick = () => {
+      pages[key]--;
+      render();
+    };
+
+    next.onclick = () => {
+      pages[key]++;
+      render();
+    };
+
+    n.append(p, text, next);
+    node.appendChild(n);
+  }
+
+  function tab(key, focus = false) {
+    $$("[data-tab]").forEach(b => {
+      const on = b.dataset.tab === key;
+
+      b.setAttribute("aria-selected", String(on));
+      b.tabIndex = on ? 0 : -1;
+
+      if (on && focus) b.focus();
+    });
+
+    $$("[data-panel]").forEach(p => {
+      p.hidden = p.dataset.panel !== key;
+    });
+  }
+
+  $$("[data-tab]").forEach((b, i, all) => {
+    b.onclick = () => tab(b.dataset.tab);
+
+    b.onkeydown = e => {
+      let n;
+
+      if (e.key === "ArrowRight") n = (i + 1) % all.length;
+      if (e.key === "ArrowLeft") {
+        n = (i + all.length - 1) % all.length;
+      }
+      if (e.key === "Home") n = 0;
+      if (e.key === "End") n = all.length - 1;
+
+      if (n !== undefined) {
+        e.preventDefault();
+        tab(all[n].dataset.tab, true);
+      }
+    };
   });
 
-  input.addEventListener("blur", () => {
-    const normalized = normalizeHaitiPhone(input.value);
-    if(normalized){
-      input.value = normalized;
+  function contact(uid = merchantUid) {
+    if (uid === user.uid) {
+      return notice("C’est ta boutique.");
     }
-  });
+
+    location.href = "chat.html?conv=" +
+      encodeURIComponent([user.uid, uid].sort().join("_"));
+  }
+
+  async function share() {
+    const url =
+      location.origin +
+      location.pathname +
+      "?uid=" +
+      encodeURIComponent(merchantUid);
+
+    const text =
+      `Découvre ${shop?.name || "cette boutique"} sur HaytiClips !`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: shop?.name || "Boutique HaytiClips",
+          text,
+          url
+        });
+      } else {
+        await navigator.clipboard.writeText(text + "\n" + url);
+        notice("Lien de la boutique copié.", "success");
+      }
+    } catch (e) {
+      if (e.name !== "AbortError") {
+        throw new Error(
+          "Partage impossible. Tu peux copier l’adresse de cette page."
+        );
+      }
+    }
+  }
+
+  $("#contactShopBtn").onclick = () => contact();
+  $("#shareShopBtn").onclick = () => run("share", share);
+
+  function drawCatalog() {
+    const node = $("#productsGrid");
+    const pgn = $("#catalogPager");
+
+    pgn.innerHTML = "";
+
+    if (!catalogReady) {
+      return empty(
+        node,
+        "Boutique indisponible. Tes achats restent accessibles dans Mes achats."
+      );
+    }
+
+    const search = $("#searchInput").value
+      .trim()
+      .toLocaleLowerCase();
+
+    const sort = $("#sortSelect").value;
+
+    const rows = products.filter(p =>
+      [p.name, p.description]
+        .join(" ")
+        .toLocaleLowerCase()
+        .includes(search)
+    ).sort((a, b) =>
+      sort === "price_asc"
+        ? a.price - b.price
+        : sort === "price_desc"
+          ? b.price - a.price
+          : (b.createdAtMs || 0) - (a.createdAtMs || 0)
+    );
+
+    node.innerHTML = "";
+
+    if (!rows.length) {
+      return empty(
+        node,
+        "Aucun produit correspondant à cette sélection."
+      );
+    }
+
+    for (const p of pageRows(rows, "catalog", 12)) {
+      const card = document.createElement("article");
+      card.className = "product-card";
+
+      const imgs = Array.isArray(p.images) && p.images.length
+        ? p.images
+        : [p.imageUrl];
+
+      card.innerHTML = `
+        <div
+          class="product-gallery"
+          role="group"
+          aria-label="Photos du produit"
+        >
+          ${imgs.map(u => photo(u, p.name || "Produit")).join("")}
+        </div>
+
+        <div class="product-body">
+          <h3 class="product-title">${esc(p.name)}</h3>
+          <p class="product-desc">${esc(p.description || "")}</p>
+
+          <div class="product-meta">
+            <strong class="price">${esc(money(p.price))}</strong>
+            <span class="stock">
+              ${p.stock > 0 ? esc(p.stock) + " en stock" : "Rupture"}
+            </span>
+          </div>
+
+          <div class="actions"></div>
+        </div>
+      `;
+
+      const a = $(".actions", card);
+
+      const buy = button(
+        a,
+        user.uid === merchantUid
+          ? "Ton produit"
+          : p.stock > 0
+            ? "Acheter"
+            : "Indisponible",
+        "checkout",
+        () => openCheckout(p.id),
+        "btn-buy"
+      );
+
+      buy.setAttribute("data-buy", "");
+
+      if (p.stock <= 0) buy.removeAttribute("data-lock");
+
+      buy.disabled = p.stock <= 0 || user.uid === merchantUid;
+
+      button(
+        a,
+        "Contacter",
+        "contact",
+        () => contact(),
+        "btn-contact"
+      );
+
+      node.appendChild(card);
+    }
+
+    pager(pgn, rows, "catalog", drawCatalog, 12);
+    sync();
+  }
+
+  async function loadShop() {
+    const version = ++shopVersion;
+
+    try {
+      const r = await api(
+        "/api/merchant/shop?uid=" + encodeURIComponent(merchantUid)
+      );
+
+      if (!alive() || version !== shopVersion) return true;
+
+      if (
+        r.merchantUid !== merchantUid ||
+        !r.shop ||
+        !Array.isArray(r.products) ||
+        r.products.some(p => p.merchantUid !== merchantUid)
+      ) {
+        throw new Error("Catalogue de boutique invalide.");
+      }
+
+      for (const p of r.products) {
+        minor(p.price);
+
+        if (!Number.isInteger(p.stock) || p.stock < 0) {
+          throw new Error("Stock de produit invalide.");
+        }
+      }
+
+      shop = r.shop;
+      products = r.products.filter(p =>
+        p.isActive === true && p.archived !== true
+      );
+
+      catalogReady = true;
+
+      $("#shopName").textContent = shop.name || "Boutique";
+      $("#shopBio").textContent = shop.bio || "Aucune description.";
+      $("#productCountPill").textContent = products.length + " produit(s)";
+
+      for (const [id, url] of [
+        ["shopLogo", shop.logo],
+        ["shopBanner", shop.banner]
+      ]) {
+        const node = $("#" + id);
+        const safe = url ? safeURL(url) : "";
+
+        node.hidden = !safe;
+
+        if (safe) node.src = safe;
+        else node.removeAttribute("src");
+      }
+
+      $("#shopContact").innerHTML = [
+        ["Email", shop.email],
+        ["Appel", shop.phone],
+        ["WhatsApp", shop.whatsapp],
+        ["Zones de livraison", shop.zones],
+        ["Conditions de livraison", shop.delivery]
+      ].map(([k, v]) => `
+        <p>
+          <strong>${esc(k)} :</strong>
+          ${esc(v || "À convenir avec le marchand")}
+        </p>
+      `).join("");
+
+      $("#shareShopBtn").disabled = false;
+
+      drawCatalog();
+      return true;
+
+    } catch (e) {
+      if (alive() && version === shopVersion) {
+        shop = null;
+        products = [];
+        catalogReady = false;
+
+        $("#shopName").textContent = "Boutique indisponible";
+        $("#shopBio").textContent = e.message;
+        $("#productCountPill").textContent = "Catalogue indisponible";
+
+        $("#shopContact").textContent =
+          "Les achats précédents restent consultables.";
+
+        $("#shareShopBtn").disabled = true;
+
+        for (const id of ["shopLogo", "shopBanner"]) {
+          $("#" + id).hidden = true;
+          $("#" + id).removeAttribute("src");
+        }
+
+        drawCatalog();
+      }
+
+      return false;
+    }
+  }
+
+  function readIntent() {
+    let raw;
+
+    try {
+      raw = localStorage.getItem(storageKey);
+    } catch {
+      throw new Error(
+        "Le stockage de la référence d’achat est indisponible sur cet appareil."
+      );
+    }
+
+    if (!raw) return null;
+
+    let p;
+
+    try {
+      p = JSON.parse(raw);
+    } catch {
+      throw new Error(
+        "La référence de la tentative locale est illisible. " +
+        "Contacte l’assistance avant un nouvel achat."
+      );
+    }
+
+    if (
+      !p ||
+      p.buyerUid !== user.uid ||
+      p.merchantUid !== merchantUid ||
+      !/^[A-Za-z0-9_-]{16,80}$/.test(p.key) ||
+      !p.payload ||
+      !validId(p.payload.productId) ||
+      !Number.isInteger(p.payload.quantity)
+    ) {
+      throw new Error(
+        "La tentative locale doit être vérifiée avec l’assistance."
+      );
+    }
+
+    return p;
+  }
+
+  function writeIntent(p) {
+    try {
+      const value = JSON.stringify(p);
+
+      localStorage.setItem(storageKey, value);
+
+      if (localStorage.getItem(storageKey) !== value) {
+        throw new Error();
+      }
+    } catch {
+      throw new Error(
+        "Impossible de conserver la référence d’achat. " +
+        "Autorise le stockage de ce site avant de confirmer."
+      );
+    }
+  }
+
+  function pendingView() {
+    if (!alive()) return;
+
+    const box = $("#pendingBox");
+
+    try {
+      const p = readIntent();
+
+      intentError = false;
+      box.hidden = !p;
+
+      if (p) {
+        $("#pendingText").textContent =
+          `Tentative à vérifier : ${p.name || "produit"}` +
+          ` · ${money(p.payload.expectedTotal)}. ` +
+          "Reprendre conserve la même référence " +
+          "pour éviter une deuxième commande.";
+      }
+
+    } catch (e) {
+      intentError = true;
+      box.hidden = false;
+      $("#pendingText").textContent = e.message;
+    }
+
+    sync();
+  }
+
+  async function withCheckoutLock(fn) {
+    if (navigator.locks?.request) {
+      return navigator.locks.request(
+        storageKey,
+        { ifAvailable: true },
+        lock => {
+          if (!lock) {
+            throw new Error(
+              "Une confirmation est en cours dans un autre onglet. " +
+              "Vérifie tes achats."
+            );
+          }
+
+          return fn();
+        }
+      );
+    }
+
+    return fn();
+  }
+
+  function newKey() {
+    const a = crypto.getRandomValues(new Uint8Array(24));
+
+    return [...a]
+      .map(v => v.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  async function lookupIntent(p) {
+    const r = await api(
+      "/api/merchant/checkout-status?requestKey=" +
+      encodeURIComponent(p.key)
+    );
+
+    if (typeof r.found !== "boolean") {
+      throw new Error("Statut de la tentative indisponible.");
+    }
+
+    if (!r.found) return null;
+
+    if (
+      !r.result ||
+      r.result.success !== true ||
+      !validId(r.result.orderId)
+    ) {
+      throw new Error(
+        "Résultat de la tentative à vérifier avec l’assistance."
+      );
+    }
+
+    return r.result;
+  }
+
+  async function finishCheckout(result, key, d) {
+    if (!alive()) return;
+
+    if (
+      !validId(result.orderId) ||
+      !Number.isFinite(result.totalAmount)
+    ) {
+      throw new Error(
+        "Confirmation incomplète. Vérifie la tentative avant de recommencer."
+      );
+    }
+
+    let kept = false;
+
+    try {
+      const current = readIntent();
+
+      if (current?.key === key) {
+        localStorage.removeItem(storageKey);
+      }
+    } catch {
+      kept = true;
+    }
+
+    if (d?.isConnected) close(d);
+
+    pendingView();
+    tab("orders", true);
+
+    const ok = await refresh(false);
+
+    if (alive()) {
+      notice(
+        `Commande ${result.orderId} enregistrée` +
+        ` · montant réservé : ${money(result.totalAmount)}.` +
+        (
+          ok
+            ? ""
+            : " Certaines données ne sont pas encore rechargées. Actualise."
+        ) +
+        (
+          kept
+            ? " La référence reste conservée sur cet appareil."
+            : ""
+        ),
+        "success"
+      );
+    }
+  }
+
+  async function checkPending() {
+    const p = readIntent();
+
+    if (!p) return pendingView();
+
+    const result = await lookupIntent(p);
+
+    if (result) return finishCheckout(result, p.key);
+
+    notice(
+      "Aucune commande n’est encore confirmée pour cette tentative. " +
+      "Reprendre réutilisera la même référence.",
+      "info"
+    );
+  }
+
+  function haitiPhone(v) {
+    let n = String(v || "").replace(/\D/g, "");
+
+    if (n.length === 8) n = "509" + n;
+
+    if (!/^509\d{8}$/.test(n)) {
+      throw new Error(
+        "Numéro haïtien invalide : utilise 8 chiffres " +
+        "ou 509 suivi de 8 chiffres."
+      );
+    }
+
+    return n;
+  }
+
+  async function openCheckout(productId) {
+    if (user.uid === merchantUid) {
+      throw new Error("Tu ne peux pas acheter tes propres produits.");
+    }
+
+    const pending = readIntent();
+
+    if (pending) {
+      const result = await lookupIntent(pending);
+
+      if (result) {
+        return finishCheckout(result, pending.key);
+      }
+    }
+
+    await loadMe();
+
+    if (!me || me.suspended) {
+      throw new Error("Les achats ne sont pas autorisés pour ce compte.");
+    }
+
+    if (!await loadShop()) {
+      throw new Error(
+        "La boutique est indisponible. Ta tentative reste récupérable."
+      );
+    }
+
+    if (!alive()) return;
+
+    const p = products.find(x => x.id === productId);
+
+    if (!p || p.stock <= 0) {
+      throw new Error("Ce produit n’est plus disponible.");
+    }
+
+    const unit = minor(p.price);
+    const known = pending?.payload || orders?.[0] || {};
+
+    const d = modal("Finaliser l’achat", `
+      <p class="buyer-note">
+        <strong>${esc(p.name)}</strong><br>
+        ${esc(money(p.price))} par unité
+      </p>
+
+      <form id="checkoutForm">
+        <fieldset data-lock="checkout">
+          <div class="buyer-form-grid">
+            ${field("buyNom", "Nom", {
+              required: true,
+              max: 60
+            })}
+
+            ${field("buyPrenom", "Prénom", {
+              required: true,
+              max: 60
+            })}
+
+            ${field("buyEmail", "Email", {
+              required: true,
+              type: "email",
+              max: 254,
+              wide: true
+            })}
+
+            ${field("buyPhone", "Contact appel", {
+              required: true,
+              type: "tel",
+              max: 30
+            })}
+
+            ${field("buyWhatsapp", "WhatsApp — facultatif si identique", {
+              type: "tel",
+              max: 30
+            })}
+
+            ${field("buyQuantity", "Quantité", {
+              required: true,
+              type: "number",
+              min: 1,
+              step: "1"
+            })}
+
+            <div class="buyer-field">
+              <label for="buySexe">Sexe — facultatif</label>
+              <select id="buySexe">
+                <option value="">Non précisé</option>
+                <option value="M">M</option>
+                <option value="F">F</option>
+                <option value="Autre">Autre</option>
+              </select>
+            </div>
+
+            ${field("buyDetails", "Adresse et détails utiles à la livraison", {
+              area: true,
+              max: 1000,
+              wide: true
+            })}
+          </div>
+
+          <p class="buyer-note">
+            ${esc(
+              shop.delivery ||
+              "Conviens des modalités de livraison avec le marchand."
+            )}
+            <br>
+            Le montant est réservé dans ton portefeuille.
+            Communique le code uniquement après réception et vérification.
+          </p>
+
+          <div class="buyer-total">
+            <span>Montant à réserver</span>
+            <span id="checkoutTotal"></span>
+          </div>
+
+          <button type="submit" class="btn-buy" style="width:100%">
+            Confirmer et réserver
+          </button>
+        </fieldset>
+      </form>
+    `);
+
+    const mapping = [
+      ["buyNom", "customerNom"],
+      ["buyPrenom", "customerPrenom"],
+      ["buyEmail", "customerEmail"],
+      ["buyPhone", "customerPhone"],
+      ["buyWhatsapp", "customerWhatsapp"],
+      ["buySexe", "customerSexe"],
+      ["buyDetails", "customerDetails"]
+    ];
+
+    for (const [id, k] of mapping) {
+      $("#" + id, d).value = known[k] || "";
+    }
+
+    $("#buyEmail", d).value =
+      known.customerEmail || user.email || me?.email || "";
+
+    $("#buyEmail", d).autocomplete = "email";
+    $("#buyNom", d).autocomplete = "family-name";
+    $("#buyPrenom", d).autocomplete = "given-name";
+
+    $("#buyQuantity", d).max = Math.min(1000, p.stock);
+
+    $("#buyQuantity", d).value =
+      pending?.payload.productId === p.id
+        ? String(pending.payload.quantity)
+        : "1";
+
+    const total = () => {
+      const qty = Number($("#buyQuantity", d).value);
+      const n = unit * qty;
+
+      return (
+        Number.isInteger(qty) &&
+        qty > 0 &&
+        qty <= Math.min(1000, p.stock) &&
+        Number.isSafeInteger(n) &&
+        n <= 100000000000
+      ) ? n : null;
+    };
+
+    const update = () => {
+      $("#checkoutTotal", d).textContent =
+        total() === null ? "—" : money(total() / 100);
+    };
+
+    $("#buyQuantity", d).oninput = update;
+    update();
+
+    for (const id of ["buyPhone", "buyWhatsapp"]) {
+      $("#" + id, d).onblur = () => {
+        const el = $("#" + id, d);
+
+        if (el.value.trim()) {
+          try {
+            el.value = haitiPhone(el.value);
+          } catch {}
+        }
+      };
+    }
+
+    if (pending) {
+      notice(
+        "Une tentative précédente existe. Sa référence sera réutilisée ; " +
+        "une commande déjà enregistrée sera récupérée sans nouvel achat.",
+        "info",
+        d
+      );
+    }
+
+    $("#checkoutForm", d).onsubmit = e => {
+      e.preventDefault();
+
+      run("checkout", () => withCheckoutLock(async () => {
+        if (!alive()) return;
+
+        if (!me || me.suspended) {
+          throw new Error("Achat non autorisé.");
+        }
+
+        let current = readIntent();
+
+        if (current) {
+          const found = await lookupIntent(current);
+
+          if (found) {
+            return finishCheckout(found, current.key, d);
+          }
+        }
+
+        if (!alive()) return;
+
+        const qty = Number($("#buyQuantity", d).value);
+        const sum = total();
+
+        if (sum === null) {
+          throw new Error("Quantité ou montant invalide.");
+        }
+
+        const payload = {
+          productId: p.id,
+          quantity: qty,
+          customerNom: $("#buyNom", d).value.trim(),
+          customerPrenom: $("#buyPrenom", d).value.trim(),
+          customerEmail: $("#buyEmail", d).value.trim().toLowerCase(),
+          customerPhone: haitiPhone($("#buyPhone", d).value),
+          customerWhatsapp: haitiPhone(
+            $("#buyWhatsapp", d).value.trim() ||
+            $("#buyPhone", d).value
+          ),
+          customerSexe: $("#buySexe", d).value,
+          customerDetails: $("#buyDetails", d).value.trim(),
+          expectedTotal: sum / 100
+        };
+
+        if (
+          !payload.customerNom ||
+          !payload.customerPrenom ||
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.customerEmail)
+        ) {
+          throw new Error("Vérifie le nom, le prénom et l’email.");
+        }
+
+        current = {
+          key: current?.key || newKey(),
+          buyerUid: user.uid,
+          merchantUid,
+          name: p.name,
+          payload,
+          createdAt: current?.createdAt || Date.now()
+        };
+
+        writeIntent(current);
+        pendingView();
+
+        try {
+          const result = await api("/api/merchant/buy-product", {
+            ...payload,
+            requestKey: current.key
+          });
+
+          await finishCheckout(result, current.key, d);
+
+        } catch (err) {
+          if (err.stale) throw err;
+
+          let found = null;
+
+          try {
+            found = await lookupIntent(current);
+          } catch {}
+
+          if (found) {
+            return finishCheckout(found, current.key, d);
+          }
+
+          pendingView();
+
+          if (err.code === "PRICE_CHANGED") {
+            if (d.isConnected) close(d);
+
+            await loadShop();
+
+            if (alive()) {
+              notice(
+                "Le prix a changé. Rouvre l’achat et confirme le nouveau montant. " +
+                "La référence de la tentative est conservée.",
+                "error"
+              );
+            }
+
+            return;
+          }
+
+          throw err;
+        }
+      }), d);
+    };
+  }
+
+  $("#checkPendingBtn").onclick = () =>
+    run("checkout", () => withCheckoutLock(checkPending));
+
+  $("#resumePendingBtn").onclick = () =>
+    run("checkout", async () => {
+      const p = readIntent();
+
+      if (p) await openCheckout(p.payload.productId);
+    });
+
+  async function ownOrder(id) {
+    const r = await api(
+      "/api/merchant/order/" + encodeURIComponent(id)
+    );
+
+    if (
+      !r.order ||
+      r.order.buyerUid !== user.uid ||
+      r.order.id !== id ||
+      !Array.isArray(r.history)
+    ) {
+      throw new Error("Commande non autorisée ou incomplète.");
+    }
+
+    return r;
+  }
+
+  function orderInfo(o) {
+    return `
+      <h3>${esc(o.productName || "Produit")}</h3>
+      <p class="buyer-ref">Commande : ${esc(o.id)}</p>
+
+      <p>
+        ${esc(date(o.createdAtMs))}
+        · Quantité : ${esc(o.quantity)}
+      </p>
+
+      <p>
+        Montant client : ${esc(money(o.totalAmount))}<br>
+        Frais de vente : ${esc(money(o.feeAmount))}<br>
+        Net marchand : ${esc(money(o.merchantNet))}
+      </p>
+
+      <p>${badge(o.status)} ${badge(o.fundsStatus)}</p>
+
+      <p>
+        ${esc(o.deliveryTerms || "Modalités convenues avec le marchand")}
+      </p>
+
+      ${o.feePolicy === "legacy-fixed" ? `
+        <p class="buyer-note">
+          Cette ancienne commande conserve ses frais historiques.
+        </p>
+      ` : ""}
+
+      ${o.requiresReconciliation ? `
+        <p class="buyer-note">
+          L’administration doit rapprocher cette ancienne commande.
+        </p>
+      ` : ""}
+
+      ${o.disputeDeadlineMs ? `
+        <p class="buyer-note">
+          Contestation possible jusqu’au
+          ${esc(date(o.disputeDeadlineMs))}.
+        </p>
+      ` : ""}
+    `;
+  }
+
+  async function viewOrder(id) {
+    const r = await ownOrder(id);
+
+    if (!alive()) return;
+
+    const d = modal("Détails de mon achat", `
+      <div class="buyer-item">
+        ${orderInfo(r.order)}
+
+        <details>
+          <summary>Mes informations de livraison</summary>
+
+          ${[
+            [
+              "Nom",
+              [r.order.customerPrenom, r.order.customerNom]
+                .filter(Boolean).join(" ")
+            ],
+            ["Email", r.order.customerEmail],
+            ["Appel", r.order.customerPhone],
+            ["WhatsApp", r.order.customerWhatsapp],
+            ["Détails", r.order.customerDetails]
+          ].map(([k, v]) => `
+            <p><strong>${esc(k)} :</strong> ${esc(v || "—")}</p>
+          `).join("")}
+        </details>
+      </div>
+
+      <h3 style="margin-top:16px">Mes mouvements</h3>
+      <div data-history></div>
+    `);
+
+    const node = $("[data-history]", d);
+
+    const rows = [...r.history]
+      .filter(x => x.userId === user.uid)
+      .sort((a, b) => (b.atMs || 0) - (a.atMs || 0));
+
+    if (!rows.length) {
+      return empty(node, "Aucun mouvement enregistré.");
+    }
+
+    const key = "history:" + id;
+    pages[key] = 1;
+
+    const render = () => {
+      node.innerHTML = pageRows(rows, key).map(x => `
+        <div class="buyer-history">
+          <p>${esc(date(x.atMs))} · ${esc(label(x.status))}</p>
+          <p class="buyer-ref">${esc(x.id)}</p>
+          <p>${esc(x.type)} · Référence : ${esc(money(x.amount))}</p>
+          <p>
+            Variation du portefeuille :
+            ${
+              Number.isFinite(x.walletDelta)
+                ? esc(
+                    (x.walletDelta > 0 ? "+" : "") +
+                    money(x.walletDelta)
+                  )
+                : "—"
+            }
+          </p>
+        </div>
+      `).join("");
+
+      pager(node, rows, key, render);
+    };
+
+    render();
+  }
+
+  async function showCode(id) {
+    const r = await ownOrder(id);
+    const o = r.order;
+
+    if (
+      !["pending", "accepted", "shipping"].includes(o.status) ||
+      o.disputeId
+    ) {
+      throw new Error("Le code n’est pas disponible pour cette commande.");
+    }
+
+    const result = await api(
+      "/api/merchant/order-code/" + encodeURIComponent(id)
+    );
+
+    if (!/^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{12}$/.test(result.code)) {
+      throw new Error("Code indisponible. Contacte l’assistance.");
+    }
+
+    if (!alive() || document.hidden) return;
+
+    const d = modal("Mon code de livraison", `
+      <p class="buyer-note">
+        Communique ce code uniquement après réception
+        et vérification du produit.
+        Ne l’envoie pas à l’avance et ne le publie pas.
+      </p>
+
+      <div class="delivery-code" data-code></div>
+
+      <button type="button" class="btn-contact" data-copy>
+        Copier mon code
+      </button>
+    `);
+
+    d.dataset.privateCode = "true";
+
+    const value = result.code;
+
+    $("[data-code]", d).textContent =
+      value.match(/.{1,4}/g).join("-");
+
+    $("[data-copy]", d).onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(value);
+
+        if (alive() && d.isConnected) {
+          notice("Code copié.", "success", d);
+        }
+      } catch {
+        if (d.isConnected) {
+          notice(
+            "Sélectionne le code pour le copier manuellement.",
+            "info",
+            d
+          );
+        }
+      }
+    };
+
+    d.addEventListener("close", () => {
+      $("[data-code]", d).textContent = "";
+    }, { once: true });
+
+    await loadOrders();
+  }
+
+  async function afterAction(text) {
+    const ok = await refresh(false);
+
+    if (alive()) {
+      notice(
+        text + (
+          ok
+            ? ""
+            : " Certaines données ne sont pas rechargées. Actualise."
+        ),
+        ok ? "success" : "info"
+      );
+    }
+  }
+
+  async function cancelOrder(o) {
+    if (!confirm(
+      "Annuler cette commande en attente et débloquer sa réservation ?"
+    )) return;
+
+    await api("/api/merchant/cancel-order", {
+      orderId: o.id
+    });
+
+    await afterAction("Commande annulée.");
+  }
+
+  function claim(o) {
+    if (cases?.some(x => x.orderId === o.id)) {
+      tab("disputes", true);
+      return;
+    }
+
+    const d = modal("Signaler un problème", `
+      <form id="claimForm">
+        <fieldset data-lock="order:${esc(o.id)}">
+          <div class="buyer-field">
+            <label for="claimType">Problème rencontré</label>
+            <select id="claimType" required>
+              <option value="">Choisir un motif</option>
+              <option>Produit non reçu</option>
+              <option>Mauvais produit reçu</option>
+              <option>Produit endommagé</option>
+              <option>Autre problème justifié</option>
+            </select>
+          </div>
+
+          ${field("claimReason", "Explique le problème", {
+            area: true,
+            required: true,
+            max: 900
+          })}
+
+          <p class="buyer-note">
+            Après enregistrement, ajoute tes preuves dans Mes réclamations.
+            Le serveur vérifie le délai de contestation applicable
+            à cette commande.
+          </p>
+
+          <button class="btn-buy" type="submit">
+            Enregistrer la réclamation
+          </button>
+        </fieldset>
+      </form>
+    `);
+
+    $("#claimForm", d).onsubmit = e => {
+      e.preventDefault();
+
+      const text = $("#claimReason", d).value.trim();
+      const type = $("#claimType", d).value;
+
+      if (!type || text.length < 10) {
+        return notice(
+          "Choisis un motif et explique le problème en au moins 10 caractères.",
+          "error",
+          d
+        );
+      }
+
+      run("order:" + o.id, async () => {
+        await api("/api/merchant/open-dispute", {
+          orderId: o.id,
+          reason: type + " : " + text
+        });
+
+        close(d);
+        tab("disputes", true);
+
+        await afterAction(
+          "Réclamation enregistrée. Consulte le dossier et ajoute tes preuves."
+        );
+      }, d);
+    };
+
+    sync();
+  }
+
+  function drawOrders() {
+    const node = $("#buyerOrders");
+
+    if (!orders) {
+      return empty(node, "Achats indisponibles. Utilise Actualiser.");
+    }
+
+    const search = $("#orderSearch").value
+      .trim()
+      .toLocaleLowerCase();
+
+    const filter = $("#orderFilter").value;
+
+    const rows = orders.filter(o =>
+      (filter === "all" || o.status === filter) &&
+      [o.id, o.productName]
+        .join(" ")
+        .toLocaleLowerCase()
+        .includes(search)
+    );
+
+    node.innerHTML = "";
+
+    if (!rows.length) {
+      return empty(
+        node,
+        "Aucun achat correspondant à cette sélection."
+      );
+    }
+
+    for (const o of pageRows(rows, "orders")) {
+      const n = document.createElement("article");
+      n.className = "buyer-item";
+
+      n.innerHTML = orderInfo(o) + '<div class="buyer-actions"></div>';
+
+      const a = $(".buyer-actions", n);
+      const key = "order:" + o.id;
+
+      button(a, "Consulter", key, () => viewOrder(o.id));
+
+      button(
+        a,
+        "Contacter le marchand",
+        key,
+        () => contact(o.merchantUid)
+      );
+
+      if (
+        ["pending", "accepted", "shipping"].includes(o.status) &&
+        !o.disputeId
+      ) {
+        button(
+          a,
+          "Voir mon code",
+          key,
+          () => showCode(o.id),
+          "btn-buy"
+        );
+      }
+
+      if (o.status === "pending" && !o.disputeId) {
+        button(a, "Annuler", key, () => cancelOrder(o));
+      }
+
+      const existing = cases?.find(c => c.orderId === o.id);
+
+      if (o.disputeId || existing) {
+        button(a, "Voir le dossier", key, () => tab("disputes", true));
+
+      } else if (
+        ["pending", "accepted", "shipping"].includes(o.status) ||
+        (
+          o.status === "completed" &&
+          Number(o.disputeDeadlineMs || 0) >= Date.now()
+        )
+      ) {
+        button(
+          a,
+          "Signaler un problème",
+          key,
+          () => claim(o),
+          "btn-contact",
+          true
+        );
+      }
+
+      node.appendChild(n);
+    }
+
+    pager(node, rows, "orders", drawOrders);
+    sync();
+  }
+
+  async function loadOrders() {
+    const version = ++orderVersion;
+
+    try {
+      const r = await api("/api/merchant/orders?side=buyer");
+
+      if (!alive() || version !== orderVersion) return true;
+
+      if (
+        !Array.isArray(r.orders) ||
+        r.orders.some(o => o.buyerUid !== user.uid)
+      ) {
+        throw new Error("Historique d’achats invalide.");
+      }
+
+      orders = r.orders;
+      drawOrders();
+
+      return true;
+
+    } catch (e) {
+      if (alive() && version === orderVersion) {
+        orders = null;
+        empty($("#buyerOrders"), "Achats indisponibles : " + e.message);
+        error(e);
+      }
+
+      return false;
+    }
+  }
+
+  async function proof(dossier, file) {
+    const blob = await api(
+      `/api/merchant/dispute-evidence/${
+        encodeURIComponent(dossier.id)
+      }/${encodeURIComponent(file.id)}`,
+      undefined,
+      true
+    );
+
+    if (!alive()) return;
+
+    if (![
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "video/mp4"
+    ].includes(blob.type.split(";")[0])) {
+      throw new Error("Format de preuve non pris en charge.");
+    }
+
+    const u = URL.createObjectURL(blob);
+    urls.add(u);
+
+    const d = modal("Pièce du dossier", "<div data-proof></div>");
+
+    const media = document.createElement(
+      blob.type.startsWith("video/") ? "video" : "img"
+    );
+
+    media.className = "buyer-proof";
+    media.src = u;
+
+    if (media.tagName === "VIDEO") {
+      media.controls = true;
+      media.preload = "metadata";
+    } else {
+      media.alt = "Pièce du dossier";
+    }
+
+    $("[data-proof]", d).appendChild(media);
+
+    d.addEventListener("close", () => {
+      media.removeAttribute("src");
+      URL.revokeObjectURL(u);
+      urls.delete(u);
+    }, { once: true });
+  }
+
+  function addNote(x) {
+    const d = modal("Ajouter une explication", `
+      <form data-form>
+        <fieldset data-lock="case:${esc(x.id)}">
+          ${field("caseMessage", "Message pour le dossier", {
+            area: true,
+            required: true,
+            max: 2000
+          })}
+
+          <button type="submit" class="btn-buy">Envoyer</button>
+        </fieldset>
+      </form>
+    `);
+
+    $("[data-form]", d).onsubmit = e => {
+      e.preventDefault();
+
+      const message = $("#caseMessage", d).value.trim();
+
+      if (message.length < 2) {
+        return notice("Ajoute au moins deux caractères.", "error", d);
+      }
+
+      run("case:" + x.id, async () => {
+        await api("/api/merchant/dispute-message", {
+          disputeId: x.id,
+          message
+        });
+
+        close(d);
+        await afterAction("Explication ajoutée.");
+      }, d);
+    };
+
+    sync();
+  }
+
+  function addProof(x) {
+    const d = modal("Ajouter une preuve", `
+      <form data-form>
+        <fieldset data-lock="case:${esc(x.id)}">
+          <div class="buyer-field">
+            <label for="proofFile">
+              Photo JPG, PNG, WebP ou vidéo MP4 · 15 Mo maximum
+            </label>
+
+            <input
+              id="proofFile"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,video/mp4"
+              required
+            >
+          </div>
+
+          <button type="submit" class="btn-buy">
+            Ajouter au dossier
+          </button>
+        </fieldset>
+      </form>
+    `);
+
+    $("[data-form]", d).onsubmit = e => {
+      e.preventDefault();
+
+      const f = $("#proofFile", d).files[0];
+
+      if (
+        !f ||
+        f.size > 15 * 1024 * 1024 ||
+        ![
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "video/mp4"
+        ].includes(f.type)
+      ) {
+        return notice(
+          "Choisis un fichier autorisé de 15 Mo maximum.",
+          "error",
+          d
+        );
+      }
+
+      run("case:" + x.id, async () => {
+        const form = new FormData();
+
+        form.append("file", f);
+        form.append("disputeId", x.id);
+
+        await api("/api/merchant/dispute-evidence", form);
+
+        close(d);
+        await afterAction("Preuve ajoutée au dossier.");
+      }, d);
+    };
+
+    sync();
+  }
+
+  function drawCases() {
+    const node = $("#buyerDisputes");
+
+    if (!cases) {
+      return empty(
+        node,
+        "Réclamations indisponibles. Utilise Actualiser."
+      );
+    }
+
+    node.innerHTML = "";
+
+    if (!cases.length) {
+      return empty(node, "Aucune réclamation liée à tes achats.");
+    }
+
+    for (const x of pageRows(cases, "cases")) {
+      const n = document.createElement("article");
+      n.className = "buyer-item";
+
+      const who = id => id === user.uid
+        ? "Toi"
+        : id === x.merchantUid
+          ? "Marchand"
+          : "Équipe HaytiClips";
+
+      n.innerHTML = `
+        <div class="buyer-toolbar">
+          <h3>Dossier de réclamation</h3>
+          ${badge(x.status)}
+        </div>
+
+        <p class="buyer-ref">Commande : ${esc(x.orderId)}</p>
+        <p>${esc(date(x.createdAtMs))}</p>
+        <p>${esc(x.reason)}</p>
+
+        ${x.status === "resolved" ? `
+          <p class="buyer-note">
+            Décision :
+            ${esc(
+              x.decision === "refund"
+                ? "Remboursement"
+                : x.decision === "release"
+                  ? "Libération / clôture"
+                  : x.decision || "À vérifier"
+            )}
+            <br>
+            ${esc(x.reasonDecision || "")}
+          </p>
+        ` : ""}
+
+        <details>
+          <summary>Explications (${(x.messages || []).length})</summary>
+
+          ${(x.messages || []).map(m => `
+            <p>
+              <strong>${esc(who(m.uid))}</strong>
+              · ${esc(date(m.atMs))}
+              <br>
+              ${esc(m.text)}
+            </p>
+          `).join("") || "<p>Aucune explication.</p>"}
+        </details>
+
+        <div class="buyer-actions" data-proofs></div>
+        <div class="buyer-actions" data-actions></div>
+      `;
+
+      for (const [i, f] of (x.evidence || []).entries()) {
+        button(
+          $("[data-proofs]", n),
+          "Voir la preuve " + (i + 1),
+          "proof:" + f.id,
+          () => proof(x, f)
+        );
+      }
+
+      const a = $("[data-actions]", n);
+      const key = "case:" + x.id;
+
+      button(
+        a,
+        "Consulter la commande",
+        key,
+        () => viewOrder(x.orderId)
+      );
+
+      if (x.status === "open") {
+        button(
+          a,
+          "Ajouter une explication",
+          key,
+          () => addNote(x),
+          "btn-contact",
+          true
+        );
+
+        button(
+          a,
+          "Ajouter une preuve",
+          key,
+          () => addProof(x),
+          "btn-buy",
+          true
+        );
+      }
+
+      node.appendChild(n);
+    }
+
+    pager(node, cases, "cases", drawCases);
+    sync();
+  }
+
+  async function loadCases() {
+    const version = ++caseVersion;
+
+    try {
+      const r = await api("/api/merchant/disputes");
+
+      if (!alive() || version !== caseVersion) return true;
+
+      if (!Array.isArray(r.disputes)) {
+        throw new Error("Liste des réclamations invalide.");
+      }
+
+      cases = r.disputes.filter(x => x.buyerUid === user.uid);
+
+      drawCases();
+
+      if (orders) drawOrders();
+
+      return true;
+
+    } catch (e) {
+      if (alive() && version === caseVersion) {
+        cases = null;
+
+        empty(
+          $("#buyerDisputes"),
+          "Réclamations indisponibles : " + e.message
+        );
+
+        error(e);
+      }
+
+      return false;
+    }
+  }
+
+  async function loadMe() {
+    try {
+      const r = await api("/api/merchant/me");
+
+      if (!alive()) return false;
+
+      if (r.uid !== user.uid) {
+        throw new Error("Profil non autorisé.");
+      }
+
+      me = r;
+      sync();
+
+      return true;
+
+    } catch (e) {
+      if (alive()) {
+        me = null;
+        sync();
+        error(e);
+      }
+
+      return false;
+    }
+  }
+
+  async function refresh(checkMe = true) {
+    const tasks = [
+      loadShop(),
+      loadOrders(),
+      loadCases()
+    ];
+
+    if (checkMe) tasks.push(loadMe());
+
+    const results = await Promise.allSettled(tasks);
+
+    return results.every(
+      r => r.status === "fulfilled" && r.value === true
+    );
+  }
+
+  $("#refreshBtn").onclick = () =>
+    run("refresh", async () => {
+      if (await refresh()) {
+        notice("Données actualisées.", "success");
+      }
+
+      pendingView();
+    });
+
+  $("#searchInput").oninput =
+  $("#sortSelect").onchange = () => {
+    pages.catalog = 1;
+    drawCatalog();
+  };
+
+  $("#orderSearch").oninput =
+  $("#orderFilter").onchange = () => {
+    pages.orders = 1;
+    drawOrders();
+  };
+
+  pendingView();
+  sync();
+
+  await run("refresh", () => refresh());
+
+  if (!alive()) return;
+
+  try {
+    const p = readIntent();
+
+    if (p) {
+      const result = await lookupIntent(p);
+
+      if (result) await finishCheckout(result, p.key);
+    }
+  } catch (e) {
+    error(e);
+  }
+
+  if (!alive()) return;
+
+  const storageHandler = e => {
+    if (e.key === storageKey && alive()) pendingView();
+  };
+
+  window.addEventListener("storage", storageHandler);
+
+  teardown = () =>
+    window.removeEventListener("storage", storageHandler);
 }
 
-bindHaitiPhoneInput(buyPhone);
-bindHaitiPhoneInput(buyWhatsapp);
+onAuthStateChanged(auth, user => {
+  const epoch = ++session;
 
-onAuthStateChanged(auth, async(user)=>{
-  if(!user){
-    window.location.href = "login.html";
+  teardown();
+  teardown = () => {};
+
+  cleanup();
+
+  $("#shop-root").innerHTML = initial;
+  $("#merchantDashboardBtn").hidden = true;
+
+  if (!user) {
+    location.href = "login.html";
     return;
   }
 
-  const ok = await loadMerchant();
-  if(!ok) return;
+  boot(user, epoch).catch(e => {
+    if (epoch === session && !e.stale) {
+      notice(e.message || "Chargement impossible.", "error");
+    }
+  });
+});
 
-  if(
-    user.uid === merchantUid &&
-    merchantData.merchantEnabled === true &&
-    merchantData.merchantStatus === "active"
-  ){
-    merchantDashboardBtn.style.display = "inline-flex";
-    merchantDashboardBtn.onclick = () => {
-      window.location.href = `merchant-dashboard.html?uid=${merchantUid}`;
-    };
-  }else{
-    merchantDashboardBtn.style.display = "none";
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    $$("dialog[data-private-code]").forEach(close);
   }
+});
 
-  await loadProducts();
+window.addEventListener("pagehide", e => {
+  if (!e.persisted) {
+    teardown();
+    cleanup();
+  }
 });
 </script>
 

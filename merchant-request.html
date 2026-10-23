@@ -231,6 +231,38 @@ input:focus,textarea:focus,select:focus{
     font-size:24px;
   }
 }
+
+[hidden]{
+  display:none!important;
+}
+
+.merchant-fields{
+  border:0;
+  padding:0;
+  margin:0;
+  min-width:0;
+}
+
+.merchant-fields:disabled{
+  opacity:.65;
+}
+
+.dashboard-link{
+  display:block;
+  text-align:center;
+  text-decoration:none;
+  margin-top:12px;
+}
+
+.status-refresh{
+  margin-top:12px;
+}
+
+textarea{
+  min-height:100px;
+  resize:vertical;
+}
+  
 </style>
 </head>
 <body>
@@ -243,284 +275,789 @@ input:focus,textarea:focus,select:focus{
 
 <div class="page">
 
- 
+  <div class="hero">
+    <h1 class="hero-title">Ouvre ta boutique</h1>
+    <p class="section-sub">
+      Présente ton activité en quelques lignes.
+    </p>
+  </div>
+
+  <div class="info-box">
+    <strong>Accès marchand entièrement gratuit.</strong><br>
+    Aucun frais d’inscription, abonnement ou renouvellement.<br>
+    Une commission de <strong>3 %</strong> s’applique aux ventes réglées.
+  </div>
 
   <div class="card">
-    <div class="section-title">Statut actuel</div>
-    <div class="section-sub">Vérifie d’abord l’état de ton accès marchand.</div>
+    <div class="section-title">
+      Statut de ton espace marchand
+    </div>
 
     <div class="status-box">
-      <span class="status-pill status-none" id="merchantStatusPill">AUCUN</span>
-      <div class="meta-line" id="merchantStatusText">Chargement...</div>
-      <div class="meta-line" id="walletText">Wallet : 0 Gdes</div>
-      <div class="meta-line" id="expireText">Expiration marchand : -</div>
+      <span
+        class="status-pill status-none"
+        id="merchantStatusPill"
+      >CHARGEMENT</span>
+
+      <div
+        class="meta-line"
+        id="merchantStatusText"
+        role="status"
+        aria-live="polite"
+      >Vérification de ton dossier...</div>
+
+      <div class="meta-line" id="decisionReason" hidden></div>
+      <div class="meta-line" id="requestReference" hidden></div>
     </div>
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      id="openDashboardBtn"
+      hidden
+      style="margin-top:12px;"
+    >
+      Ouvrir mon dashboard
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-dark"
+      id="refreshStatusBtn"
+      style="margin-top:12px;"
+      disabled
+    >
+      Actualiser le statut
+    </button>
   </div>
 
-  <div class="card">
-    <div class="section-title">Demande</div>
-    <div class="section-sub">
-      Toute Nouvelle demande coûte <strong>750 Gdes</strong>. Un code parrain valide est obligatoire.
-      Puis renouvellement de l'espace: <strong>250 Gdes</strong> tous les 30 jours.
-    </div>
+  <div class="card" id="requestCard" hidden>
+    <div class="section-title">Demande d’accès</div>
+
+    <p class="section-sub">
+      Ton compte HaytiClips est associé automatiquement à la demande.
+      L’équipe examine ton activité avant l’activation.
+    </p>
 
     <form id="merchantForm">
-      <label for="shopName">Nom de la boutique</label>
-      <input type="text" id="shopName" maxlength="60" placeholder="Ex: Vava creation" required>
 
-      <label for="productType">Type de produits à vendre</label>
-      <input type="text" id="productType" maxlength="60" placeholder="Ex: vêtements, chaussures, accessoires..." required>
+      <fieldset
+        id="merchantFields"
+        disabled
+        style="border:0;padding:0;margin:0;min-width:0;"
+      >
+        <label for="shopName">Nom de la boutique</label>
+        <input
+          type="text"
+          id="shopName"
+          minlength="2"
+          maxlength="60"
+          autocomplete="organization"
+          placeholder="Ex : Vava Création"
+          required
+        >
 
-      <label for="referralCode">Code parrain</label>
-      <input type="text" id="referralCode" maxlength="20" placeholder="Ex: RUG123456" required>
+        <label for="merchantEmail">Email professionnel</label>
+        <input
+          type="email"
+          id="merchantEmail"
+          maxlength="254"
+          autocomplete="email"
+          inputmode="email"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="boutique@exemple.com"
+          required
+        >
+
+        <label for="productType">Catégorie commerciale</label>
+        <input
+          type="text"
+          id="productType"
+          list="merchantCategories"
+          minlength="2"
+          maxlength="60"
+          placeholder="Ex : vêtements et accessoires"
+          required
+        >
+
+        <datalist id="merchantCategories">
+          <option value="Vêtements et accessoires"></option>
+          <option value="Beauté et soins"></option>
+          <option value="Artisanat et décoration"></option>
+          <option value="Électronique et accessoires"></option>
+          <option value="Maison et équipement"></option>
+          <option value="Alimentation"></option>
+          <option value="Services"></option>
+          <option value="Autre activité"></option>
+        </datalist>
+
+        <label for="merchantDescription">
+          Description courte de l’activité
+        </label>
+        <textarea
+          id="merchantDescription"
+          rows="3"
+          minlength="5"
+          maxlength="300"
+          placeholder="Présente ce que tu proposes et à qui tu t’adresses."
+          required
+        ></textarea>
+      </fieldset>
 
       <div class="row">
-        <button type="submit" class="btn btn-primary" id="submitBtn">Envoyer la demande</button>
-        <button type="button" class="btn btn-dark" onclick="history.back()">Annuler</button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          id="submitBtn"
+          disabled
+        >
+          Envoyer la demande
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-dark"
+          onclick="history.back()"
+        >
+          Annuler
+        </button>
       </div>
 
-      <div class="message" id="statusMsg"></div>
-      <button type="button" class="btn btn-primary" id="renewBtn" style="display:none;margin-top:12px;">
-  Renouveler l’accès marchand (250 Gdes)
-</button>
-      
     </form>
   </div>
+
+  <div
+    class="message"
+    id="statusMsg"
+    role="status"
+    aria-live="polite"
+  ></div>
 
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-  authDomain:"tstx-58474.firebaseapp.com",
-  projectId:"tstx-58474",
-  storageBucket:"tstx-58474.firebasestorage.app",
-  messagingSenderId:"1010020144942",
-  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
 const API_BASE = "https://hayticlip-server.onrender.com";
 
 const merchantForm = document.getElementById("merchantForm");
-const submitBtn = document.getElementById("submitBtn");
-const statusMsg = document.getElementById("statusMsg");
-const expireText = document.getElementById("expireText");
-const renewBtn = document.getElementById("renewBtn");
-const merchantStatusPill = document.getElementById("merchantStatusPill");
-const merchantStatusText = document.getElementById("merchantStatusText");
-const walletText = document.getElementById("walletText");
+const merchantFields = document.getElementById("merchantFields");
+const requestCard = document.getElementById("requestCard");
 
+const shopName = document.getElementById("shopName");
+const merchantEmail = document.getElementById("merchantEmail");
+const productType = document.getElementById("productType");
+const merchantDescription =
+  document.getElementById("merchantDescription");
+
+const submitBtn = document.getElementById("submitBtn");
+const refreshStatusBtn =
+  document.getElementById("refreshStatusBtn");
+const openDashboardBtn =
+  document.getElementById("openDashboardBtn");
+
+const merchantStatusPill =
+  document.getElementById("merchantStatusPill");
+const merchantStatusText =
+  document.getElementById("merchantStatusText");
+const decisionReason = document.getElementById("decisionReason");
+const requestReference =
+  document.getElementById("requestReference");
+const statusMsg = document.getElementById("statusMsg");
 
 let currentUser = null;
-let currentUserData = null;
+let merchantData = null;
+let canRequest = false;
 let processing = false;
+let refreshing = false;
+let prefilled = false;
+let loadVersion = 0;
+let intent = null;
 
-function setStatusClass(status){
-  merchantStatusPill.className = "status-pill";
+function setMessage(text, type = "") {
+  statusMsg.textContent = text;
+  statusMsg.className = "message" + (type ? " " + type : "");
+}
 
-  if(status === "pending"){
-    merchantStatusPill.classList.add("status-pending");
-    merchantStatusPill.textContent = "EN ATTENTE";
-  } else if(status === "active"){
-    merchantStatusPill.classList.add("status-active");
-    merchantStatusPill.textContent = "ACTIF";
-  } else if(status === "rejected"){
-    merchantStatusPill.classList.add("status-rejected");
-    merchantStatusPill.textContent = "REFUSÉ";
-  } else {
-    merchantStatusPill.classList.add("status-none");
-    merchantStatusPill.textContent = "AUCUN";
+function syncControls() {
+  merchantFields.disabled =
+    !canRequest || processing || refreshing;
+
+  submitBtn.disabled = merchantFields.disabled;
+  submitBtn.textContent =
+    processing ? "Envoi..." : "Envoyer la demande";
+
+  refreshStatusBtn.disabled =
+    !currentUser || processing || refreshing;
+
+  refreshStatusBtn.textContent =
+    refreshing ? "Actualisation..." : "Actualiser le statut";
+}
+
+function storageKey(uid) {
+  return "hc_merchant_request_v2:" + uid;
+}
+
+function readIntent(uid) {
+  try {
+    const saved = JSON.parse(
+      sessionStorage.getItem(storageKey(uid)) || "null"
+    );
+
+    if (
+      saved &&
+      typeof saved.key === "string" &&
+      /^[a-zA-Z0-9_-]{16,80}$/.test(saved.key) &&
+      saved.payload &&
+      ["shopName", "email", "productType", "description"]
+        .every(key => typeof saved.payload[key] === "string")
+    ) {
+      return saved;
+    }
+  } catch {}
+
+  return null;
+}
+
+function clearIntent(uid) {
+  intent = null;
+
+  try {
+    sessionStorage.removeItem(storageKey(uid));
+  } catch {}
+}
+
+function requestKey(uid, payload) {
+  if (
+    !intent ||
+    JSON.stringify(intent.payload) !== JSON.stringify(payload)
+  ) {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+
+    const key = Array.from(
+      bytes,
+      value => value.toString(16).padStart(2, "0")
+    ).join("");
+
+    intent = { key, payload };
+  }
+
+  try {
+    sessionStorage.setItem(
+      storageKey(uid),
+      JSON.stringify(intent)
+    );
+  } catch {}
+
+  return intent.key;
+}
+
+async function apiRequest(path, options = {}) {
+  const user = auth.currentUser;
+
+  if (!user || user.uid !== currentUser?.uid) {
+    throw Object.assign(
+      new Error("Session expirée"),
+      { status: 401 }
+    );
+  }
+
+  const token = await user.getIdToken();
+
+  if (auth.currentUser?.uid !== user.uid) {
+    throw Object.assign(
+      new Error("Session modifiée"),
+      { status: 401 }
+    );
+  }
+
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 30000);
+
+  try {
+    const response = await fetch(API_BASE + path, {
+      method: options.method || "GET",
+
+      headers: {
+        "Accept": "application/json",
+        "Authorization": "Bearer " + token,
+        ...(options.body
+          ? { "Content-Type": "application/json" }
+          : {})
+      },
+
+      cache: "no-store",
+      signal: controller.signal,
+
+      body: options.body
+        ? JSON.stringify(options.body)
+        : undefined
+    });
+
+    let data;
+
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error(
+        "Le service est temporairement indisponible. Réessaie dans un instant."
+      );
+    }
+
+    if (!response.ok || data?.success !== true) {
+      throw Object.assign(
+        new Error(data?.error || "Requête refusée"),
+        { status: response.status }
+      );
+    }
+
+    return data;
+
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(
+        "Le serveur met trop de temps à répondre."
+      );
+    }
+
+    throw error;
+
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
-function updateUI(userData){
-  currentUserData = userData || {};
+function prefill(data) {
+  if (prefilled) return;
 
-  const merchantStatus = currentUserData.merchantStatus || "none";
-  const wallet = Number(currentUserData.wallet || 0);
-  const blocked = currentUserData.merchantRenewalBlocked === true;
-  const expireDate = currentUserData.merchantExpiresAt?.toDate?.() || null;
-  const expired = !expireDate || expireDate.getTime() <= Date.now();
+  const previous = data.lastRequest || {};
+  const shop = data.shop || {};
+  const draft = intent?.payload || {};
 
-  setStatusClass(merchantStatus);
-  walletText.textContent = "Wallet : " + wallet + " Gdes";
-  expireText.textContent = "Expiration marchand : " + (expireDate ? expireDate.toLocaleDateString() : "-");
+  shopName.value =
+    draft.shopName ?? previous.shopName ?? shop.name ?? "";
 
-  renewBtn.style.display = "none";
+  merchantEmail.value =
+    draft.email ||
+    previous.email ||
+    shop.email ||
+    data.email ||
+    currentUser.email ||
+    "";
 
-  if(merchantStatus === "pending"){
-    merchantStatusText.textContent = "Votre demande marchand est en cours d’analyse.";
-    submitBtn.disabled = true;
-  } else if(merchantStatus === "active" && !blocked && !expired){
-    merchantStatusText.textContent = "Votre espace marchand est actif.";
-    submitBtn.disabled = true;
-  } else if(merchantStatus === "active" && (blocked || expired)){
-    merchantStatusText.textContent = "Votre accès marchand est bloqué jusqu’au renouvellement.";
-    submitBtn.disabled = true;
-    renewBtn.style.display = "block";
-  } else if(merchantStatus === "rejected"){
-    merchantStatusText.textContent = "Votre dernière demande a été refusée. Vous pouvez en renvoyer une nouvelle.";
-    submitBtn.disabled = false;
+  productType.value =
+    draft.productType ??
+    previous.productType ??
+    shop.category ??
+    "";
+
+  merchantDescription.value =
+    draft.description ??
+    previous.description ??
+    shop.bio ??
+    "";
+
+  prefilled = true;
+}
+
+function renderState(data) {
+  merchantData = data;
+
+  const status = data.status || "none";
+
+  let label = "À DEMANDER";
+  let css = "status-none";
+  let text =
+    "Présente ton activité pour demander l’accès gratuit.";
+  let reason = "";
+
+  canRequest = false;
+  openDashboardBtn.hidden = true;
+
+  if (data.suspended === true) {
+    label = "COMPTE SUSPENDU";
+    css = "status-rejected";
+    text =
+      "Les demandes sont indisponibles pendant la suspension de ton compte.";
+
+  } else if (status === "suspended") {
+    label = "ACCÈS SUSPENDU";
+    css = "status-rejected";
+    text =
+      "Contacte l’équipe HaytiClips pour examiner la suspension de ta boutique.";
+    reason = data.suspensionReason || "";
+
+  } else if (data.active === true) {
+    label = "ACTIF";
+    css = "status-active";
+    text =
+      "Ta boutique est active. L’accès est gratuit, sans renouvellement.";
+    openDashboardBtn.hidden = false;
+
+  } else if (status === "active") {
+    label = "À VÉRIFIER";
+    text =
+      "Ton accès nécessite une vérification par l’équipe HaytiClips.";
+
+  } else if (
+    status === "pending" ||
+    data.lastRequest?.status === "pending"
+  ) {
+    label = "EN ATTENTE";
+    css = "status-pending";
+    text =
+      "Ta demande est en cours d’examen. Tu recevras une notification de la décision.";
+
+  } else if (
+    status === "rejected" ||
+    (
+      status === "none" &&
+      data.lastRequest?.status === "rejected"
+    )
+  ) {
+    label = "REFUSÉ";
+    css = "status-rejected";
+    text =
+      "Tu peux corriger les informations et envoyer une nouvelle demande gratuite.";
+
+    reason =
+      data.rejectReason ||
+      data.lastRequest?.rejectReason ||
+      "";
+
+    canRequest = true;
+
+  } else if (status === "none") {
+    canRequest = true;
+
   } else {
-    merchantStatusText.textContent = "Aucune demande marchand active pour le moment.";
-    submitBtn.disabled = false;
+    label = "À VÉRIFIER";
+    text =
+      "Contacte l’équipe HaytiClips pour vérifier ton dossier.";
+  }
+
+  merchantStatusPill.className = "status-pill " + css;
+  merchantStatusPill.textContent = label;
+  merchantStatusText.textContent = text;
+
+  decisionReason.textContent =
+    reason ? "Motif : " + reason : "";
+
+  decisionReason.hidden = !reason;
+
+  const reference = data.lastRequest?.id || "";
+
+  requestReference.textContent =
+    reference ? "Dernière demande : " + reference : "";
+
+  requestReference.hidden = !reference;
+  requestCard.hidden = !canRequest;
+
+  syncControls();
+}
+
+async function loadMerchant(silent = false) {
+  if (!currentUser || processing || refreshing) {
+    return false;
+  }
+
+  const uid = currentUser.uid;
+  const version = ++loadVersion;
+
+  refreshing = true;
+  syncControls();
+
+  try {
+    const data = await apiRequest("/api/merchant/me");
+
+    if (
+      currentUser?.uid !== uid ||
+      version !== loadVersion
+    ) {
+      return false;
+    }
+
+    if (data.uid !== uid) {
+      throw new Error(
+        "Le dossier reçu ne correspond pas à ta session."
+      );
+    }
+
+    prefill(data);
+    renderState(data);
+
+    if (
+      data.suspended ||
+      ["pending", "active", "rejected", "suspended"]
+        .includes(data.status) ||
+      ["pending", "rejected", "approved"]
+        .includes(data.lastRequest?.status)
+    ) {
+      clearIntent(uid);
+    }
+
+    if (!silent) setMessage("");
+
+    return true;
+
+  } catch (error) {
+    if (
+      currentUser?.uid !== uid ||
+      version !== loadVersion
+    ) {
+      return false;
+    }
+
+    if (error.status === 401) {
+      window.location.href = "login.html";
+      return false;
+    }
+
+    if (!merchantData) {
+      merchantStatusPill.textContent = "INDISPONIBLE";
+      merchantStatusText.textContent =
+        "Impossible de vérifier ton dossier. Utilise le bouton d’actualisation.";
+    }
+
+    if (!silent || !merchantData) {
+      setMessage(
+        "Actualisation impossible : " + error.message,
+        "error"
+      );
+    }
+
+    return false;
+
+  } finally {
+    if (
+      currentUser?.uid === uid &&
+      version === loadVersion
+    ) {
+      refreshing = false;
+      syncControls();
+    }
   }
 }
 
-onAuthStateChanged(auth, async(user)=>{
-  if(!user){
+merchantForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (
+    processing ||
+    refreshing ||
+    !currentUser ||
+    !canRequest
+  ) {
+    return;
+  }
+
+  const payload = {
+    shopName: shopName.value.trim(),
+    productType: productType.value.trim(),
+    description: merchantDescription.value.trim(),
+    email: merchantEmail.value.trim().toLowerCase()
+  };
+
+  if (
+    payload.shopName.length < 2 ||
+    payload.shopName.length > 60
+  ) {
+    setMessage(
+      "Le nom de boutique doit contenir entre 2 et 60 caractères.",
+      "error"
+    );
+    return;
+  }
+
+  if (
+    payload.productType.length < 2 ||
+    payload.productType.length > 60
+  ) {
+    setMessage(
+      "La catégorie doit contenir entre 2 et 60 caractères.",
+      "error"
+    );
+    return;
+  }
+
+  if (
+    payload.description.length < 5 ||
+    payload.description.length > 300
+  ) {
+    setMessage(
+      "La description doit contenir entre 5 et 300 caractères.",
+      "error"
+    );
+    return;
+  }
+
+  if (
+    payload.email.length > 254 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)
+  ) {
+    setMessage(
+      "Indique une adresse email valide.",
+      "error"
+    );
+    return;
+  }
+
+  merchantEmail.value = payload.email;
+
+  if (!merchantForm.reportValidity()) return;
+
+  const uid = currentUser.uid;
+
+  processing = true;
+  syncControls();
+  setMessage("Envoi de ta demande...");
+
+  try {
+    const key = requestKey(uid, payload);
+
+    const result = await apiRequest(
+      "/api/requestMerchantAccess",
+      {
+        method: "POST",
+        body: {
+          ...payload,
+          requestKey: key
+        }
+      }
+    );
+
+    if (currentUser?.uid !== uid) return;
+
+    clearIntent(uid);
+
+    renderState({
+      ...merchantData,
+      active: false,
+      status: "pending",
+      lastRequest: {
+        ...payload,
+        id: result.requestId || "",
+        status: "pending"
+      }
+    });
+
+    setMessage(
+      "Demande enregistrée avec succès.",
+      "success"
+    );
+
+    processing = false;
+    await loadMerchant(true);
+
+  } catch (error) {
+    if (currentUser?.uid !== uid) return;
+
+    if (error.status === 401) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    processing = false;
+    await loadMerchant(true);
+
+    if (currentUser?.uid !== uid) return;
+
+    if (
+      merchantData?.active ||
+      merchantData?.status === "pending" ||
+      merchantData?.lastRequest?.status === "pending"
+    ) {
+      setMessage(
+        "Ton dossier marchand est déjà enregistré. Consulte le statut ci-dessus.",
+        "success"
+      );
+    } else {
+      setMessage(
+        error.status
+          ? error.message
+          : "Envoi non confirmé. Actualise le statut ou réessaie avec les mêmes informations.",
+        "error"
+      );
+    }
+
+  } finally {
+    if (currentUser?.uid === uid) {
+      processing = false;
+      syncControls();
+    }
+  }
+});
+
+refreshStatusBtn.addEventListener("click", () => {
+  loadMerchant();
+});
+
+openDashboardBtn.addEventListener("click", () => {
+  if (merchantData?.active === true) {
+    window.location.href = "merchant-dashboard.html";
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) loadMerchant(true);
+});
+
+window.addEventListener("pageshow", event => {
+  if (event.persisted) loadMerchant(true);
+});
+
+onAuthStateChanged(auth, async user => {
+  loadVersion++;
+
+  currentUser = user;
+  merchantData = null;
+  canRequest = false;
+  processing = false;
+  refreshing = false;
+  prefilled = false;
+
+  merchantForm.reset();
+
+  requestCard.hidden = true;
+  openDashboardBtn.hidden = true;
+  decisionReason.hidden = true;
+  requestReference.hidden = true;
+
+  setMessage("");
+  syncControls();
+
+  if (!user) {
     window.location.href = "login.html";
     return;
   }
 
-  currentUser = user;
+  intent = readIntent(user.uid);
 
-  const snap = await getDoc(doc(db,"users",user.uid));
+  merchantStatusPill.className =
+    "status-pill status-none";
+  merchantStatusPill.textContent = "CHARGEMENT";
+  merchantStatusText.textContent =
+    "Vérification de ton dossier...";
 
-  if(!snap.exists()){
-    alert("Profil introuvable");
-    window.location.href = "profil.html";
-    return;
-  }
-
-  updateUI(snap.data());
+  await loadMerchant();
 });
-
-merchantForm.addEventListener("submit", async (e)=>{
-  e.preventDefault();
-
-  if(processing) return;
-  processing = true;
-
-  statusMsg.textContent = "";
-  statusMsg.className = "message";
-
-  try{
-    if(!currentUser){
-      throw new Error("Utilisateur non connecté");
-    }
-
-    if(!currentUserData){
-      throw new Error("Profil introuvable");
-    }
-
-    const merchantStatus = currentUserData.merchantStatus || "none";
-
-    if(merchantStatus === "pending"){
-      throw new Error("Une demande est déjà en attente");
-    }
-
-    if(merchantStatus === "active"){
-      throw new Error("Votre espace marchand est déjà actif");
-    }
-
-    const shopName = document.getElementById("shopName").value.trim();
-    const productType = document.getElementById("productType").value.trim();
-    const referralCode = document.getElementById("referralCode").value.trim().toUpperCase();
-
-    if(shopName.length < 2){
-      throw new Error("Nom de boutique invalide");
-    }
-
-    if(productType.length < 2){
-      throw new Error("Type de produits invalide");
-    }
-
-    if(!referralCode){
-      throw new Error("Code parrain obligatoire");
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Envoi...";
-
-    const token = await currentUser.getIdToken(true);
-
-    const res = await fetch(`${API_BASE}/api/requestMerchantAccess`,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      },
-      body: JSON.stringify({
-        shopName,
-        productType,
-        referralCode
-      })
-    });
-
-    const result = await res.json();
-
-    if(!res.ok || !result.success){
-      throw new Error(result.error || "Erreur serveur");
-    }
-
-    statusMsg.textContent = "Demande envoyée avec succès.";
-    statusMsg.classList.add("success");
-    merchantForm.reset();
-
-    const snap = await getDoc(doc(db,"users",currentUser.uid));
-    if(snap.exists()){
-      updateUI(snap.data());
-    }
-
-  }catch(err){
-    statusMsg.textContent = err.message || "Erreur";
-    statusMsg.classList.add("error");
-  }finally{
-    processing = false;
-    submitBtn.textContent = "Envoyer la demande";
-
-    if(currentUser){
-      const snap = await getDoc(doc(db,"users",currentUser.uid));
-      if(snap.exists()){
-        updateUI(snap.data());
-      }
-    }
-  }
-});
-
-renewBtn.onclick = async ()=>{
-  try{
-    if(!currentUser) throw new Error("Utilisateur non connecté");
-
-    const token = await currentUser.getIdToken(true);
-
-    const res = await fetch(`${API_BASE}/api/merchant/renew-access`,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      }
-    });
-
-    const result = await res.json();
-
-    if(!res.ok || !result.success){
-      throw new Error(result.error || "Erreur serveur");
-    }
-
-    statusMsg.textContent = "Renouvellement effectué avec succès.";
-    statusMsg.className = "message success";
-
-    const snap = await getDoc(doc(db,"users",currentUser.uid));
-    if(snap.exists()){
-      updateUI(snap.data());
-    }
-
-  }catch(err){
-    statusMsg.textContent = err.message || "Erreur";
-    statusMsg.className = "message error";
-  }
-};
-
 </script>
 
 </body>

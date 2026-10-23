@@ -1,714 +1,3191 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#ff0050">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff0050">
 <title>Dashboard marchand – HaytiClips</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-
-html,body{background:#000;color:#fff;min-height:100%;overflow-x:hidden}
+:root{
+  color-scheme:dark;
+  --hc-bg:#08090d;
+  --hc-card:#111319;
+  --hc-edge:#282b36;
+  --hc-muted:#a5aab8;
+  --hc-pink:#ff0050;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  background:var(--hc-bg);
+  color:#f4f5fa;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  min-height:100%;
+  overflow-x:hidden;
+}
 body{min-height:100vh}
-
-.header{
-  height:60px;display:flex;align-items:center;justify-content:space-between;
-  padding:0 14px;border-bottom:1px solid #222;background:#000;
-  position:sticky;top:0;z-index:100;
+button,input,select,textarea{font:inherit}
+a{color:inherit}
+button,a.hc-button{
+  min-height:44px;
+  padding:11px 16px;
+  border:1px solid var(--hc-edge);
+  border-radius:12px;
+  background:#222530;
+  color:#fff;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
 }
-.header-left{font-size:24px;cursor:pointer;width:40px}
-.header-center{font-weight:700;font-size:18px}
-.header-right{min-width:40px;display:flex;justify-content:flex-end}
-
-.page{max-width:980px;margin:0 auto;padding:20px 16px 50px}
-.topbar{display:none}
-
-.hero,.card,.stat,.item{
-  background:#000;border:1px solid #222;border-radius:16px;
+button:hover,a.hc-button:hover{filter:brightness(1.12)}
+button:disabled{opacity:.5;cursor:wait}
+button:focus-visible,a:focus-visible,summary:focus-visible{
+  outline:2px solid #ff759f;
+  outline-offset:3px;
 }
-.hero{padding:16px;margin-bottom:18px}
-.hero h1{font-size:24px;margin-bottom:6px}
-.hero p,.card p.small,.stat .label{color:#aaa;font-size:14px}
-
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
-.stat{padding:14px}
-.stat .label{font-size:12px;margin-bottom:8px}
-.stat .value{font-size:24px;font-weight:800}
-
-.layout{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.card{padding:16px;margin-bottom:14px}
-.card h2{font-size:18px;margin-bottom:5px}
-
-label{display:block;font-size:14px;color:#aaa;margin:12px 0 6px}
-
-input,textarea{
-  width:100%;background:#111;color:#fff;border:1px solid #333;
-  border-radius:12px;padding:12px 16px;margin-bottom:10px;
-  outline:none;font-size:16px;
+.hc-primary{
+  background:var(--hc-pink)!important;
+  border-color:var(--hc-pink)!important;
 }
-textarea{min-height:95px;resize:vertical}
-input:focus,textarea:focus{border-color:#ff0050}
-input:disabled{background:#1a1a1a;color:#888;cursor:not-allowed;border-color:#222;}
-
-button{
-  border:none;border-radius:30px;padding:12px 15px;
-  font-size:14px;font-weight:700;cursor:pointer;
+.hc-danger{background:#431d2a!important;color:#ffc2d0!important}
+.hc-success{background:#163c2c!important;color:#a1f1cc!important}
+.hc-header{
+  position:sticky;
+  top:0;
+  background:rgba(8,9,13,.96);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--hc-edge);
+  z-index:10;
 }
-.btn-primary{background:#ff0050;color:#fff}
-.btn-dark{background:#1a1a1a;border:1px solid #333;color:#fff}
-.btn-danger{background:#ff4d4d;color:#fff}
-.top-btn{background:#ff0050;color:#fff;padding:8px 12px;font-size:13px}
-
-.message{min-height:18px;margin-top:10px;font-size:13px}
-.message.success{color:#19c37d}
-.message.error{color:#ff4d4d}
-
-.list{display:flex;flex-direction:column;gap:10px}
-.item{padding:12px}
-.item-top{display:flex;gap:10px}
-.item-img{
-  width:66px;height:66px;border-radius:12px;object-fit:cover;
-  background:#111;border:1px solid #333;flex-shrink:0;
+.hc-header-inner{
+  max-width:1240px;
+  margin:auto;
+  padding:10px 20px;
+  display:flex;
+  align-items:center;
+  gap:12px;
 }
-.item-title{font-size:15px;font-weight:700;margin-bottom:4px}
-.item-line{font-size:13px;color:#ccc;margin-top:4px;line-height:1.45;word-break:break-word}
-.item-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-
-.pill{
-  display:inline-flex;padding:4px 10px;border-radius:999px;
-  font-size:11px;font-weight:800;border:1px solid #333;
+.hc-back{
+  font-size:23px;
+  min-width:44px;
+  padding:4px;
+  background:transparent;
+  border:0;
 }
-.pill-success{color:#6ff0b6;background:rgba(25,195,125,.12)}
-.pill-danger{color:#ff9a9a;background:rgba(255,77,77,.12)}
-
-.empty{
-  color:#aaa;text-align:center;padding:20px;
-  border:1px dashed #333;border-radius:16px;
+.hc-brand{
+  font-size:12px;
+  letter-spacing:1px;
+  font-weight:800;
+  color:var(--hc-pink);
 }
-
-@media(max-width:900px){
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .layout{grid-template-columns:1fr}
+.hc-title{font-size:16px;margin:3px 0}
+.hc-header-actions{margin-left:auto;display:flex;gap:8px}
+.hc-header-actions .hc-button{white-space:nowrap}
+.hc-wrap{max-width:1240px;margin:auto;padding:26px 20px 90px}
+.hc-welcome{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin-bottom:24px;
 }
-@media(max-width:640px){
-  .page{padding:18px 14px 45px}
-  .stats{grid-template-columns:1fr}
-  .hero h1{font-size:22px}
+.hc-welcome>div{min-width:0}
+.hc-welcome h1{
+  font-size:clamp(25px,4vw,34px);
+  margin:0 0 8px;
+  letter-spacing:-.8px;
+  overflow-wrap:anywhere;
+}
+.hc-muted,.hc-note{
+  color:var(--hc-muted);
+  font-size:13px;
+  line-height:1.6;
+}
+.hc-note{
+  background:#191c24;
+  border:1px solid var(--hc-edge);
+  padding:14px;
+  border-radius:12px;
+}
+.hc-tabs{
+  display:flex;
+  gap:8px;
+  overflow:auto;
+  padding:4px 0 16px;
+  margin-bottom:8px;
+  scrollbar-width:thin;
+}
+.hc-tabs button{
+  white-space:nowrap;
+  background:transparent;
+  min-height:40px;
+}
+.hc-tabs button[aria-selected=true]{
+  background:#35111f;
+  border-color:#a31c48;
+  color:#ff8ab0;
+}
+.hc-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:13px;
+  margin:18px 0;
+}
+.hc-stat,.hc-card{
+  background:var(--hc-card);
+  border:1px solid var(--hc-edge);
+  border-radius:17px;
+  padding:20px;
+  min-width:0;
+}
+.hc-stat small{
+  display:block;
+  color:var(--hc-muted);
+  font-size:12px;
+  line-height:1.5;
+}
+.hc-stat strong{
+  display:block;
+  font-size:clamp(21px,2.6vw,29px);
+  margin:10px 0 5px;
+  overflow-wrap:anywhere;
+  letter-spacing:-.6px;
+}
+.hc-stat em{
+  font-size:11px;
+  color:#bbc1cd;
+  font-style:normal;
+}
+.hc-card{margin-bottom:16px}
+.hc-card h2{font-size:18px;margin:0 0 10px}
+.hc-card h3{font-size:16px;margin:0 0 8px}
+.hc-card p{line-height:1.55}
+.hc-two{
+  display:grid;
+  grid-template-columns:1.4fr 1fr;
+  gap:16px;
+}
+.hc-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.hc-between{justify-content:space-between}
+.hc-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:14px;
+}
+.hc-actions>*{max-width:100%}
+.hc-field{
+  display:grid;
+  gap:7px;
+  margin:0 0 16px;
+  min-width:0;
+}
+.hc-field label{color:#bdc3d0;font-size:13px}
+input,select,textarea{min-width:0}
+.hc-field input,
+.hc-field textarea,
+.hc-field select,
+.hc-filter{
+  width:100%;
+  background:#0b0d12;
+  color:white;
+  border:1px solid #363a47;
+  border-radius:11px;
+  padding:12px;
+  font-size:16px;
+  min-height:46px;
+  outline:none;
+}
+.hc-field input:focus,
+.hc-field textarea:focus,
+.hc-field select:focus,
+.hc-filter:focus{
+  border-color:var(--hc-pink);
+}
+.hc-field textarea{min-height:95px;resize:vertical}
+.hc-form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0 16px;
+}
+.hc-span{grid-column:1/-1}
+.hc-toolbar{
+  display:flex;
+  align-items:flex-end;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.hc-toolbar .hc-field{margin:0;min-width:150px}
+.hc-status{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  border-radius:30px;
+  background:#292d39;
+  color:#d3d8e4;
+  padding:6px 10px;
+  font-size:11px;
+  font-weight:800;
+  margin:2px 0;
+}
+.hc-status[data-status=completed],
+.hc-status[data-status=active]{
+  background:#12392a;
+  color:#7ee5b2;
+}
+.hc-status[data-status=disputed],
+.hc-status[data-status=suspended]{
+  background:#482433;
+  color:#ffa9c1;
+}
+.hc-status[data-status=pending],
+.hc-status[data-status=held]{
+  background:#3c311c;
+  color:#f0cd7a;
+}
+.hc-list{display:grid;gap:12px}
+.hc-empty{
+  padding:25px;
+  text-align:center;
+  border:1px dashed #3b4050;
+  border-radius:14px;
+  color:var(--hc-muted);
+  overflow-wrap:anywhere;
+}
+.hc-message{
+  padding:12px 15px;
+  border-radius:12px;
+  margin-bottom:16px;
+  font-size:14px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.hc-message:empty{display:none}
+.hc-message[data-type=error]{
+  background:#431c2a;
+  color:#ffb9cc;
+  border:1px solid #79324a;
+}
+.hc-message[data-type=success]{background:#163b2c;color:#9ff0c5}
+.hc-message[data-type=info]{background:#202634;color:#d5e0f8}
+.hc-item{
+  padding:17px;
+  border:1px solid var(--hc-edge);
+  border-radius:14px;
+  background:#12151d;
+  min-width:0;
+}
+.hc-item h3{font-size:16px;margin:0 0 7px}
+.hc-item small{color:var(--hc-muted)}
+.hc-item p{
+  margin:5px 0;
+  font-size:13px;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+  white-space:pre-line;
+}
+.hc-item details{margin-top:12px}
+.hc-item summary{cursor:pointer}
+.hc-item-photo{
+  width:66px;
+  height:66px;
+  object-fit:cover;
+  border-radius:12px;
+  background:#242833;
+}
+.hc-shop-photo{
+  display:block;
+  width:86px;
+  height:86px;
+  object-fit:cover;
+  border-radius:20px;
+  background:#242833;
+  flex-shrink:0;
+}
+.hc-banner{
+  width:100%;
+  height:190px;
+  object-fit:cover;
+  border-radius:18px;
+  margin-bottom:20px;
+}
+.hc-table-wrap{
+  overflow:auto;
+  border:1px solid var(--hc-edge);
+  border-radius:14px;
+}
+.hc-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+  min-width:680px;
+}
+.hc-table th,.hc-table td{
+  text-align:left;
+  vertical-align:top;
+  padding:13px;
+  border-bottom:1px solid var(--hc-edge);
+}
+.hc-table th{
+  color:var(--hc-muted);
+  font-weight:600;
+  background:#171a23;
+}
+.hc-table tr:last-child td{border:0}
+.hc-ref{
+  font:10px ui-monospace,monospace;
+  overflow-wrap:anywhere;
+  max-width:130px;
+}
+.hc-positive{color:#73e9ad}
+.hc-negative{color:#ff9ab9}
+.hc-bars{display:grid;gap:17px;margin:20px 0}
+.hc-bar-label{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  font-size:12px;
+  margin-bottom:6px;
+}
+.hc-bar-label span{overflow-wrap:anywhere;min-width:0}
+.hc-bar{
+  height:7px;
+  border-radius:20px;
+  background:#292d37;
+  overflow:hidden;
+}
+.hc-bar>i{
+  display:block;
+  height:100%;
+  background:var(--hc-pink);
+  border-radius:20px;
+}
+.hc-chart{display:block;width:100%;height:185px;margin-top:15px}
+.hc-chart-labels{
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:var(--hc-muted);
+}
+.hc-dialog{
+  background:var(--hc-card);
+  color:#fff;
+  border:1px solid #444b5d;
+  border-radius:18px;
+  width:calc(100% - 24px);
+  max-width:590px;
+  max-height:90dvh;
+  padding:22px;
+  overflow:auto;
+}
+.hc-dialog::backdrop{background:rgba(0,0,0,.82)}
+.hc-dialog h2{font-size:21px;margin:0 0 14px}
+.hc-dialog form{margin:0}
+.hc-proof{max-width:100%;max-height:60vh;object-fit:contain}
+.hc-badge{
+  display:inline-flex;
+  padding:5px 10px;
+  border-radius:20px;
+  background:#371126;
+  color:#ff8bb3;
+  font-size:12px;
+  font-weight:700;
+}
+.hc-a11y{
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+}
+.hc-pager{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:16px;
+  font-size:12px;
+  color:var(--hc-muted);
+}
+.hc-period{margin:10px 0;font-size:13px;color:var(--hc-muted)}
+#pdf-download a{overflow-wrap:anywhere;max-width:100%}
+
+@media(max-width:950px){
+  .hc-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hc-two{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .hc-wrap{padding:20px 14px 65px}
+  .hc-header-inner{padding:10px 12px}
+  .hc-grid{gap:9px}
+  .hc-stat,.hc-card{padding:16px}
+  .hc-stat strong{font-size:22px}
+  .hc-form-grid{grid-template-columns:1fr}
+  .hc-welcome{align-items:flex-start;flex-direction:column}
+  .hc-toolbar{align-items:stretch}
+  .hc-toolbar .hc-field{min-width:0;flex:1}
+  .hc-banner{height:135px}
+  .hc-dialog{padding:18px}
+  .hc-shop-photo{width:65px;height:65px}
+  .hc-title{font-size:15px}
 }
 </style>
 </head>
+
 <body>
-
-<div class="page">
-
- <div class="header">
-  <div class="header-left" onclick="history.back()">←</div>
-  <div class="header-center">Dashboard</div>
-  <div class="header-right">
-    <button id="openShopBtn" class="top-btn">Boutique</button>
-  </div>
-</div>
-
-  <div class="hero">
-    <p>Gère ta boutique et tes produits.</p>
-    <p>Une commission fixe de <strong>10 Gdes</strong> est prélevée sur chaque vente effectuée</p>
-  </div>
-
-  <div class="stats">
-    <div class="stat">
-      <div class="label">Produits actifs</div>
-      <div class="value" id="statProducts">0</div>
-    </div>
-    <div class="stat">
-      <div class="label">Unités vendues</div>
-      <div class="value" id="statSold">0</div>
-    </div>
-    <div class="stat">
-      <div class="label">Achats reçus</div>
-      <div class="value" id="statOrders">0</div>
-    </div>
-    <div class="stat">
-      <div class="label">Revenu estimé</div>
-      <div class="value" id="statRevenue">0 G</div>
-    </div>
-  </div>
-
-  <div class="layout">
-
-    <div>
-      <div class="card">
-        <h2>Boutique</h2>
-        <p class="small">Infos visibles dans ta page produits.</p>
-
-        <label for="shopNameInput">Nom boutique</label>
-        <input type="text" id="shopNameInput" maxlength="60" disabled>
-
-        <label for="shopBioInput">Bio boutique</label>
-        <textarea id="shopBioInput" maxlength="300" placeholder="Décris ta boutique"></textarea>
-
-        <label for="shopLogoFile">Photo / logo boutique</label>
-        <input type="file" id="shopLogoFile" accept="image/*">
-
-        <button class="btn-primary" id="saveShopBtn">Enregistrer</button>
-        <div class="message" id="shopMsg"></div>
-      </div>
-
-      <div class="card">
-        <h2>Ajouter produit</h2>
-        <p class="small">Ajoute un produit visible dans ta boutique.</p>
-
-        <label for="productName">Nom produit</label>
-        <input type="text" id="productName" maxlength="80" placeholder="Ex: T-shirt noir">
-
-        <label for="productDescription">Description</label>
-        <textarea id="productDescription" maxlength="500" placeholder="Description"></textarea>
-
-        <label for="productPrice">Prix (Gdes)</label>
-        <input type="number" id="productPrice" min="1" placeholder="1500">
-
-        <label for="productStock">Stock</label>
-        <input type="number" id="productStock" min="0" placeholder="10">
-
-        <label for="productImagesFiles">Photos du produit</label>
-        <input type="file" id="productImagesFiles" accept="image/*" multiple>
-
-        <button class="btn-primary" id="addProductBtn">Ajouter</button>
-        <div class="message" id="productMsg"></div>
-      </div>
-    </div>
-
-    <div>
-      <div class="card">
-        <h2>Mes produits</h2>
-        <p class="small">Active, désactive ou supprime.</p>
-        <div class="list" id="productList"></div>
-      </div>
-
-      <div class="card">
-        <h2>Achats reçus</h2>
-        <p class="small">Historique achats.</p>
-        <div class="list" id="orderList"></div>
-      </div>
-    </div>
-
-  </div>
-</div>
+<noscript>Active JavaScript pour accéder à ton dashboard marchand.</noscript>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
-  getFirestore,
-  collection,
-  getDocs,
-  getDoc,
-  doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  initializeApp,
+  getApps
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-const firebaseConfig = {
-  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-  authDomain:"tstx-58474.firebaseapp.com",
-  projectId:"tstx-58474",
-  storageBucket:"tstx-58474.firebasestorage.app",
-  messagingSenderId:"1010020144942",
-  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const config = {
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const auth = getAuth(getApps()[0] || initializeApp(config));
+const API = "https://hayticlip-server.onrender.com";
 
-const SUPABASE_URL = "https://nxpifzslxoigcuuhslox.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cGlmenNseG9pZ2N1dWhzbG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTgwODgsImV4cCI6MjA4NTk5NDA4OH0.yYQ3nQn6Z0ZCC9ZjuHt_HGJbf1CQVPHlz-b6nnEhFqg";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const API_BASE = "https://hayticlip-server.onrender.com";
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
-const statProducts = document.getElementById("statProducts");
-const statSold = document.getElementById("statSold");
-const statOrders = document.getElementById("statOrders");
-const statRevenue = document.getElementById("statRevenue");
+const esc = value => String(value ?? "").replace(
+  /[&<>"']/g,
+  x => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[x])
+);
 
-const shopNameInput = document.getElementById("shopNameInput");
-const shopBioInput = document.getElementById("shopBioInput");
-const shopLogoFile = document.getElementById("shopLogoFile");
-const saveShopBtn = document.getElementById("saveShopBtn");
-const shopMsg = document.getElementById("shopMsg");
+const fmt = value => Number.isFinite(value)
+  ? new Intl.NumberFormat("fr-HT", {
+      maximumFractionDigits: 2
+    }).format(value) + " HTG"
+  : "—";
 
-const productName = document.getElementById("productName");
-const productDescription = document.getElementById("productDescription");
-const productPrice = document.getElementById("productPrice");
-const productStock = document.getElementById("productStock");
-const productImagesFiles = document.getElementById("productImagesFiles");
-const addProductBtn = document.getElementById("addProductBtn");
-const productMsg = document.getElementById("productMsg");
+const when = value => Number.isFinite(value) && value > 0
+  ? new Intl.DateTimeFormat("fr-FR", {
+      timeZone: "America/Port-au-Prince",
+      dateStyle: "short",
+      timeStyle: "short"
+    }).format(new Date(value))
+  : "—";
 
-const productList = document.getElementById("productList");
-const orderList = document.getElementById("orderList");
-const openShopBtn = document.getElementById("openShopBtn");
+const names = {
+  pending: "En attente",
+  accepted: "À préparer",
+  shipping: "En livraison",
+  completed: "Terminée",
+  rejected: "Refusée",
+  cancelled: "Annulée",
+  refunded: "Remboursée",
+  disputed: "En litige",
+  active: "Actif",
+  suspended: "Suspendu",
+  inactive: "Inactif",
+  held: "Fonds en attente",
+  settled: "Fonds libérés",
+  open: "Ouvert",
+  resolved: "Résolu",
+  failed: "Échoué"
+};
 
-let currentUser = null;
-let currentUserData = null;
-let allProducts = [];
-let allOrders = [];
+const label = state => Object.prototype.hasOwnProperty.call(names, state)
+  ? names[state]
+  : String(state || "À vérifier");
 
-function renderEmpty(container, text){
-  container.innerHTML = `<div class="empty">${text}</div>`;
-}
+const pill = state =>
+  `<span class="hc-status" data-status="${esc(state)}">${esc(label(state))}</span>`;
 
-function escapeHTML(str=""){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function setMessage(el, text, type=""){
-  el.textContent = text;
-  el.className = "message" + (type ? " " + type : "");
-}
-
-function getProductMainImage(product){
-  if(Array.isArray(product.images) && product.images.length){
-    return product.images[0];
+function safeURL(value) {
+  try {
+    const url = new URL(value, location.origin);
+    return url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
   }
-  return product.imageUrl || "https://placehold.co/600x600/png?text=Produit";
 }
 
-async function uploadImageToSupabase(file, path){
-  const { error } = await supabase.storage
-    .from("media")
-    .upload(path, file, {
-      upsert: true,
-      contentType: file.type
-    });
+function image(value, cls = "hc-item-photo", alt = "") {
+  const url = value ? safeURL(value) : "";
 
-  if(error){
-    throw new Error(error.message);
+  return url
+    ? `<img class="${cls}" src="${esc(url)}" alt="${esc(alt)}" loading="lazy">`
+    : `<span class="${cls}" aria-hidden="true"></span>`;
+}
+
+function field(id, title, o = {}) {
+  const attrs = `
+    ${o.required ? "required" : ""}
+    ${o.max ? `maxlength="${o.max}"` : ""}
+  `;
+
+  const input = o.area
+    ? `<textarea id="${id}" rows="3" ${attrs}></textarea>`
+    : `<input
+        id="${id}"
+        type="${o.type || "text"}"
+        ${attrs}
+        ${o.min !== undefined ? `min="${o.min}"` : ""}
+        ${o.step ? `step="${o.step}"` : ""}
+        ${o.type === "file"
+          ? 'accept="image/jpeg,image/png,image/webp"'
+          : ""}
+        ${o.multiple ? "multiple" : ""}
+      >`;
+
+  return `
+    <div class="hc-field ${o.wide ? "hc-span" : ""}">
+      <label for="${id}">${title}</label>
+      ${input}
+    </div>
+  `;
+}
+
+function empty(node, text) {
+  node.innerHTML = `<div class="hc-empty">${esc(text)}</div>`;
+}
+
+function message(text = "", type = "info", root = document) {
+  const node = $("[data-message]", root);
+
+  if (node) {
+    node.textContent = text;
+    node.dataset.type = type;
   }
-
-  const { data } = supabase.storage
-    .from("media")
-    .getPublicUrl(path);
-
-  return data.publicUrl;
 }
 
-function updateStats(){
-  const activeProducts = allProducts.filter(p => p.isActive === true).length;
-  const sold = allOrders.reduce((sum,o)=> sum + Number(o.quantity || 0), 0);
-  const revenue = allOrders.reduce((sum,o)=> sum + Number(o.totalAmount || 0), 0);
+function shell() {
+  document.body.innerHTML = `
+    <header class="hc-header">
+      <div class="hc-header-inner">
+        <button id="go-back" class="hc-back" aria-label="Retour">←</button>
 
-  statProducts.textContent = activeProducts;
-  statSold.textContent = sold;
-  statOrders.textContent = allOrders.length;
-  statRevenue.textContent = revenue + " G";
-}
-
-function renderProducts(){
-  productList.innerHTML = "";
-
-  if(!allProducts.length){
-    renderEmpty(productList, "Aucun produit");
-    return;
-  }
-
-  allProducts.forEach(product=>{
-    const stock = Number(product.stock || 0);
-    const active = product.isActive === true;
-
-    const div = document.createElement("div");
-    div.className = "item";
-
-    div.innerHTML = `
-      <div class="item-top">
-        <img class="item-img" src="${getProductMainImage(product)}" alt="Produit">
-        <div style="min-width:0;flex:1;">
-          <div class="item-title">${escapeHTML(product.name || "Produit")}</div>
-          <div class="item-line">${escapeHTML(product.description || "")}</div>
-          <div class="item-line">Prix : ${Number(product.price || 0)} Gdes</div>
-          <div class="item-line">Stock : ${stock}</div>
-          <div class="item-line">Photos : ${Array.isArray(product.images) ? product.images.length : (product.imageUrl ? 1 : 0)}</div>
-          <div class="item-line">
-            ${active ? `<span class="pill pill-success">ACTIF</span>` : `<span class="pill pill-danger">INACTIF</span>`}
-          </div>
+        <div>
+          <div class="hc-brand">HAYTICLIPS</div>
+          <h1 class="hc-title">Dashboard marchand</h1>
         </div>
+
+        <div class="hc-header-actions" id="header-actions"></div>
       </div>
+    </header>
 
-      <div class="item-actions">
-        <button class="btn-dark" onclick="toggleProductStatus('${product.id}', ${active})">
-          ${active ? "Désactiver" : "Activer"}
-        </button>
-        <button class="btn-danger" onclick="deleteProduct('${product.id}')">Supprimer</button>
+    <main class="hc-wrap">
+      <div
+        class="hc-message"
+        data-message
+        role="status"
+        aria-live="polite"
+      ></div>
+
+      <div id="content">
+        <p class="hc-note">Chargement de ta boutique...</p>
       </div>
-    `;
+    </main>
+  `;
 
-    productList.appendChild(div);
-  });
+  $("#go-back").onclick = () => history.back();
 }
 
-function renderOrders(){
-  orderList.innerHTML = "";
+let session = 0;
+const objectURLs = new Set();
 
-  if(!allOrders.length){
-    renderEmpty(orderList, "Aucun achat");
-    return;
-  }
-
-  allOrders
-  .filter(order => order.status !== "completed")
-  .forEach(order=>{
-    const div = document.createElement("div");
-    div.className = "item";
-
-    div.innerHTML = `
-  <div class="item-title">${escapeHTML(order.productName || "Produit")}</div>
-  <div class="item-line">Nom : ${escapeHTML(order.customerNom || "-")}</div>
-  <div class="item-line">Prénom : ${escapeHTML(order.customerPrenom || "-")}</div>
-  <div class="item-line">Sexe : ${escapeHTML(order.customerSexe || "-")}</div>
-  <div class="item-line">Email : ${escapeHTML(order.customerEmail || "-")}</div>
-  <div class="item-line">Appel : ${escapeHTML(order.customerPhone || "-")}</div>
-  <div class="item-line">WhatsApp : ${escapeHTML(order.customerWhatsapp || "-")}</div>
-  <div class="item-line">Détails : ${escapeHTML(order.customerDetails || "-")}</div>
-  <div class="item-line">Quantité : ${Number(order.quantity || 0)}</div>
-  <div class="item-line">Total : ${Number(order.totalAmount || 0)} Gdes</div>
-  <div class="item-line">Statut : ${escapeHTML(order.status || "pending")}</div>
-  <div class="item-line">Code livraison : ${escapeHTML(order.deliveryCode || "-")}</div>
-
-  <div class="item-actions">
-    ${
-      order.status === "pending"
-        ? `
-          <button class="btn-primary" onclick="acceptOrder('${order.id}')">Accepter</button>
-          <button class="btn-danger" onclick="rejectOrder('${order.id}')">Refuser</button>
-          <button class="btn-dark" onclick="completeOrder('${order.id}')">Traiter immédiatement</button>
-        `
-        : ""
-    }
-  </div>
-`;
-
-    orderList.appendChild(div);
-  });
+function releaseURL(url) {
+  URL.revokeObjectURL(url);
+  objectURLs.delete(url);
 }
 
-async function loadMerchant(){
-  const snap = await getDoc(doc(db,"users",currentUser.uid));
+function cleanup() {
+  $$("dialog").forEach(closeModal);
 
-  if(!snap.exists()){
-    alert("Profil introuvable");
-    location.href = "profil.html";
-    return false;
+  for (const url of objectURLs) {
+    URL.revokeObjectURL(url);
   }
 
-  currentUserData = snap.data();
-
-  const expireDate = currentUserData.merchantExpiresAt?.toDate?.() || null;
-  const expired = !expireDate || expireDate.getTime() <= Date.now();
-  const blocked = currentUserData.merchantRenewalBlocked === true;
-
-  if(!(currentUserData.merchantEnabled === true && currentUserData.merchantStatus === "active")){
-    alert("Votre espace marchand n'est pas actif");
-    location.href = "profil.html";
-    return false;
-  }
-
-  if(blocked || expired){
-    alert("Votre accès marchand est bloqué. Veuillez renouveler.");
-    location.href = "merchant-request.html";
-    return false;
-  }
-
-  shopNameInput.value = currentUserData.merchantShopName || "Boutique Sans Nom";
-  shopBioInput.value = currentUserData.merchantBio || "";
-
-  return true;
+  objectURLs.clear();
 }
 
-async function loadProducts(){
-  allProducts = [];
-
-  const q = query(
-    collection(db,"merchantProducts"),
-    where("merchantUid","==",currentUser.uid)
+async function request(path, body, options, uid, epoch) {
+  const stale = () => Object.assign(
+    new Error("Session modifiée"),
+    { stale: true }
   );
 
-  const snap = await getDocs(q);
+  const valid = () =>
+    epoch === session &&
+    auth.currentUser?.uid === uid;
 
-  snap.forEach(d=>{
-    allProducts.push({ id:d.id, ...d.data() });
-  });
+  if (!valid()) throw stale();
 
-  renderProducts();
-  updateStats();
+  const token = await auth.currentUser.getIdToken();
+
+  if (!valid()) throw stale();
+
+  const controller = new AbortController();
+
+  const timer = setTimeout(
+    () => controller.abort(),
+    body instanceof FormData ? 120000 : 60000
+  );
+
+  try {
+    const form = body instanceof FormData;
+
+    const response = await fetch(API + path, {
+      method: body === undefined ? "GET" : "POST",
+      headers: {
+        Authorization: "Bearer " + token,
+        ...(body !== undefined && !form
+          ? { "Content-Type": "application/json" }
+          : {})
+      },
+      body: body === undefined
+        ? undefined
+        : form
+          ? body
+          : JSON.stringify(body),
+      cache: "no-store",
+      signal: controller.signal
+    });
+
+    if (!valid()) throw stale();
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+
+      throw Object.assign(
+        new Error(
+          data.error || `Service indisponible (${response.status})`
+        ),
+        {
+          status: response.status,
+          code: data.code
+        }
+      );
+    }
+
+    if (options?.blob) {
+      const blob = await response.blob();
+
+      if (!valid()) throw stale();
+
+      return blob;
+    }
+
+    const data = await response.json();
+
+    if (!valid()) throw stale();
+
+    if (data?.success !== true) {
+      throw new Error(
+        data?.error || "Réponse du service invalide"
+      );
+    }
+
+    return data;
+
+  } catch (error) {
+    if (!valid()) throw stale();
+
+    if (error.name === "AbortError") {
+      throw new Error(
+        "Réponse non confirmée. Actualise les données avant de réessayer."
+      );
+    }
+
+    throw error;
+
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-async function loadOrders(){
-  allOrders = [];
+function showError(error, root = document) {
+  if (error.stale) return;
 
-  try{
-    const q = query(
-      collection(db,"merchantOrders"),
-      where("merchantUid","==",currentUser.uid)
-    );
-
-    const snap = await getDocs(q);
-
-    snap.forEach(d=>{
-      allOrders.push({ id:d.id, ...d.data() });
-    });
-  }catch(e){
-    console.log("merchantOrders:", e);
-  }
-
-  renderOrders();
-  updateStats();
-}
-
-saveShopBtn.onclick = async ()=>{
-  try{
-    const shopBio = shopBioInput.value.trim();
-    const logoFile = shopLogoFile?.files?.[0];
-    
-    // On conserve l'ancien logo par défaut
-    let finalLogoUrl = currentUserData.merchantLogo || "";
-
-    if(logoFile){
-      // 1. Suppression de l'ancien logo si c'est un lien Supabase
-      if (finalLogoUrl && finalLogoUrl.includes("supabase.co")) {
-        try {
-          const urlParts = finalLogoUrl.split("/media/");
-          if (urlParts.length > 1) {
-            let fileName = urlParts[1].split('?')[0];
-            fileName = decodeURIComponent(fileName);
-            await supabase.storage.from("media").remove([fileName]);
-            console.log("Ancien logo supprimé de Supabase :", fileName);
-          }
-        } catch (supaErr) {
-          console.error("Erreur suppression ancien logo :", supaErr);
-        }
-      }
-
-      // 2. Upload du nouveau logo
-      const ext = logoFile.name.split(".").pop() || "jpg";
-      const path = `shops/${currentUser.uid}/logo_${Date.now()}.${ext}`;
-      finalLogoUrl = await uploadImageToSupabase(logoFile, path);
-    }
-
-    // Sauvegarde (On ne met PAS à jour le merchantShopName !)
-    await updateDoc(doc(db,"users",currentUser.uid),{
-      merchantBio: shopBio,
-      merchantLogo: finalLogoUrl
-    });
-
-    currentUserData.merchantBio = shopBio;
-    currentUserData.merchantLogo = finalLogoUrl;
-
-    setMessage(shopMsg, "Boutique mise à jour", "success");
-    shopLogoFile.value = ""; // Vide l'input file
-  }catch(e){
-    setMessage(shopMsg, "Erreur : " + e.message, "error");
-  }
-};
-
-addProductBtn.onclick = async ()=>{
-  try{
-    const name = productName.value.trim();
-    const description = productDescription.value.trim();
-    const price = Number(productPrice.value);
-    const stock = Number(productStock.value);
-    const fileImages = [...(productImagesFiles?.files || [])];
-
-    if(name.length < 2){
-      setMessage(productMsg, "Nom produit invalide", "error");
-      return;
-    }
-
-    if(!Number.isFinite(price) || price <= 0){
-      setMessage(productMsg, "Prix invalide", "error");
-      return;
-    }
-
-    if(!Number.isFinite(stock) || stock < 0){
-      setMessage(productMsg, "Stock invalide", "error");
-      return;
-    }
-
-    if(fileImages.length === 0){
-      setMessage(productMsg, "Ajoute au moins une photo", "error");
-      return;
-    }
-
-    // Upload des images vers Supabase
-    let uploadedImages = [];
-    for(const file of fileImages){
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `products/${currentUser.uid}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const publicUrl = await uploadImageToSupabase(file, path);
-      uploadedImages.push(publicUrl);
-    }
-
-    await addDoc(collection(db,"merchantProducts"),{
-      merchantUid: currentUser.uid,
-      name,
-      description,
-      price,
-      stock,
-      images: uploadedImages,
-      imageUrl: uploadedImages[0],
-      isActive: true,
-      createdAt: serverTimestamp()
-    });
-
-    productName.value = "";
-    productDescription.value = "";
-    productPrice.value = "";
-    productStock.value = "";
-    if(productImagesFiles) productImagesFiles.value = "";
-
-    setMessage(productMsg, "Produit ajouté", "success");
-    await loadProducts();
-
-  }catch(e){
-    setMessage(productMsg, "Erreur : " + e.message, "error");
-  }
-};
-
-window.toggleProductStatus = async (productId, currentState)=>{
-  try{
-    await updateDoc(doc(db,"merchantProducts",productId),{
-      isActive: !currentState
-    });
-    await loadProducts();
-  }catch(e){
-    alert("Erreur : " + e.message);
-  }
-};
-
-window.deleteProduct = async (productId)=>{
-  try{
-    if(!confirm("Supprimer ce produit définitivement ?")) return;
-    
-    const product = allProducts.find(p => p.id === productId);
-    
-    if (product) {
-      let imagesToDelete = [];
-      if (Array.isArray(product.images)) {
-        imagesToDelete = [...product.images];
-      }
-      if (product.imageUrl && !imagesToDelete.includes(product.imageUrl)) {
-        imagesToDelete.push(product.imageUrl);
-      }
-
-      // Boucle de suppression Supabase
-      for (const imgUrl of imagesToDelete) {
-        if (imgUrl && imgUrl.includes("supabase.co")) {
-          try {
-            const urlParts = imgUrl.split("/media/");
-            if (urlParts.length > 1) {
-              let fileName = urlParts[1].split('?')[0];
-              fileName = decodeURIComponent(fileName);
-              await supabase.storage.from("media").remove([fileName]);
-              console.log("✅ Image produit supprimée :", fileName);
-            }
-          } catch (supaErr) {
-            console.error("❌ Erreur Supabase :", supaErr);
-          }
-        }
-      }
-    }
-
-    await deleteDoc(doc(db,"merchantProducts",productId));
-    await loadProducts();
-    alert("Produit supprimé !");
-    
-  }catch(e){
-    alert("Erreur : " + e.message);
-  }
-};
-
-window.completeOrder = async (orderId)=>{
-  try{
-    const token = await auth.currentUser.getIdToken();
-    const res = await fetch(`${API_BASE}/api/merchant/complete-order`, {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      },
-      body: JSON.stringify({ orderId })
-    });
-    const result = await res.json();
-    if(!res.ok) throw new Error(result.error || "Erreur");
-    await loadOrders();
-  }catch(e){
-    alert(e.message || "Erreur réseau");
-  }
-};
-
-window.acceptOrder = async (orderId)=>{
-  try{
-    const token = await auth.currentUser.getIdToken();
-    const res = await fetch(`${API_BASE}/api/merchant/accept-order`, {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      },
-      body: JSON.stringify({ orderId })
-    });
-    const result = await res.json();
-    if(!res.ok) throw new Error(result.error || "Erreur");
-    await loadOrders();
-  }catch(e){
-    alert(e.message || "Erreur réseau");
-  }
-};
-
-window.rejectOrder = async (orderId)=>{
-  try{
-    const token = await auth.currentUser.getIdToken();
-    const res = await fetch(`${API_BASE}/api/merchant/reject-order`, {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      },
-      body: JSON.stringify({ orderId })
-    });
-    const result = await res.json();
-    if(!res.ok) throw new Error(result.error || "Erreur");
-    await loadOrders();
-  }catch(e){
-    alert(e.message || "Erreur réseau");
-  }
-};
-
-onAuthStateChanged(auth, async(user)=>{
-  if(!user){
+  if (error.status === 401) {
     location.href = "login.html";
     return;
   }
-  currentUser = user;
-  const ok = await loadMerchant();
-  if(!ok) return;
 
-  openShopBtn.onclick = () => {
-    window.location.href = `merchant-products.html?uid=${currentUser.uid}`;
+  message(
+    error.message || "Connexion au service impossible",
+    "error",
+    root
+  );
+}
+
+function modal(title, body) {
+  $$("dialog").forEach(closeModal);
+
+  const d = document.createElement("dialog");
+  d.className = "hc-dialog";
+
+  d.innerHTML = `
+    <div class="hc-row hc-between">
+      <h2>${esc(title)}</h2>
+      <button type="button" data-close aria-label="Fermer">✕</button>
+    </div>
+
+    <div
+      class="hc-message"
+      data-message
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    ${body}
+  `;
+
+  document.body.appendChild(d);
+
+  d.addEventListener("close", () => d.remove(), { once: true });
+
+  $("[data-close]", d).onclick = () => closeModal(d);
+
+  if (d.showModal) {
+    d.showModal();
+  } else {
+    d.setAttribute("open", "");
+  }
+
+  return d;
+}
+
+function closeModal(d) {
+  if (d.close) {
+    d.close();
+  } else {
+    d.dispatchEvent(new Event("close"));
+    d.remove();
+  }
+}
+
+async function resized(file) {
+  if (!file || file.size > 15 * 1024 * 1024) {
+    throw new Error("Chaque photo est limitée à 15 Mo.");
+  }
+
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    throw new Error("Choisis une photo JPG, PNG ou WebP.");
+  }
+
+  if (file.size < 500000) return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+
+    const scale = Math.min(
+      1,
+      1600 / Math.max(bitmap.width, bitmap.height)
+    );
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+    bitmap.close();
+
+    const blob = await new Promise(resolve =>
+      canvas.toBlob(resolve, "image/jpeg", 0.85)
+    );
+
+    return blob
+      ? new File([blob], "photo.jpg", { type: "image/jpeg" })
+      : file;
+
+  } catch {
+    return file;
+  }
+}
+
+function today() {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Port-au-Prince",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(new Date()).map(p => [p.type, p.value])
+  );
+
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+async function boot(user, epoch) {
+  const api = (path, body, options) =>
+    request(path, body, options, user.uid, epoch);
+
+  let me = await api("/api/merchant/me");
+
+  if (me.uid !== user.uid || !me.shop) {
+    throw new Error("Le dossier ne correspond pas à ta session.");
+  }
+
+  if (!me.active && !["active", "suspended"].includes(me.status)) {
+    $("#content").innerHTML = `
+      <section class="hc-card">
+        <h2>Accès marchand</h2>
+        <p>Consulte le statut de ta demande pour accéder à ta boutique.</p>
+        <a class="hc-button hc-primary" href="merchant-request.html">
+          Voir ma demande
+        </a>
+      </section>
+    `;
+    return;
+  }
+
+  const tabItems = [
+    ["overview", "Vue générale"],
+    ["orders", "Commandes"],
+    ["products", "Produits"],
+    ["shop", "Boutique"],
+    ["finance", "Finances et PDF"],
+    ["disputes", "Litiges"]
+  ];
+
+  $("#header-actions").innerHTML = `
+    <a
+      class="hc-button"
+      href="merchant-products.html?uid=${encodeURIComponent(user.uid)}"
+    >
+      Boutique ↗
+    </a>
+  `;
+
+  $("#content").innerHTML = `
+    <div class="hc-welcome">
+      <div>
+        <span class="hc-badge">
+          Accès gratuit · commission courante de 3 %
+        </span>
+        <h1 id="shop-title" style="margin-top:12px"></h1>
+        <p class="hc-muted">
+          Pilote tes ventes, tes commandes et ta boutique.
+        </p>
+      </div>
+      <div id="shop-visual"></div>
+    </div>
+
+    <div id="shop-banner-preview"></div>
+    <div id="access-note" class="hc-note" hidden></div>
+
+    <section class="hc-card">
+      <div class="hc-toolbar">
+        <div class="hc-field">
+          <label for="report-period">Période des ventes et du rapport</label>
+          <select id="report-period">
+            <option value="today">Aujourd’hui</option>
+            <option value="7">7 jours</option>
+            <option value="30" selected>30 jours</option>
+            <option value="month">Mois actuel</option>
+            <option value="year">Année actuelle</option>
+            <option value="custom">Dates personnalisées</option>
+          </select>
+        </div>
+
+        <div id="custom-dates" class="hc-row" hidden>
+          ${field("date-from", "Du", { type: "date" })}
+          ${field("date-to", "Au", { type: "date" })}
+        </div>
+
+        <button id="refresh-all" data-lock="refresh">Actualiser</button>
+
+        <button
+          id="download-report"
+          class="hc-primary"
+          data-lock="pdf"
+          disabled
+        >
+          Générer mon rapport PDF
+        </button>
+      </div>
+
+      <p id="data-period" class="hc-period">
+        Chargement des données financières...
+      </p>
+
+      <div id="pdf-download"></div>
+    </section>
+
+    <nav class="hc-tabs" role="tablist" aria-label="Sections du dashboard">
+      ${tabItems.map(([key, title], i) => `
+        <button
+          id="tab-${key}"
+          role="tab"
+          aria-controls="panel-${key}"
+          aria-selected="${i === 0}"
+          tabindex="${i === 0 ? 0 : -1}"
+          data-tab="${key}"
+        >${title}</button>
+      `).join("")}
+    </nav>
+
+    <section
+      id="panel-overview"
+      role="tabpanel"
+      aria-labelledby="tab-overview"
+      data-panel="overview"
+    >
+      <div id="dashboard-stats" class="hc-grid"></div>
+      <div id="summary-warnings"></div>
+
+      <div class="hc-two">
+        <section class="hc-card">
+          <h2>Évolution des ventes</h2>
+          <div id="sales-chart"></div>
+        </section>
+
+        <section class="hc-card">
+          <h2>Produits les plus vendus</h2>
+          <div id="best-products"></div>
+        </section>
+      </div>
+
+      <section class="hc-card">
+        <h2>Commandes : historique complet</h2>
+        <div id="order-chart"></div>
+      </section>
+    </section>
+
+    <section
+      id="panel-orders"
+      role="tabpanel"
+      aria-labelledby="tab-orders"
+      data-panel="orders"
+      hidden
+    >
+      <div class="hc-card">
+        <h2>Gestion des commandes</h2>
+
+        <p class="hc-note">
+          Accepter une commande ne libère aucun montant.
+          L’acheteur communique son code après réception
+          et vérification du produit.
+        </p>
+
+        <div class="hc-toolbar" style="margin-bottom:16px">
+          <input
+            id="order-search"
+            class="hc-filter"
+            style="flex:1"
+            placeholder="Numéro, produit ou client"
+            aria-label="Rechercher une commande"
+          >
+
+          <select
+            id="order-filter"
+            class="hc-filter"
+            style="max-width:220px"
+            aria-label="Statut des commandes"
+          >
+            <option value="all">Toutes les commandes</option>
+            ${[
+              "pending",
+              "accepted",
+              "shipping",
+              "completed",
+              "disputed",
+              "cancelled",
+              "rejected",
+              "refunded"
+            ].map(x => `
+              <option value="${x}">${label(x)}</option>
+            `).join("")}
+          </select>
+        </div>
+
+        <div id="dashboard-orders" class="hc-list"></div>
+      </div>
+    </section>
+
+    <section
+      id="panel-products"
+      role="tabpanel"
+      aria-labelledby="tab-products"
+      data-panel="products"
+      hidden
+    >
+      <div class="hc-two">
+        <section class="hc-card">
+          <h2 id="product-form-title">Ajouter un produit</h2>
+
+          <form id="product-form">
+            <fieldset
+              data-business
+              data-lock="product:new"
+              style="border:0;padding:0;margin:0;min-width:0"
+            >
+              ${field("product-name", "Nom du produit", {
+                required: true,
+                max: 80
+              })}
+
+              ${field("product-description", "Description", {
+                area: true,
+                max: 500
+              })}
+
+              <div class="hc-form-grid">
+                ${field("product-price", "Prix (HTG)", {
+                  required: true,
+                  type: "number",
+                  min: 0.01,
+                  step: "0.01"
+                })}
+
+                ${field("product-stock", "Stock disponible", {
+                  required: true,
+                  type: "number",
+                  min: 0,
+                  step: "1"
+                })}
+              </div>
+
+              ${field(
+                "product-images",
+                "Photos : 1 à 8, JPG / PNG / WebP",
+                { type: "file", multiple: true }
+              )}
+
+              <p class="hc-muted">
+                En modification, sélectionner de nouvelles photos
+                remplace la sélection actuelle.
+              </p>
+
+              <div class="hc-actions">
+                <button type="submit" class="hc-primary">
+                  Enregistrer le produit
+                </button>
+                <button type="button" id="reset-product">
+                  Nouveau produit
+                </button>
+              </div>
+            </fieldset>
+          </form>
+        </section>
+
+        <section class="hc-card">
+          <h2>Mes produits</h2>
+          <input
+            id="product-search"
+            class="hc-filter"
+            placeholder="Rechercher un produit"
+            aria-label="Rechercher un produit"
+            style="margin-bottom:16px"
+          >
+          <div id="dashboard-products" class="hc-list"></div>
+        </section>
+      </div>
+    </section>
+
+    <section
+      id="panel-shop"
+      role="tabpanel"
+      aria-labelledby="tab-shop"
+      data-panel="shop"
+      hidden
+    >
+      <section class="hc-card">
+        <h2>Identité et livraison</h2>
+
+        <form id="shop-form">
+          <fieldset
+            data-business
+            data-lock="shop"
+            class="hc-form-grid"
+            style="border:0;padding:0;margin:0;min-width:0"
+          >
+            ${field("shop-name", "Nom de boutique approuvé", {
+              max: 60
+            })}
+
+            ${field("shop-email", "Email professionnel", {
+              required: true,
+              type: "email",
+              max: 254
+            })}
+
+            ${field("shop-bio", "Description de la boutique", {
+              area: true,
+              max: 300,
+              wide: true
+            })}
+
+            ${field("shop-phone", "Téléphone professionnel", {
+              max: 30
+            })}
+
+            ${field("shop-whatsapp", "WhatsApp professionnel", {
+              max: 30
+            })}
+
+            ${field("shop-address", "Adresse professionnelle publique", {
+              max: 200,
+              wide: true
+            })}
+
+            ${field("shop-zones", "Zones de livraison", {
+              area: true,
+              max: 500
+            })}
+
+            ${field("shop-delivery", "Modalités et délais de livraison", {
+              area: true,
+              max: 1000
+            })}
+
+            ${field("shop-logo", "Photo ou logo", {
+              type: "file"
+            })}
+
+            ${field("shop-banner", "Bannière facultative", {
+              type: "file"
+            })}
+
+            <div class="hc-span">
+              <button type="submit" class="hc-primary">
+                Enregistrer la boutique
+              </button>
+            </div>
+          </fieldset>
+        </form>
+      </section>
+    </section>
+
+    <section
+      id="panel-finance"
+      role="tabpanel"
+      aria-labelledby="tab-finance"
+      data-panel="finance"
+      hidden
+    >
+      <section class="hc-card">
+        <div class="hc-row hc-between">
+          <h2>Finances</h2>
+          <a class="hc-button" href="wallet.html">Mon portefeuille</a>
+        </div>
+
+        <p id="wallet-notice" class="hc-note"></p>
+        <div id="finance-stats" class="hc-grid"></div>
+
+        <h3>Historique de la période</h3>
+        <p class="hc-muted">
+          La variation du portefeuille indique les entrées et sorties
+          effectives. Les réservations et les mouvements des ventes
+          en attente sont présentés séparément.
+        </p>
+
+        <div id="dashboard-transactions"></div>
+      </section>
+    </section>
+
+    <section
+      id="panel-disputes"
+      role="tabpanel"
+      aria-labelledby="tab-disputes"
+      data-panel="disputes"
+      hidden
+    >
+      <section class="hc-card">
+        <h2>Litiges et commandes à examiner</h2>
+        <p class="hc-note">
+          Ajoute tes explications et tes preuves.
+          L’administration examine le dossier avant de décider
+          d’un remboursement ou d’une libération des fonds.
+        </p>
+        <div id="dashboard-disputes" class="hc-list"></div>
+      </section>
+    </section>
+  `;
+
+  let products = [];
+  let orders = [];
+  let disputes = [];
+  let editing = null;
+  let summary = null;
+  let summaryQuery = "";
+  let summaryVersion = 0;
+  let summaryBusy = false;
+  let productsReady = false;
+  let pdfURL = null;
+  let accessVerified = true;
+  let ordersReady = false;
+
+  const pages = {
+    orders: 1,
+    products: 1,
+    finance: 1,
+    disputes: 1
   };
 
-  await loadProducts();
-  await loadOrders();
+  const locks = new Set();
+
+  const alive = () =>
+    epoch === session &&
+    auth.currentUser?.uid === user.uid;
+
+  function sync() {
+    if (!alive()) return;
+
+    $$("[data-business],[data-lock]").forEach(node => {
+      node.disabled =
+        (
+          node.hasAttribute("data-business") &&
+          (!me.active || !accessVerified)
+        ) ||
+        locks.has(node.dataset.lock);
+    });
+
+    $("#product-form fieldset").disabled =
+      !me.active ||
+      !accessVerified ||
+      !productsReady ||
+      locks.has(editing ? `product:${editing.id}` : "product:new");
+
+    $("#download-report").disabled =
+      locks.has("pdf") ||
+      summaryBusy ||
+      !summary ||
+      summaryQuery !== query() ||
+      !!summary.warnings?.length;
+  }
+
+  async function task(button, key, fn, root = document) {
+    if (locks.has(key)) return;
+
+    locks.add(key);
+
+    if (button) {
+      button.disabled = true;
+      button.dataset.lock = key;
+    }
+
+    sync();
+
+    try {
+      await fn();
+    } catch (error) {
+      if (alive()) showError(error, root);
+    } finally {
+      locks.delete(key);
+
+      if (button?.isConnected) {
+        button.disabled = false;
+      }
+
+      sync();
+    }
+  }
+
+  function addButton(
+    node,
+    title,
+    key,
+    fn,
+    cls = "",
+    business = false
+  ) {
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.textContent = title;
+    button.className = cls;
+    button.dataset.lock = key;
+
+    if (business) {
+      button.setAttribute("data-business", "");
+    }
+
+    button.onclick = () => task(button, key, fn);
+    node.appendChild(button);
+
+    return button;
+  }
+
+  function pageData(list, key) {
+    const max = Math.max(1, Math.ceil(list.length / 20));
+
+    pages[key] = Math.min(Math.max(1, pages[key]), max);
+
+    return list.slice(
+      (pages[key] - 1) * 20,
+      pages[key] * 20
+    );
+  }
+
+  function pager(node, list, key, render) {
+    if (list.length <= 20) return;
+
+    const bar = document.createElement("div");
+    bar.className = "hc-pager";
+
+    const previous = document.createElement("button");
+    const next = document.createElement("button");
+    const text = document.createElement("span");
+
+    previous.type = next.type = "button";
+
+    previous.textContent = "Précédent";
+    next.textContent = "Suivant";
+
+    previous.disabled = pages[key] <= 1;
+    next.disabled = pages[key] * 20 >= list.length;
+
+    text.textContent =
+      `Page ${pages[key]} / ${Math.ceil(list.length / 20)}` +
+      ` · ${list.length} éléments`;
+
+    previous.onclick = () => {
+      pages[key]--;
+      render();
+    };
+
+    next.onclick = () => {
+      pages[key]++;
+      render();
+    };
+
+    bar.append(previous, text, next);
+    node.appendChild(bar);
+  }
+
+  function switchTab(key, focus = false) {
+    $$("[data-tab]").forEach(b => {
+      const selected = b.dataset.tab === key;
+
+      b.setAttribute("aria-selected", String(selected));
+      b.tabIndex = selected ? 0 : -1;
+
+      if (selected && focus) b.focus();
+    });
+
+    $$("[data-panel]").forEach(p => {
+      p.hidden = p.dataset.panel !== key;
+    });
+  }
+
+  $$("[data-tab]").forEach((b, i, list) => {
+    b.onclick = () => switchTab(b.dataset.tab);
+
+    b.onkeydown = e => {
+      let index;
+
+      if (e.key === "ArrowRight") index = (i + 1) % list.length;
+      if (e.key === "ArrowLeft") {
+        index = (i + list.length - 1) % list.length;
+      }
+
+      if (e.key === "Home") index = 0;
+      if (e.key === "End") index = list.length - 1;
+
+      if (index !== undefined) {
+        e.preventDefault();
+        switchTab(list[index].dataset.tab, true);
+      }
+    };
+  });
+
+  function query() {
+    const p = new URLSearchParams({
+      period: $("#report-period").value
+    });
+
+    if (p.get("period") === "custom") {
+      p.set("from", $("#date-from").value);
+      p.set("to", $("#date-to").value);
+    }
+
+    return p.toString();
+  }
+
+  function validatePeriod() {
+    if ($("#report-period").value !== "custom") return;
+
+    const from = $("#date-from").value;
+    const to = $("#date-to").value;
+
+    if (
+      !from ||
+      !to ||
+      from > to ||
+      to > today() ||
+      Date.parse(to) - Date.parse(from) > 366 * 86400000
+    ) {
+      throw new Error(
+        "Choisis une période valide, de 366 jours maximum, " +
+        "terminant au plus tard aujourd’hui."
+      );
+    }
+  }
+
+  const end = today();
+
+  $("#date-to").value = end;
+  $("#date-to").max = $("#date-from").max = end;
+
+  $("#date-from").value = new Date(
+    Date.parse(end + "T12:00:00Z") - 29 * 86400000
+  ).toISOString().slice(0, 10);
+
+  function header() {
+    $("#shop-title").textContent = me.shop.name || "Ma boutique";
+
+    $("#shop-visual").innerHTML = image(
+      me.shop.logo,
+      "hc-shop-photo",
+      "Logo de la boutique"
+    );
+
+    $("#shop-banner-preview").innerHTML = me.shop.banner
+      ? image(me.shop.banner, "hc-banner", "Bannière de la boutique")
+      : "";
+
+    $("#access-note").hidden = !!me.active && accessVerified;
+
+    $("#access-note").textContent = !accessVerified
+      ? "Impossible de vérifier l’accès marchand. " +
+        "Actualise pour réactiver les actions commerciales."
+      : me.suspended
+        ? "Compte suspendu : certaines consultations sont limitées " +
+          "et les actions commerciales sont désactivées."
+        : `Boutique suspendue : ${
+            me.suspensionReason || "contacte l’équipe HaytiClips."
+          } Les historiques et les dossiers autorisés restent consultables.`;
+
+    sync();
+  }
+
+  const shopFields = [
+    ["shop-name", "name"],
+    ["shop-email", "email"],
+    ["shop-bio", "bio"],
+    ["shop-phone", "phone"],
+    ["shop-whatsapp", "whatsapp"],
+    ["shop-address", "address"],
+    ["shop-zones", "zones"],
+    ["shop-delivery", "delivery"]
+  ];
+
+  for (const [id, key] of shopFields) {
+    $("#" + id).value = me.shop[key] || "";
+  }
+
+  $("#shop-name").disabled = true;
+
+  async function upload(file, kind) {
+    const form = new FormData();
+
+    form.append("file", await resized(file));
+    form.append("kind", kind);
+
+    return (await api("/api/merchant/upload-image", form)).url;
+  }
+
+  const stat = (title, value, note = "") => `
+    <div class="hc-stat">
+      <small>${esc(title)}</small>
+      <strong>${esc(value)}</strong>
+      <em>${esc(note)}</em>
+    </div>
+  `;
+
+  function bars(node, list) {
+    if (!list.length) {
+      return empty(node, "Aucune donnée pour cette période.");
+    }
+
+    const max = Math.max(
+      1,
+      ...list.map(x =>
+        Number.isFinite(x.value) ? Math.max(0, x.value) : 0
+      )
+    );
+
+    node.innerHTML = `
+      <div class="hc-bars">
+        ${list.map(x => `
+          <div>
+            <div class="hc-bar-label">
+              <span>${esc(x.name)}</span>
+              <strong>${
+                esc(Number.isFinite(x.value) ? x.value : "—")
+              }</strong>
+            </div>
+            <div class="hc-bar">
+              <i style="width:${
+                Number.isFinite(x.value)
+                  ? Math.min(100, Math.max(0, x.value) / max * 100)
+                  : 0
+              }%"></i>
+            </div>
+            ${x.note
+              ? `<small class="hc-muted">${esc(x.note)}</small>`
+              : ""}
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function salesChart(r) {
+    if (!r.daily.length) {
+      return empty(
+        $("#sales-chart"),
+        "Aucune vente réglée sur cette période."
+      );
+    }
+
+    const map = new Map(r.daily.map(x => [x.date, x]));
+    const rows = [];
+
+    for (
+      let d = new Date(r.range.from + "T12:00:00Z"),
+          last = new Date(r.range.to + "T12:00:00Z");
+      d <= last;
+      d.setUTCDate(d.getUTCDate() + 1)
+    ) {
+      const date = d.toISOString().slice(0, 10);
+      rows.push(map.get(date) || { date, gross: 0 });
+    }
+
+    const max = Math.max(1, ...rows.map(x => x.gross));
+    const steps = Math.max(1, rows.length - 1);
+
+    const points = rows.map((x, i) =>
+      `${22 + i / steps * 656},${155 - x.gross / max * 125}`
+    ).join(" ");
+
+    $("#sales-chart").innerHTML = `
+      <p class="hc-muted">
+        Chiffre d’affaires brut réglé · maximum
+        ${esc(fmt(Math.max(...rows.map(x => x.gross))))}
+      </p>
+
+      <svg
+        class="hc-chart"
+        viewBox="0 0 700 185"
+        role="img"
+        aria-label="Évolution quotidienne des ventes réglées"
+      >
+        <path
+          d="M22 155H678 M22 92H678 M22 30H678"
+          fill="none"
+          stroke="#343847"
+        />
+        <polyline
+          points="${points}"
+          fill="none"
+          stroke="#ff0050"
+          stroke-width="3"
+        />
+        ${rows.length === 1 ? `
+          <circle
+            cx="22"
+            cy="${155 - rows[0].gross / max * 125}"
+            r="5"
+            fill="#ff0050"
+          />
+        ` : ""}
+      </svg>
+
+      <div class="hc-chart-labels">
+        <span>${esc(r.range.from)}</span>
+        <span>${esc(r.range.to)}</span>
+      </div>
+
+      <details class="hc-muted">
+        <summary>Voir les valeurs quotidiennes</summary>
+        ${rows.map(x => `
+          <p>${esc(x.date)} : ${esc(fmt(x.gross))}</p>
+        `).join("")}
+      </details>
+    `;
+  }
+
+  function renderTransactions() {
+    const node = $("#dashboard-transactions");
+    const rows = [...(summary?.transactions || [])].reverse();
+
+    if (!rows.length) {
+      return empty(node, "Aucun mouvement sur cette période.");
+    }
+
+    const delta = v => Number.isFinite(v)
+      ? esc((v > 0 ? "+" : "") + fmt(v))
+      : "Non rapproché";
+
+    node.innerHTML = `
+      <div class="hc-table-wrap">
+        <table class="hc-table">
+          <caption class="hc-a11y">
+            Historique financier de la période
+          </caption>
+
+          <thead>
+            <tr>
+              <th>Date et référence</th>
+              <th>Opération et statut</th>
+              <th>Variation du portefeuille</th>
+              <th>Réservations du portefeuille</th>
+              <th>Ventes en attente</th>
+              <th>Solde total après</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${pageData(rows, "finance").map(x => `
+              <tr>
+                <td>
+                  ${esc(when(x.atMs))}
+                  <div class="hc-ref">${esc(x.id)}</div>
+                </td>
+                <td>
+                  ${esc(x.description)}
+                  <div class="hc-muted">
+                    ${esc(label(x.status))}
+                    · Montant de référence : ${esc(fmt(x.amount))}
+                    ${x.correction ? " · Correction historique" : ""}
+                  </div>
+                </td>
+                <td class="${
+                  x.walletDelta > 0
+                    ? "hc-positive"
+                    : x.walletDelta < 0
+                      ? "hc-negative"
+                      : ""
+                }">
+                  ${delta(x.walletDelta)}
+                </td>
+                <td>${delta(x.lockedDelta)}</td>
+                <td>${delta(x.heldDelta)}</td>
+                <td>${
+                  Number.isFinite(x.balanceAfter)
+                    ? esc(fmt(x.balanceAfter))
+                    : "—"
+                }</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    pager(node, rows, "finance", renderTransactions);
+  }
+
+  async function refreshSummary() {
+    const version = ++summaryVersion;
+    const selected = query();
+
+    summaryBusy = true;
+    sync();
+
+    try {
+      validatePeriod();
+
+      const r = await api("/api/merchant/summary?" + selected);
+
+      if (
+        version !== summaryVersion ||
+        selected !== query()
+      ) {
+        return true;
+      }
+
+      if (
+        !r.period ||
+        !r.periods ||
+        !r.snapshot?.counts ||
+        !r.range ||
+        !Array.isArray(r.transactions) ||
+        !Array.isArray(r.daily) ||
+        !Array.isArray(r.bestProducts) ||
+        !Array.isArray(r.warnings)
+      ) {
+        throw new Error("Données financières incomplètes.");
+      }
+
+      summary = r;
+      summaryQuery = selected;
+      pages.finance = 1;
+
+      const p = r.period;
+      const s = r.snapshot;
+      const c = s.counts;
+
+      $("#data-period").textContent =
+        `Ventes et mouvements du ${r.range.from} au ${r.range.to}` +
+        ` · Heure d’Haïti · Actualisé le ${when(r.generatedAtMs)}`;
+
+      $("#dashboard-stats").innerHTML = [
+        stat(
+          "Chiffre d’affaires réglé",
+          fmt(p.gross),
+          "Période sélectionnée"
+        ),
+        stat(
+          "Montant libéré au marchand",
+          fmt(p.net),
+          "Net sur la période"
+        ),
+        stat(
+          "Ventes en attente",
+          fmt(s.merchantPending),
+          "Situation actuelle · indisponibles au retrait"
+        ),
+        stat(
+          "Solde disponible",
+          fmt(s.walletAvailable),
+          "Portefeuille HaytiClips partagé"
+        ),
+        stat(
+          "Ventes du jour",
+          fmt(r.periods.today.gross),
+          `${r.periods.today.count} vente(s) réglée(s)`
+        ),
+        stat("7 derniers jours", fmt(r.periods.week.gross)),
+        stat("Ventes du mois", fmt(r.periods.month.gross)),
+        stat("Produits actifs", s.activeProducts),
+        stat(
+          "Commandes au total",
+          s.totalOrders,
+          "Historique complet"
+        ),
+        stat("À préparer", (c.pending || 0) + (c.accepted || 0)),
+        stat("En livraison", c.shipping || 0),
+        stat("Terminées", c.completed || 0),
+        stat("En litige", c.disputed || 0),
+        stat(
+          "Annulées ou refusées",
+          (c.cancelled || 0) + (c.rejected || 0)
+        ),
+        stat("Ventes réglées", p.count, "Période sélectionnée")
+      ].join("");
+
+      salesChart(r);
+
+      bars(
+        $("#best-products"),
+        r.bestProducts.map(x => ({
+          name: x.name,
+          value: x.quantity,
+          note: fmt(x.gross)
+        }))
+      );
+
+      bars($("#order-chart"), [
+        { name: "Terminées", value: c.completed || 0 },
+        {
+          name: "Annulées ou refusées",
+          value: (c.cancelled || 0) + (c.rejected || 0)
+        },
+        { name: "En litige", value: c.disputed || 0 },
+        { name: "Remboursées", value: c.refunded || 0 }
+      ]);
+
+      $("#summary-warnings").innerHTML = r.warnings.map(w =>
+        `<p class="hc-note">${esc(w)}</p>`
+      ).join("");
+
+      $("#wallet-notice").textContent = r.walletNotice;
+
+      $("#finance-stats").innerHTML =
+        stat(
+          "Frais sur les ventes",
+          fmt(p.fee),
+          "Période sélectionnée"
+        ) +
+        stat(
+          "Remboursements : débit marchand",
+          fmt(p.refundsNet),
+          "Période sélectionnée"
+        ) +
+        stat(
+          "Retraits du portefeuille partagé",
+          fmt(p.withdrawalsGlobalWallet),
+          "Période sélectionnée"
+        ) +
+        stat(
+          "Portefeuille : solde total",
+          fmt(s.wallet),
+          "Situation actuelle"
+        ) +
+        stat(
+          "Portefeuille : réservations",
+          fmt(s.walletLocked),
+          "Achats ou retraits en cours"
+        ) +
+        stat(
+          "Portefeuille : disponible",
+          fmt(s.walletAvailable),
+          "Situation actuelle"
+        ) +
+        stat(
+          "Ventes en attente : net marchand",
+          fmt(s.merchantPending),
+          "Situation actuelle · hors solde disponible"
+        ) +
+        stat(
+          "Fonds libérés",
+          fmt(p.net),
+          "Période sélectionnée"
+        );
+
+      renderTransactions();
+      return true;
+
+    } catch (e) {
+      if (!alive() || version !== summaryVersion) return true;
+
+      summary = null;
+
+      $("#summary-warnings").textContent = "";
+      $("#wallet-notice").textContent =
+        "Soldes non vérifiés : actualise les données.";
+
+      $("#data-period").textContent =
+        "Données financières indisponibles. Actualise pour réessayer.";
+
+      for (const id of [
+        "dashboard-stats",
+        "sales-chart",
+        "best-products",
+        "order-chart",
+        "finance-stats",
+        "dashboard-transactions"
+      ]) {
+        empty($("#" + id), e.message);
+      }
+
+      showError(e);
+      return false;
+
+    } finally {
+      if (version === summaryVersion && alive()) {
+        summaryBusy = false;
+        sync();
+      }
+    }
+  }
+
+  let orderVersion = 0;
+  let productVersion = 0;
+  let disputeVersion = 0;
+
+  const productImages = p =>
+    Array.isArray(p.images) && p.images.length
+      ? p.images
+      : p.imageUrl
+        ? [p.imageUrl]
+        : [];
+
+  const latest = id => orders.find(o => o.id === id);
+
+  function orderDetails(o) {
+    return `
+      <p class="hc-ref">${esc(o.id)}</p>
+      <p>${esc(when(o.createdAtMs))}</p>
+
+      <h3>${esc(o.productName || "Produit")}</h3>
+
+      <p>
+        Quantité : ${esc(o.quantity)}
+        · Total payé : ${esc(fmt(o.totalAmount))}
+      </p>
+
+      <p>
+        Frais : ${esc(fmt(o.feeAmount))}
+        · Net marchand : ${esc(fmt(o.merchantNet))}
+      </p>
+
+      <p>${pill(o.status)} ${pill(o.fundsStatus)}</p>
+
+      ${o.feePolicy === "legacy-fixed" ? `
+        <p class="hc-note">
+          Cette ancienne commande conserve ses frais historiques.
+        </p>
+      ` : ""}
+
+      ${o.requiresReconciliation ? `
+        <p class="hc-note">
+          Cette commande nécessite un rapprochement côté administration.
+        </p>
+      ` : ""}
+
+      <details>
+        <summary>Coordonnées et livraison</summary>
+
+        ${[
+          [
+            "Nom",
+            [o.customerPrenom, o.customerNom].filter(Boolean).join(" ")
+          ],
+          ["Email", o.customerEmail],
+          ["Appel", o.customerPhone],
+          ["WhatsApp", o.customerWhatsapp],
+          ["Détails", o.customerDetails],
+          ["Conditions de livraison enregistrées", o.deliveryTerms]
+        ].map(([k, v]) => `
+          <p><strong>${esc(k)} :</strong> ${esc(v || "—")}</p>
+        `).join("")}
+      </details>
+
+      ${o.disputeDeadlineMs ? `
+        <p class="hc-note">
+          Contestation de l’acheteur possible jusqu’au
+          ${esc(when(o.disputeDeadlineMs))}.
+        </p>
+      ` : ""}
+    `;
+  }
+
+  async function viewOrder(id) {
+    const r = await api(
+      "/api/merchant/order/" + encodeURIComponent(id)
+    );
+
+    if (!r.order || r.order.merchantUid !== user.uid) {
+      throw new Error("Commande non autorisée.");
+    }
+
+    const d = modal("Commande", orderDetails(r.order));
+    const historyNode = document.createElement("div");
+
+    historyNode.innerHTML = `
+      <h3 style="margin-top:20px">
+        Tes mouvements liés à cette commande
+      </h3>
+
+      ${(r.history || []).length
+        ? r.history.map(x => `
+            <p>
+              ${esc(when(x.atMs))}
+              · ${esc(label(x.type))}
+              · ${esc(fmt(x.amount))}
+              · ${esc(label(x.status))}
+            </p>
+          `).join("")
+        : '<p class="hc-muted">Aucun mouvement enregistré.</p>'}
+    `;
+
+    d.appendChild(historyNode);
+  }
+
+  async function afterWrite(text) {
+    const ok = await refreshAll();
+
+    if (alive()) {
+      message(
+        text + (
+          ok
+            ? ""
+            : " Certaines données n’ont pas pu être rechargées : " +
+              "utilise Actualiser."
+        ),
+        ok ? "success" : "info"
+      );
+    }
+  }
+
+  async function changeOrder(id, action) {
+    if (!me.active) {
+      throw new Error("Les actions commerciales sont désactivées.");
+    }
+
+    if (
+      action === "reject-order" &&
+      !confirm(
+        "Refuser cette commande et débloquer le montant pour l’acheteur ?"
+      )
+    ) {
+      return;
+    }
+
+    await api("/api/merchant/" + action, { orderId: id });
+    await afterWrite("Commande mise à jour.");
+  }
+
+  function confirmDelivery(id) {
+    const o = latest(id);
+
+    if (
+      !me.active ||
+      !o ||
+      !["accepted", "shipping"].includes(o.status)
+    ) {
+      throw new Error("Cette commande ne peut pas être confirmée.");
+    }
+
+    const d = modal("Confirmer la remise du produit", `
+      <p class="hc-note">
+        Demande le code à l’acheteur après remise et vérification
+        du produit. Le serveur contrôle la commande, le paiement,
+        les tentatives et les litiges avant toute libération.
+      </p>
+
+      <form id="delivery-form">
+        <fieldset
+          data-lock="order:${esc(id)}"
+          style="border:0;padding:0;margin:0;min-width:0"
+        >
+          ${field(
+            "delivery-code",
+            "Code communiqué par l’acheteur",
+            { required: true, max: 32 }
+          )}
+
+          <button type="submit" class="hc-primary">
+            Valider la livraison
+          </button>
+        </fieldset>
+      </form>
+    `);
+
+    const input = $("#delivery-code", d);
+
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    input.autocapitalize = "characters";
+    input.focus();
+
+    $("#delivery-form", d).onsubmit = e => {
+      e.preventDefault();
+
+      const code = input.value
+        .trim()
+        .toUpperCase()
+        .replace(/[\s-]/g, "");
+
+      if (!/^[A-Z0-9]{8,32}$/.test(code)) {
+        message(
+          "Vérifie le code communiqué par l’acheteur.",
+          "error",
+          d
+        );
+        return;
+      }
+
+      task(
+        $('button[type="submit"]', d),
+        "order:" + id,
+        async () => {
+          if (!me.active) {
+            throw new Error("Accès marchand désactivé.");
+          }
+
+          await api("/api/merchant/complete-order", {
+            orderId: id,
+            deliveryCode: code
+          });
+
+          input.value = "";
+          closeModal(d);
+
+          await afterWrite(
+            "Livraison confirmée. " +
+            "Les montants affichés proviennent du serveur."
+          );
+        },
+        d
+      );
+    };
+  }
+
+  function requestReview(id) {
+    const d = modal("Demander un examen", `
+      <p class="hc-note">
+        Explique le problème : livraison sans confirmation,
+        acheteur injoignable ou autre blocage.
+        Le serveur vérifie le délai applicable.
+        Cette demande ne libère aucun montant.
+      </p>
+
+      <form id="review-form">
+        <fieldset
+          data-lock="order:${esc(id)}"
+          style="border:0;padding:0;margin:0"
+        >
+          ${field("review-reason", "Motif de la demande", {
+            required: true,
+            area: true,
+            max: 1000
+          })}
+
+          <button type="submit" class="hc-primary">
+            Soumettre à l’administration
+          </button>
+        </fieldset>
+      </form>
+    `);
+
+    $("#review-form", d).onsubmit = e => {
+      e.preventDefault();
+
+      const reason = $("#review-reason", d).value.trim();
+
+      if (reason.length < 10) {
+        return message(
+          "Explique le problème en au moins 10 caractères.",
+          "error",
+          d
+        );
+      }
+
+      task(
+        $('button[type="submit"]', d),
+        "order:" + id,
+        async () => {
+          await api("/api/merchant/request-review", {
+            orderId: id,
+            reason
+          });
+
+          closeModal(d);
+          await afterWrite("Demande d’examen enregistrée.");
+        },
+        d
+      );
+    };
+  }
+
+  function renderOrders() {
+    const node = $("#dashboard-orders");
+
+    const term = $("#order-search").value
+      .trim()
+      .toLocaleLowerCase();
+
+    const filter = $("#order-filter").value;
+
+    if (!ordersReady) {
+      return empty(
+        node,
+        "Commandes indisponibles. Utilise Actualiser pour réessayer."
+      );
+    }
+
+    const rows = orders.filter(o =>
+      (filter === "all" || o.status === filter) &&
+      [
+        o.id,
+        o.productName,
+        o.customerNom,
+        o.customerPrenom,
+        o.customerEmail
+      ].join(" ").toLocaleLowerCase().includes(term)
+    );
+
+    node.innerHTML = "";
+
+    if (!rows.length) {
+      return empty(
+        node,
+        "Aucune commande correspondant à cette sélection."
+      );
+    }
+
+    for (const o of pageData(rows, "orders")) {
+      const item = document.createElement("article");
+      item.className = "hc-item";
+
+      item.innerHTML = `
+        <div class="hc-row hc-between">
+          <h3>${esc(o.productName || "Produit")}</h3>
+          ${pill(o.status)}
+        </div>
+
+        <p class="hc-ref">N° ${esc(o.id)}</p>
+
+        <p>
+          ${esc(when(o.createdAtMs))}
+          · ${esc(o.quantity)} unité(s)
+        </p>
+
+        <p>
+          Total : ${esc(fmt(o.totalAmount))}
+          · Frais : ${esc(fmt(o.feeAmount))}
+        </p>
+
+        <p>
+          Net marchand : ${esc(fmt(o.merchantNet))}
+          · ${pill(o.fundsStatus)}
+        </p>
+
+        <div class="hc-actions"></div>
+      `;
+
+      const a = $(".hc-actions", item);
+      const key = "order:" + o.id;
+
+      addButton(a, "Consulter", key, () => viewOrder(o.id));
+
+      if (o.status === "pending") {
+        addButton(
+          a,
+          "Accepter",
+          key,
+          () => changeOrder(o.id, "accept-order"),
+          "hc-primary",
+          true
+        );
+
+        addButton(
+          a,
+          "Refuser",
+          key,
+          () => changeOrder(o.id, "reject-order"),
+          "hc-danger",
+          true
+        );
+      }
+
+      if (o.status === "accepted") {
+        addButton(
+          a,
+          "Mettre en livraison",
+          key,
+          () => changeOrder(o.id, "ship-order"),
+          "",
+          true
+        );
+      }
+
+      if (["accepted", "shipping"].includes(o.status)) {
+        const code = document.createElement("button");
+
+        code.type = "button";
+        code.className = "hc-primary";
+        code.textContent = "Saisir le code de livraison";
+        code.dataset.lock = key;
+        code.setAttribute("data-business", "");
+
+        code.onclick = () => confirmDelivery(o.id);
+        a.appendChild(code);
+
+        const review = document.createElement("button");
+
+        review.type = "button";
+        review.textContent = "Demander un examen";
+        review.dataset.lock = key;
+        review.onclick = () => requestReview(o.id);
+
+        a.appendChild(review);
+      }
+
+      if (o.disputeId) {
+        const b = document.createElement("button");
+
+        b.type = "button";
+        b.textContent = "Voir les litiges";
+        b.onclick = () => switchTab("disputes", true);
+
+        a.appendChild(b);
+      }
+
+      node.appendChild(item);
+    }
+
+    pager(node, rows, "orders", renderOrders);
+    sync();
+  }
+
+  async function refreshOrders() {
+    const version = ++orderVersion;
+
+    try {
+      const r = await api("/api/merchant/orders?side=seller");
+
+      if (version !== orderVersion) return true;
+
+      if (
+        !Array.isArray(r.orders) ||
+        r.orders.some(o => o.merchantUid !== user.uid)
+      ) {
+        throw new Error("Historique de commandes invalide.");
+      }
+
+      orders = r.orders;
+      ordersReady = true;
+
+      renderOrders();
+      return true;
+
+    } catch (e) {
+      if (alive() && version === orderVersion) {
+        orders = [];
+        ordersReady = false;
+
+        empty(
+          $("#dashboard-orders"),
+          "Commandes indisponibles : " + e.message
+        );
+
+        showError(e);
+      }
+
+      return false;
+    }
+  }
+
+  function resetProduct() {
+    editing = null;
+
+    $("#product-form").reset();
+    $("#product-form-title").textContent = "Ajouter un produit";
+    $("#product-form fieldset").dataset.lock = "product:new";
+
+    sync();
+  }
+
+  function editProduct(p) {
+    if (
+      !me.active ||
+      locks.has("product:" + p.id) ||
+      locks.has(editing ? "product:" + editing.id : "product:new")
+    ) {
+      return;
+    }
+
+    editing = {
+      ...p,
+      images: [...productImages(p)]
+    };
+
+    $("#product-form-title").textContent = "Modifier le produit";
+    $("#product-name").value = p.name || "";
+    $("#product-description").value = p.description || "";
+    $("#product-price").value = p.price;
+    $("#product-stock").value = p.stock;
+    $("#product-images").value = "";
+
+    $("#product-form fieldset").dataset.lock = "product:" + p.id;
+
+    sync();
+    $("#product-name").focus();
+  }
+
+  async function toggleProduct(p) {
+    try {
+      await api("/api/merchant/save-product", {
+        productId: p.id,
+        expectedVersion: Number(p.version || 0),
+        isActive: p.isActive !== true,
+        images: productImages(p)
+      });
+
+    } catch (e) {
+      if (e.status === 409) await refreshProducts();
+      throw e;
+    }
+
+    await afterWrite("État du produit mis à jour.");
+  }
+
+  async function archiveProduct(p) {
+    if (!confirm(
+      "Retirer ce produit de la boutique ? " +
+      "Ses données resteront conservées pour l’historique."
+    )) {
+      return;
+    }
+
+    await api("/api/merchant/archive-product", {
+      productId: p.id
+    });
+
+    if (editing?.id === p.id) resetProduct();
+
+    await afterWrite("Produit retiré du catalogue.");
+  }
+
+  function renderProducts() {
+    const node = $("#dashboard-products");
+
+    const term = $("#product-search").value
+      .trim()
+      .toLocaleLowerCase();
+
+    const rows = products.filter(p =>
+      [p.name, p.description]
+        .join(" ")
+        .toLocaleLowerCase()
+        .includes(term)
+    );
+
+    node.innerHTML = "";
+
+    if (!rows.length) {
+      return empty(
+        node,
+        "Aucun produit correspondant à cette sélection."
+      );
+    }
+
+    for (const p of pageData(rows, "products")) {
+      const item = document.createElement("article");
+      item.className = "hc-item";
+
+      item.innerHTML = `
+        <div class="hc-row">
+          ${image(
+            productImages(p)[0],
+            "hc-item-photo",
+            "Photo du produit"
+          )}
+
+          <div style="flex:1;min-width:0">
+            <h3>${esc(p.name)}</h3>
+            <p>${esc(fmt(p.price))} · Stock : ${esc(p.stock)}</p>
+            ${pill(p.isActive === true ? "active" : "inactive")}
+          </div>
+        </div>
+
+        <p>${esc(p.description || "")}</p>
+        <p class="hc-muted">${productImages(p).length} photo(s)</p>
+        <div class="hc-actions"></div>
+      `;
+
+      const a = $(".hc-actions", item);
+      const key = "product:" + p.id;
+
+      const edit = document.createElement("button");
+
+      edit.type = "button";
+      edit.textContent = "Modifier";
+      edit.dataset.lock = key;
+      edit.setAttribute("data-business", "");
+      edit.onclick = () => editProduct(p);
+
+      a.appendChild(edit);
+
+      addButton(
+        a,
+        p.isActive === true ? "Désactiver" : "Activer",
+        key,
+        () => toggleProduct(p),
+        "",
+        true
+      );
+
+      addButton(
+        a,
+        "Retirer",
+        key,
+        () => archiveProduct(p),
+        "hc-danger",
+        true
+      );
+
+      node.appendChild(item);
+    }
+
+    pager(node, rows, "products", renderProducts);
+    sync();
+  }
+
+  async function refreshProducts() {
+    const version = ++productVersion;
+
+    if (!me.active) {
+      productsReady = false;
+      products = [];
+
+      empty(
+        $("#dashboard-products"),
+        "Gestion des produits désactivée pendant la suspension."
+      );
+
+      sync();
+      return true;
+    }
+
+    try {
+      const r = await api("/api/merchant/products");
+
+      if (version !== productVersion) return true;
+
+      if (
+        !Array.isArray(r.products) ||
+        r.products.some(p => p.merchantUid !== user.uid)
+      ) {
+        throw new Error("Liste de produits invalide.");
+      }
+
+      products = r.products.filter(p => p.archived !== true);
+      productsReady = true;
+
+      renderProducts();
+      return true;
+
+    } catch (e) {
+      if (alive() && version === productVersion) {
+        productsReady = false;
+        products = [];
+
+        empty(
+          $("#dashboard-products"),
+          "Produits indisponibles : " + e.message
+        );
+
+        showError(e);
+        sync();
+      }
+
+      return false;
+    }
+  }
+
+  $("#reset-product").onclick = resetProduct;
+
+  $("#product-form").onsubmit = e => {
+    e.preventDefault();
+
+    const edit = editing ? { ...editing } : null;
+    const key = edit ? "product:" + edit.id : "product:new";
+
+    task(
+      $('button[type="submit"]', e.currentTarget),
+      key,
+      async () => {
+        if (!me.active || !productsReady) {
+          throw new Error(
+            "Recharge les produits avant de les modifier."
+          );
+        }
+
+        const name = $("#product-name").value.trim();
+        const description = $("#product-description").value.trim();
+        const price = Number($("#product-price").value);
+        const stock = Number($("#product-stock").value);
+        const files = [...$("#product-images").files];
+
+        if (
+          name.length < 2 ||
+          name.length > 80 ||
+          description.length > 500
+        ) {
+          throw new Error(
+            "Vérifie le nom et la description du produit."
+          );
+        }
+
+        if (
+          !Number.isFinite(price) ||
+          price <= 0 ||
+          Math.abs(price * 100 - Math.round(price * 100)) > 0.00001
+        ) {
+          throw new Error(
+            "Le prix doit être positif, " +
+            "avec deux décimales au maximum."
+          );
+        }
+
+        if (
+          !Number.isInteger(stock) ||
+          stock < 0 ||
+          stock > 1000000
+        ) {
+          throw new Error(
+            "Le stock doit être un entier entre 0 et 1 000 000."
+          );
+        }
+
+        if (files.length > 8 || (!edit && !files.length)) {
+          throw new Error("Ajoute entre 1 et 8 photos.");
+        }
+
+        for (const f of files) {
+          if (
+            f.size > 15 * 1024 * 1024 ||
+            !["image/jpeg", "image/png", "image/webp"].includes(f.type)
+          ) {
+            throw new Error(
+              "Photos JPG, PNG ou WebP de 15 Mo maximum."
+            );
+          }
+        }
+
+        const images = files.length ? [] : productImages(edit);
+
+        for (const file of files) {
+          images.push(await upload(file, "product"));
+        }
+
+        const body = {
+          name,
+          description,
+          price,
+          stock,
+          images,
+          isActive: edit ? edit.isActive === true : true
+        };
+
+        if (edit) {
+          body.productId = edit.id;
+          body.expectedVersion = Number(edit.version || 0);
+        }
+
+        try {
+          await api("/api/merchant/save-product", body);
+
+        } catch (err) {
+          if (err.status === 409) await refreshProducts();
+          throw err;
+        }
+
+        resetProduct();
+
+        await afterWrite(
+          edit ? "Produit modifié." : "Produit ajouté."
+        );
+      }
+    );
+  };
+
+  $("#shop-form").onsubmit = e => {
+    e.preventDefault();
+
+    task(
+      $('button[type="submit"]', e.currentTarget),
+      "shop",
+      async () => {
+        if (!me.active) {
+          throw new Error("Accès marchand désactivé.");
+        }
+
+        const body = {};
+
+        for (const [id, key] of shopFields) {
+          if (key !== "name") {
+            body[key] = $("#" + id).value.trim();
+          }
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+          throw new Error("Email professionnel invalide.");
+        }
+
+        const logo = $("#shop-logo").files[0];
+        const banner = $("#shop-banner").files[0];
+
+        if (logo) body.logo = await upload(logo, "shop");
+        if (banner) body.banner = await upload(banner, "shop");
+
+        await api("/api/merchant/save-shop", body);
+
+        $("#shop-logo").value = "";
+        $("#shop-banner").value = "";
+
+        await afterWrite("Boutique enregistrée.");
+      }
+    );
+  };
+
+  async function viewEvidence(dispute, file) {
+    const blob = await api(
+      `/api/merchant/dispute-evidence/${
+        encodeURIComponent(dispute.id)
+      }/${encodeURIComponent(file.id)}`,
+      undefined,
+      { blob: true }
+    );
+
+    if (![
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "video/mp4"
+    ].includes(blob.type.split(";")[0])) {
+      throw new Error("Format de preuve non pris en charge.");
+    }
+
+    const url = URL.createObjectURL(blob);
+    objectURLs.add(url);
+
+    const d = modal(
+      "Pièce du dossier",
+      "<div data-proof></div>"
+    );
+
+    const media = document.createElement(
+      blob.type.startsWith("video/") ? "video" : "img"
+    );
+
+    media.className = "hc-proof";
+    media.src = url;
+
+    if (media.tagName === "VIDEO") {
+      media.controls = true;
+      media.preload = "metadata";
+    } else {
+      media.alt = "Pièce fournie dans le dossier";
+    }
+
+    $("[data-proof]", d).appendChild(media);
+
+    d.addEventListener("close", () => {
+      media.removeAttribute("src");
+      releaseURL(url);
+    }, { once: true });
+  }
+
+  function disputeMessage(dossier) {
+    const d = modal("Ajouter une explication", `
+      <form id="dispute-message-form">
+        <fieldset
+          data-lock="dispute:${esc(dossier.id)}"
+          style="border:0;padding:0;margin:0"
+        >
+          ${field("dispute-message", "Message pour le dossier", {
+            area: true,
+            required: true,
+            max: 2000
+          })}
+
+          <button type="submit" class="hc-primary">Envoyer</button>
+        </fieldset>
+      </form>
+    `);
+
+    $("#dispute-message-form", d).onsubmit = e => {
+      e.preventDefault();
+
+      const text = $("#dispute-message", d).value.trim();
+
+      if (text.length < 2) {
+        return message(
+          "Ajoute au moins deux caractères.",
+          "error",
+          d
+        );
+      }
+
+      task(
+        $('button[type="submit"]', d),
+        "dispute:" + dossier.id,
+        async () => {
+          await api("/api/merchant/dispute-message", {
+            disputeId: dossier.id,
+            message: text
+          });
+
+          closeModal(d);
+          await afterWrite("Explication ajoutée au dossier.");
+        },
+        d
+      );
+    };
+  }
+
+  function disputeEvidence(dossier) {
+    const d = modal("Ajouter une preuve", `
+      <form id="evidence-form">
+        <fieldset style="border:0;padding:0;margin:0">
+          <div class="hc-field">
+            <label for="evidence-file">
+              Photo JPG, PNG, WebP ou vidéo MP4 · 15 Mo maximum
+            </label>
+
+            <input
+              id="evidence-file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,video/mp4"
+              required
+            >
+          </div>
+
+          <button type="submit" class="hc-primary">
+            Ajouter au dossier
+          </button>
+        </fieldset>
+      </form>
+    `);
+
+    $("fieldset", d).dataset.lock = "dispute:" + dossier.id;
+
+    $("#evidence-form", d).onsubmit = e => {
+      e.preventDefault();
+
+      const file = $("#evidence-file", d).files[0];
+
+      if (
+        !file ||
+        ![
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "video/mp4"
+        ].includes(file.type) ||
+        file.size > 15 * 1024 * 1024
+      ) {
+        return message(
+          "Choisis une photo ou une vidéo autorisée, de 15 Mo maximum.",
+          "error",
+          d
+        );
+      }
+
+      task(
+        $('button[type="submit"]', d),
+        "dispute:" + dossier.id,
+        async () => {
+          const form = new FormData();
+
+          form.append("file", file);
+          form.append("disputeId", dossier.id);
+
+          await api("/api/merchant/dispute-evidence", form);
+
+          closeModal(d);
+          await afterWrite("Preuve ajoutée au dossier.");
+        },
+        d
+      );
+    };
+  }
+
+  function renderDisputes() {
+    const node = $("#dashboard-disputes");
+    node.innerHTML = "";
+
+    if (!disputes.length) {
+      return empty(
+        node,
+        "Aucun dossier lié aux ventes de ta boutique."
+      );
+    }
+
+    for (const x of pageData(disputes, "disputes")) {
+      const item = document.createElement("article");
+      item.className = "hc-item";
+
+      const who = uid => uid === user.uid
+        ? "Toi"
+        : uid === x.buyerUid
+          ? "Acheteur"
+          : "Équipe HaytiClips";
+
+      item.innerHTML = `
+        <div class="hc-row hc-between">
+          <h3>Dossier de la commande</h3>
+          ${pill(x.status)}
+        </div>
+
+        <p class="hc-ref">${esc(x.orderId)}</p>
+        <p>${esc(when(x.createdAtMs))}</p>
+        <p>${esc(x.reason)}</p>
+
+        ${x.status === "resolved" ? `
+          <p class="hc-note">
+            Décision :
+            ${esc(
+              x.decision === "refund"
+                ? "Remboursement"
+                : x.decision === "release"
+                  ? "Libération des fonds"
+                  : x.decision || "Voir le motif"
+            )}
+            <br>
+            ${esc(x.reasonDecision || "")}
+          </p>
+        ` : ""}
+
+        <details>
+          <summary>
+            Explications (${(x.messages || []).length})
+          </summary>
+
+          ${(x.messages || []).map(m => `
+            <p>
+              <strong>${esc(who(m.uid))}</strong>
+              · ${esc(when(m.atMs))}
+              <br>
+              ${esc(m.text)}
+            </p>
+          `).join("") || "<p>Aucune explication.</p>"}
+        </details>
+
+        <div class="hc-actions" data-evidence></div>
+        <div class="hc-actions" data-dispute-actions></div>
+      `;
+
+      (x.evidence || []).forEach((file, i) => {
+        addButton(
+          $("[data-evidence]", item),
+          `Voir la preuve ${i + 1}`,
+          "evidence:" + file.id,
+          () => viewEvidence(x, file)
+        );
+      });
+
+      if (x.status === "open") {
+        const a = $("[data-dispute-actions]", item);
+
+        for (const [title, fn] of [
+          ["Ajouter une explication", () => disputeMessage(x)],
+          ["Ajouter une preuve", () => disputeEvidence(x)]
+        ]) {
+          const b = document.createElement("button");
+
+          b.type = "button";
+          b.textContent = title;
+          b.dataset.lock = "dispute:" + x.id;
+          b.onclick = fn;
+
+          a.appendChild(b);
+        }
+      }
+
+      node.appendChild(item);
+    }
+
+    pager(node, disputes, "disputes", renderDisputes);
+    sync();
+  }
+
+  async function refreshDisputes() {
+    const version = ++disputeVersion;
+
+    try {
+      const r = await api("/api/merchant/disputes");
+
+      if (version !== disputeVersion) return true;
+
+      if (!Array.isArray(r.disputes)) {
+        throw new Error("Liste des dossiers invalide.");
+      }
+
+      disputes = r.disputes.filter(
+        x => x.merchantUid === user.uid
+      );
+
+      renderDisputes();
+      return true;
+
+    } catch (e) {
+      if (alive() && version === disputeVersion) {
+        disputes = [];
+
+        empty(
+          $("#dashboard-disputes"),
+          "Dossiers indisponibles : " + e.message
+        );
+
+        showError(e);
+      }
+
+      return false;
+    }
+  }
+
+  async function refreshAll(checkAccess = true) {
+    if (checkAccess) {
+      try {
+        const fresh = await api("/api/merchant/me");
+
+        if (fresh.uid !== user.uid || !fresh.shop) {
+          throw new Error("Accès marchand invalide.");
+        }
+
+        me = fresh;
+        accessVerified = true;
+
+        header();
+
+      } catch (e) {
+        if (alive()) {
+          accessVerified = false;
+          header();
+          showError(e);
+        }
+
+        return false;
+      }
+    }
+
+    const results = await Promise.allSettled([
+      refreshSummary(),
+      refreshOrders(),
+      refreshProducts(),
+      refreshDisputes()
+    ]);
+
+    return results.every(
+      r => r.status === "fulfilled" && r.value === true
+    );
+  }
+
+  async function downloadReport() {
+    validatePeriod();
+
+    if (
+      !summary ||
+      summary.warnings.length ||
+      summaryQuery !== query()
+    ) {
+      throw new Error(
+        "Actualise les données et résous les anomalies signalées " +
+        "avant de générer le rapport."
+      );
+    }
+
+    const selected = summaryQuery;
+    const range = { ...summary.range };
+
+    const blob = await api(
+      "/api/merchant/report.pdf?" + selected,
+      undefined,
+      { blob: true }
+    );
+
+    const signature = await blob.slice(0, 5).text();
+
+    if (!alive()) return;
+
+    if (signature !== "%PDF-") {
+      throw new Error("Le serveur n’a pas renvoyé un PDF valide.");
+    }
+
+    if (pdfURL) releaseURL(pdfURL);
+
+    pdfURL = URL.createObjectURL(blob);
+    objectURLs.add(pdfURL);
+
+    const node = $("#pdf-download");
+    node.innerHTML = "";
+
+    const link = document.createElement("a");
+
+    link.className = "hc-button hc-success";
+    link.href = pdfURL;
+    link.download = `HaytiClips_${range.from}_${range.to}.pdf`;
+    link.target = "_blank";
+    link.rel = "noopener";
+
+    link.textContent =
+      `Ouvrir / télécharger le PDF · ${range.from} au ${range.to}`;
+
+    node.appendChild(link);
+    link.click();
+
+    message(
+      "Rapport généré. Sur mobile, utilise aussi le lien " +
+      "de téléchargement affiché sous la période.",
+      "success"
+    );
+  }
+
+  $("#report-period").onchange = () => {
+    $("#custom-dates").hidden =
+      $("#report-period").value !== "custom";
+
+    sync();
+
+    if ($("#report-period").value !== "custom") {
+      refreshSummary();
+    }
+  };
+
+  for (const id of ["date-from", "date-to"]) {
+    $("#" + id).onchange = sync;
+  }
+
+  $("#refresh-all").onclick = () =>
+    task($("#refresh-all"), "refresh", async () => {
+      const ok = await refreshAll();
+
+      if (ok) message("Données actualisées.", "success");
+    });
+
+  $("#download-report").onclick = () =>
+    task($("#download-report"), "pdf", downloadReport);
+
+  $("#order-search").oninput =
+  $("#order-filter").onchange = () => {
+    pages.orders = 1;
+    renderOrders();
+  };
+
+  $("#product-search").oninput = () => {
+    pages.products = 1;
+
+    if (productsReady) renderProducts();
+  };
+
+  header();
+
+  for (const id of [
+    "dashboard-stats",
+    "sales-chart",
+    "best-products",
+    "order-chart",
+    "finance-stats",
+    "dashboard-transactions",
+    "dashboard-products",
+    "dashboard-orders",
+    "dashboard-disputes"
+  ]) {
+    empty($("#" + id), "Chargement...");
+  }
+
+  await refreshAll(false);
+}
+
+onAuthStateChanged(auth, user => {
+  const epoch = ++session;
+
+  cleanup();
+  shell();
+
+  if (!user) {
+    location.href = "login.html";
+    return;
+  }
+
+  boot(user, epoch).catch(error => {
+    if (epoch === session) showError(error);
+  });
+});
+
+window.addEventListener("pagehide", e => {
+  if (!e.persisted) cleanup();
 });
 </script>
 

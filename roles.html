@@ -342,369 +342,530 @@ button:disabled{
 
   <div class="hero">
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Rechercher par username ou UID pour assigner un rôle...">
+     <input
+  type="search"
+  id="searchInput"
+  maxlength="128"
+  autocomplete="off"
+  autocapitalize="off"
+  autocorrect="off"
+  spellcheck="false"
+  placeholder="UID exact ou début du nom d’utilisateur"
+>
     </div>
   </div>
 
   <div class="results" id="results"></div>
-  <div class="message" id="statusMsg"></div>
+  <div class="message" id="statusMsg" role="status" aria-live="polite"></div>
 
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  getDoc,
-  doc,
-  updateDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-  authDomain:"tstx-58474.firebaseapp.com",
-  projectId:"tstx-58474",
-  storageBucket:"tstx-58474.firebasestorage.app",
-  messagingSenderId:"1010020144942",
-  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+
+const API_BASE = "https://hayticlip-server.onrender.com";
 
 const results = document.getElementById("results");
 const searchInput = document.getElementById("searchInput");
 const statusMsg = document.getElementById("statusMsg");
-const API_BASE = "https://hayticlip-server.onrender.com";
 
 let allUsers = [];
 let currentAdminUid = null;
+let searchTimer = null;
+let searchController = null;
+let searchVersion = 0;
 
-onAuthStateChanged(auth, async (user)=>{
-  if(!user){
-    window.location.href = "login.html";
-    return;
+const processingIds = new Set();
+
+searchInput.disabled = true;
+renderEmpty("Vérification de la connexion...");
+
+function escapeHTML(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function setMessage(text, type = "") {
+  statusMsg.textContent = text;
+
+  statusMsg.style.color = type === "error"
+    ? "#ff4d4d"
+    : type === "success"
+      ? "#19c37d"
+      : "#aaa";
+}
+
+function renderEmpty(text) {
+  results.innerHTML = `
+    <div class="empty">${escapeHTML(text)}</div>
+  `;
+}
+
+function getAvatar(user) {
+  const fallback =
+    `https://i.pravatar.cc/150?u=${encodeURIComponent(user.id)}`;
+
+  try {
+    const url = new URL(
+      user.avatar || fallback,
+      window.location.origin
+    );
+
+    return url.protocol === "https:" ? url.href : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function getRolePill(role) {
+  const labels = {
+    admin: ["role-admin", "ADMIN"],
+    moderator: ["role-moderator", "MODERATOR"],
+    badge_manager: ["role-badge", "BADGE MANAGER"],
+    merchant_manager: ["role-merchant", "MERCHANT MANAGER"]
+  };
+
+  const [className, label] =
+    Object.prototype.hasOwnProperty.call(labels, role)
+      ? labels[role]
+      : ["role-user", "USER"];
+
+  return `
+    <span class="role-pill ${className}">${label}</span>
+  `;
+}
+
+async function apiRequest(path, options = {}) {
+  const user = auth.currentUser;
+
+  if (!user || user.uid !== currentAdminUid) {
+    throw Object.assign(
+      new Error("Session expirée"),
+      { status: 401 }
+    );
   }
 
-  const meSnap = await getDoc(doc(db,"users",user.uid));
+  const token = await user.getIdToken();
 
-  if(!meSnap.exists() || meSnap.data().role !== "admin"){
-    window.location.href = "feed.html";
-    return;
+  if (auth.currentUser?.uid !== user.uid) {
+    throw Object.assign(
+      new Error("Session modifiée"),
+      { status: 401 }
+    );
   }
 
-  currentAdminUid = user.uid;
-  await loadUsers();
-  
-  // Affiche la liste filtrée par défaut au lieu de tous les utilisateurs
-  applySearch(); 
-});
+  const headers = {
+    "Accept": "application/json",
+    "Authorization": "Bearer " + token
+  };
 
-async function loadUsers(){
-  allUsers = [];
-  const snap = await getDocs(collection(db,"users"));
+  if (options.body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
 
-  snap.forEach(d=>{
-    allUsers.push({
-      id:d.id,
-      ...d.data()
-    });
+  const response = await fetch(API_BASE + path, {
+    method: options.method || "GET",
+    headers,
+    cache: "no-store",
+    signal: options.signal,
+    body: options.body === undefined
+      ? undefined
+      : JSON.stringify(options.body)
   });
 
-  allUsers.sort((a,b)=>{
-    const nameA = (a.username || "").toLowerCase();
-    const nameB = (b.username || "").toLowerCase();
-    return nameA.localeCompare(nameB);
-  });
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    throw Object.assign(
+      new Error(
+        "Réponse serveur invalide. Réessaie dans un instant."
+      ),
+      { status: response.status }
+    );
+  }
+
+  if (!response.ok || data?.success !== true) {
+    throw Object.assign(
+      new Error(
+        data?.error || "Requête refusée par le serveur"
+      ),
+      { status: response.status }
+    );
+  }
+
+  return data;
 }
 
-function getAvatar(user){
-  return user.avatar || `https://i.pravatar.cc/150?u=${user.id}`;
+function updateButtons(uid) {
+  for (const card of results.children) {
+    if (card.dataset.uid !== uid) continue;
+
+    card.querySelectorAll("button[data-role]")
+      .forEach(button => {
+        button.disabled = processingIds.has(uid);
+      });
+  }
 }
 
-function getRolePill(role){
-  if(role === "admin"){
-    return `<span class="role-pill role-admin">ADMIN</span>`;
-  }
-  if(role === "moderator"){
-    return `<span class="role-pill role-moderator">MODERATOR</span>`;
-  }
-  if(role === "badge_manager"){
-    return `<span class="role-pill role-badge">BADGE MANAGER</span>`;
-  }
-  if(role === "merchant_manager"){
-    return `<span class="role-pill role-merchant">MERCHANT MANAGER</span>`;
-  }
-  return `<span class="role-pill role-user">USER</span>`;
-}
-
-function getParrainPill(canReferMerchant){
-  if(canReferMerchant === true){
-    return `<span class="role-pill role-parrain">PARRAIN</span>`;
-  }
-  return "";
-}
-
-function escapeHTML(str=""){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function renderUsers(list){
+function renderUsers(list) {
   results.innerHTML = "";
 
-  if(!list.length){
-    results.innerHTML = `<div class="empty">Aucun utilisateur trouvé.</div>`;
+  if (!list.length) {
+    renderEmpty(
+      searchInput.value.trim()
+        ? "Aucun utilisateur trouvé."
+        : "Aucun compte avec un rôle particulier."
+    );
     return;
   }
 
-  list.forEach(user=>{
+  for (const user of list) {
     const card = document.createElement("div");
     card.className = "card";
-
-    const isMe = user.id === currentAdminUid;
-    const isAdmin = user.role === "admin";
-    const isModerator = user.role === "moderator";
-    const isBadgeManager = user.role === "badge_manager";
-    const isMerchantManager = user.role === "merchant_manager";
-    const isParrain = user.canReferMerchant === true;
+    card.dataset.uid = user.id;
 
     card.innerHTML = `
-      <div class="user-main" onclick="openUserProfile('${user.id}')">
-        <img src="${getAvatar(user)}" class="avatar">
+      <div class="user-main" role="link" tabindex="0">
+        <img
+          src="${escapeHTML(getAvatar(user))}"
+          class="avatar"
+          alt=""
+        >
 
         <div class="meta">
           <div class="user-row">
-            <div class="username">${escapeHTML(user.username || "Sans nom")}</div>
-            ${getRolePill(user.role || "user")}
-            ${getParrainPill(user.canReferMerchant)}
+            <div class="username">
+              ${escapeHTML(user.username || "Sans nom")}
+            </div>
+
+            ${getRolePill(user.role)}
           </div>
 
-          <div class="uid">${user.id}</div>
-          <div class="bio">${escapeHTML(user.bio || "")}</div>
+          <div class="uid">
+            ${escapeHTML(user.id)}
+          </div>
 
           <div class="meta-box">
-            <div class="meta-line"><strong>Rôle :</strong> ${escapeHTML(user.role || "user")}</div>
-            <div class="meta-line"><strong>Parrain actif :</strong> ${isParrain ? "Oui" : "Non"}</div>
-            <div class="meta-line"><strong>Code parrain :</strong> ${escapeHTML(user.referralCode || "-")}</div>
+            <div class="meta-line">
+              <strong>Rôle :</strong>
+              ${escapeHTML(user.role)}
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="actions">
-        ${!isAdmin && !isModerator ? `
-          <button class="btn-moderator" onclick="event.stopPropagation(); setRole('${user.id}','moderator')">
-            Nommer moderator
-          </button>
-        ` : ""}
-
-        ${!isAdmin && !isBadgeManager ? `
-          <button class="btn-badge" onclick="event.stopPropagation(); setRole('${user.id}','badge_manager')">
-            Nommer badge_manager
-          </button>
-        ` : ""}
-
-        ${!isAdmin && !isMerchantManager ? `
-          <button class="btn-merchant" onclick="event.stopPropagation(); setRole('${user.id}','merchant_manager')">
-            Nommer merchant_manager
-          </button>
-        ` : ""}
-
-        ${!isAdmin && !isParrain ? `
-          <button class="btn-parrain" onclick="event.stopPropagation(); enableParrain('${user.id}')">
-            Nommer parrain
-          </button>
-        ` : ""}
-
-        ${isParrain && !isAdmin ? `
-          <button class="btn-remove" onclick="event.stopPropagation(); removeParrain('${user.id}')">
-            Retirer parrain
-          </button>
-        ` : ""}
-
-        ${(isModerator || isBadgeManager || isMerchantManager) && !isAdmin ? `
-          <button class="btn-remove" onclick="event.stopPropagation(); removeRole('${user.id}')">
-            Enlever fonction
-          </button>
-        ` : ""}
-
-        ${isMe ? `
-          <button class="btn-remove" style="opacity:.5;cursor:not-allowed;" disabled>
-            Votre compte admin
-          </button>
-        ` : ""}
-      </div>
+      <div class="actions"></div>
     `;
 
+    const profile = card.querySelector(".user-main");
+
+    profile.addEventListener("click", () => {
+      window.openUserProfile(user.id);
+    });
+
+    profile.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        window.openUserProfile(user.id);
+      }
+    });
+
+    const actions = card.querySelector(".actions");
+
+    function addAction(label, className, role) {
+      const button = document.createElement("button");
+
+      button.type = "button";
+      button.className = className;
+      button.textContent = label;
+      button.dataset.role = role;
+      button.disabled = processingIds.has(user.id);
+
+      button.addEventListener("click", () => {
+        window.setRole(user.id, role);
+      });
+
+      actions.appendChild(button);
+    }
+
+    if (
+      user.role !== "admin" &&
+      user.id !== currentAdminUid
+    ) {
+      if (user.role !== "moderator") {
+        addAction(
+          "Nommer modérateur",
+          "btn-moderator",
+          "moderator"
+        );
+      }
+
+      if (user.role !== "badge_manager") {
+        addAction(
+          "Nommer Badge Manager",
+          "btn-badge",
+          "badge_manager"
+        );
+      }
+
+      if (user.role !== "merchant_manager") {
+        addAction(
+          "Nommer Merchant Manager",
+          "btn-merchant",
+          "merchant_manager"
+        );
+      }
+
+      if ([
+        "moderator",
+        "badge_manager",
+        "merchant_manager"
+      ].includes(user.role)) {
+        addAction(
+          "Enlever fonction",
+          "btn-remove",
+          "user"
+        );
+      }
+    }
+
+    if (user.id === currentAdminUid) {
+      const button = document.createElement("button");
+
+      button.type = "button";
+      button.className = "btn-remove";
+      button.textContent = "Votre compte admin";
+      button.disabled = true;
+
+      actions.appendChild(button);
+    }
+
     results.appendChild(card);
-  });
+  }
 }
 
-window.openUserProfile = (uid)=>{
-  window.location.href = `profil.html?uid=${uid}`;
-};
+async function loadUsers(notice = "") {
+  clearTimeout(searchTimer);
+  searchController?.abort();
 
-window.setRole = async (uid, role)=>{
-  try{
-    if(uid === currentAdminUid){
-      statusMsg.textContent = "Impossible de modifier votre propre compte admin ici.";
+  const controller = new AbortController();
+  searchController = controller;
+
+  const version = ++searchVersion;
+  const adminUid = currentAdminUid;
+  const search = searchInput.value.trim();
+
+  allUsers = [];
+  results.setAttribute("aria-busy", "true");
+
+  renderEmpty("Chargement...");
+
+  setMessage(
+    notice || "Recherche en cours...",
+    notice ? "success" : ""
+  );
+
+  try {
+    const data = await apiRequest(
+      "/api/merchant/admin/users?search=" +
+        encodeURIComponent(search),
+      { signal: controller.signal }
+    );
+
+    if (
+      version !== searchVersion ||
+      adminUid !== currentAdminUid
+    ) return;
+
+    if (!Array.isArray(data.users)) {
+      throw new Error("Liste reçue invalide");
+    }
+
+    allUsers = data.users
+      .filter(user =>
+        user &&
+        typeof user.uid === "string" &&
+        user.uid
+      )
+      .map(user => ({
+        id: user.uid,
+        username: String(user.username || "Sans nom"),
+        avatar: String(user.avatar || ""),
+        role: String(user.role || "user")
+      }))
+      .sort((a, b) =>
+        a.username.localeCompare(b.username, "fr")
+      );
+
+    renderUsers(allUsers);
+
+    const message = search
+      ? `${allUsers.length} résultat(s). Précise la recherche si nécessaire.`
+      : "Rôles particuliers affichés. Recherche par UID exact ou début du nom.";
+
+    setMessage(
+      notice || message,
+      notice ? "success" : ""
+    );
+
+  } catch (error) {
+    if (
+      error.name === "AbortError" ||
+      version !== searchVersion ||
+      adminUid !== currentAdminUid
+    ) return;
+
+    if (error.status === 401 || error.status === 403) {
+      window.location.href = error.status === 401
+        ? "login.html"
+        : "feed.html";
       return;
     }
 
-    await updateDoc(doc(db,"users",uid),{
-      role: role
-    });
+    allUsers = [];
+    renderEmpty("Impossible de charger la liste.");
 
-    statusMsg.textContent = `Rôle mis à jour : ${role}`;
-    await loadUsers();
-    applySearch();
-  }catch(e){
-    console.error(e);
-    statusMsg.textContent = "Erreur : " + e.message;
+    setMessage(
+      notice
+        ? notice + " La liste n’a pas pu être actualisée. Relance la recherche."
+        : "Chargement impossible. Vérifie ta connexion et relance la recherche.",
+      "error"
+    );
+
+  } finally {
+    if (version === searchVersion) {
+      results.setAttribute("aria-busy", "false");
+    }
   }
+}
+
+window.openUserProfile = uid => {
+  window.location.href =
+    "profil.html?uid=" + encodeURIComponent(uid);
 };
 
-window.removeRole = async (uid)=>{
-  try{
-    if(uid === currentAdminUid){
-      statusMsg.textContent = "Impossible de modifier votre propre compte admin ici.";
-      return;
-    }
+window.setRole = async (uid, role) => {
+  if (processingIds.has(uid)) return;
 
-    await updateDoc(doc(db,"users",uid),{
-      role: "user"
-    });
-
-    statusMsg.textContent = "Fonction retirée.";
-    await loadUsers();
-    applySearch();
-  }catch(e){
-    console.error(e);
-    statusMsg.textContent = "Erreur : " + e.message;
-  }
-};
-
-window.enableParrain = async (uid)=>{
-  try{
-    if(uid === currentAdminUid){
-      statusMsg.textContent = "Impossible de modifier votre propre compte admin ici.";
-      return;
-    }
-
-    const user = auth.currentUser;
-
-    if(!user){
-      statusMsg.textContent = "Utilisateur non connecté.";
-      return;
-    }
-
-    const token = await user.getIdToken(true);
-
-    const res = await fetch(`${API_BASE}/api/enableMerchantReferrer`,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      },
-      body: JSON.stringify({
-        targetUid: uid
-      })
-    });
-
-    const result = await res.json();
-
-    if(!res.ok || !result.success){
-      statusMsg.textContent = result.error || "Erreur serveur";
-      return;
-    }
-
-    statusMsg.textContent = `Parrain activé. Code : ${result.referralCode}`;
-    await loadUsers();
-    applySearch();
-
-  }catch(e){
-    console.error(e);
-    statusMsg.textContent = "Erreur : " + e.message;
-  }
-};
-
-window.removeParrain = async (uid)=>{
-  try{
-    if(uid === currentAdminUid){
-      statusMsg.textContent = "Impossible de modifier votre propre compte admin ici.";
-      return;
-    }
-
-    const user = auth.currentUser;
-
-    if(!user){
-      statusMsg.textContent = "Utilisateur non connecté.";
-      return;
-    }
-
-    const token = await user.getIdToken(true);
-
-    const res = await fetch(`${API_BASE}/api/disableMerchantReferrer`,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      },
-      body: JSON.stringify({
-        targetUid: uid
-      })
-    });
-
-    const result = await res.json();
-
-    if(!res.ok || !result.success){
-      statusMsg.textContent = result.error || "Erreur serveur";
-      return;
-    }
-
-    statusMsg.textContent = "Fonction parrain retirée.";
-    await loadUsers();
-    applySearch();
-
-  }catch(e){
-    console.error(e);
-    statusMsg.textContent = "Erreur : " + e.message;
-  }
-};
-
-function applySearch(){
-  const value = searchInput.value.toLowerCase().trim();
-
-  // Si la barre de recherche est vide, on affiche UNIQUEMENT ceux qui ont un rôle spécial
-  if(!value){
-    const filteredRoles = allUsers.filter(user => {
-      const hasSpecialRole = user.role && user.role !== "user";
-      const isParrain = user.canReferMerchant === true;
-      return hasSpecialRole || isParrain;
-    });
-    renderUsers(filteredRoles);
+  if (uid === currentAdminUid) {
+    setMessage(
+      "Impossible de modifier votre propre compte admin ici.",
+      "error"
+    );
     return;
   }
 
-  // S'il y a une recherche, on affiche les résultats parmi TOUS les utilisateurs
-  const filtered = allUsers.filter(user =>
-    (user.username || "").toLowerCase().includes(value) ||
-    user.id.toLowerCase().includes(value) ||
-    (user.referralCode || "").toLowerCase().includes(value)
-  );
+  if (![
+    "user",
+    "moderator",
+    "badge_manager",
+    "merchant_manager"
+  ].includes(role)) {
+    setMessage("Rôle non autorisé.", "error");
+    return;
+  }
 
-  renderUsers(filtered);
-}
+  const adminUid = currentAdminUid;
 
-searchInput.addEventListener("input", applySearch);
+  processingIds.add(uid);
+  updateButtons(uid);
+  setMessage("Modification en cours...");
+
+  try {
+    await apiRequest("/api/merchant/admin/set-role", {
+      method: "POST",
+      body: {
+        targetUid: uid,
+        role
+      }
+    });
+
+    if (adminUid !== currentAdminUid) return;
+
+    await loadUsers(
+      role === "user"
+        ? "Fonction retirée."
+        : "Rôle mis à jour."
+    );
+
+  } catch (error) {
+    if (adminUid !== currentAdminUid) return;
+
+    if (error.status === 401) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    setMessage(
+      error.status === 403
+        ? "Action refusée : " + error.message
+        : "Modification non confirmée. Relance la recherche pour vérifier le rôle actuel.",
+      "error"
+    );
+
+  } finally {
+    processingIds.delete(uid);
+    updateButtons(uid);
+  }
+};
+
+window.removeRole = uid => {
+  return window.setRole(uid, "user");
+};
+
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchController?.abort();
+  searchVersion++;
+
+  if (!currentAdminUid) return;
+
+  allUsers = [];
+  results.setAttribute("aria-busy", "true");
+  renderEmpty("Recherche en cours...");
+
+  searchTimer = setTimeout(() => {
+    loadUsers();
+  }, 350);
+});
+
+onAuthStateChanged(auth, async user => {
+  clearTimeout(searchTimer);
+  searchController?.abort();
+  searchVersion++;
+
+  allUsers = [];
+  currentAdminUid = user?.uid || null;
+
+  searchInput.disabled = !user;
+  results.innerHTML = "";
+
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  await loadUsers();
+});
 </script>
 
 </body>

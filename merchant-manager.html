@@ -98,485 +98,1799 @@ button{
   .hero-title{font-size:22px}
   .actions button{flex:1}
 }
+  
+[hidden]{display:none!important}
+
+.header-left{
+  border:0;background:transparent;color:#fff;padding:0;min-height:44px;
+}
+.header-right{width:auto;min-width:40px}
+.header-right a{font-size:13px;color:#fff;text-decoration:none}
+
+.manager-row{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;margin-bottom:12px;
+}
+.manager-row>*{min-width:0}
+
+.stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.stat-value,.hero-title{overflow-wrap:anywhere}
+.manager-small{font-size:11px;color:#aaa;margin-top:7px}
+
+.manager-label{
+  display:block;font-size:13px;color:#bbb;margin:10px 0 6px;
+}
+.manager-input{
+  width:100%;min-width:0;background:#111;color:#fff;
+  border:1px solid #333;border-radius:12px;padding:12px;font-size:16px;
+}
+.manager-input:focus{
+  outline:2px solid #ff0050;outline-offset:1px;
+}
+#orderIdInput{flex:1;min-width:160px}
+
+.manager-message{
+  padding:12px;border-radius:12px;margin:12px 0;font-size:14px;
+  line-height:1.5;overflow-wrap:anywhere;
+}
+.manager-message:empty{display:none}
+.manager-message[data-type=error]{
+  background:#3d1421;color:#ffb5c8;border:1px solid #713044;
+}
+.manager-message[data-type=success]{background:#102c21;color:#8fedbf}
+.manager-message[data-type=info]{background:#172230;color:#d1dff4}
+
+.manager-note{
+  background:#15151b;border:1px solid #333;border-radius:12px;
+  padding:12px;margin:12px 0;color:#c2c2cf;font-size:13px;
+  line-height:1.6;overflow-wrap:anywhere;
+}
+
+.manager-status{
+  display:inline-flex;padding:5px 10px;border:1px solid #383842;
+  border-radius:30px;background:#202029;font-size:12px;font-weight:700;
+}
+.manager-status[data-status=active],
+.manager-status[data-status=resolved],
+.manager-status[data-status=completed],
+.manager-status[data-status=settled]{
+  background:#102c21;color:#8fedbf;
+}
+.manager-status[data-status=pending],
+.manager-status[data-status=held],
+.manager-status[data-status=open]{
+  background:#34280e;color:#ffcf70;
+}
+.manager-status[data-status=suspended],
+.manager-status[data-status=disputed]{
+  background:#3d1421;color:#ffb5c8;
+}
+
+.manager-link{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;background:#1a1a1a;border:1px solid #333;
+  border-radius:30px;padding:10px 14px;text-decoration:none;
+  color:#fff;font-size:13px;font-weight:700;
+}
+.actions button{min-height:44px}
+
+.request-card{min-width:0}
+.request-card details{margin-top:12px}
+.request-card summary{cursor:pointer;font-size:13px;color:#ccc}
+.meta-line{white-space:pre-line}
+
+.manager-pager{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;flex-wrap:wrap;margin-top:16px;color:#aaa;font-size:12px;
+}
+
+.manager-dialog{
+  width:calc(100% - 24px);max-width:720px;max-height:90dvh;
+  overflow:auto;background:#08080d;color:#fff;border:1px solid #444;
+  border-radius:18px;padding:20px;
+}
+.manager-dialog::backdrop{background:rgba(0,0,0,.85)}
+.manager-dialog h2{font-size:20px}
+.manager-dialog h3{margin-top:12px}
+.manager-dialog fieldset{border:0;padding:0;margin:0;min-width:0}
+.manager-dialog .manager-input{margin-bottom:12px}
+
+.manager-check{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:13px;line-height:1.5;margin:16px 0;
+}
+.manager-check input{width:20px;height:20px;flex-shrink:0}
+
+.manager-proof{
+  display:block;max-width:100%;max-height:65vh;
+  margin:auto;object-fit:contain;
+}
+
+.manager-table-wrap{
+  overflow:auto;margin-top:12px;border:1px solid #333;border-radius:12px;
+}
+.manager-table{
+  width:100%;min-width:650px;border-collapse:collapse;font-size:12px;
+}
+.manager-table th,.manager-table td{
+  text-align:left;vertical-align:top;padding:12px;
+  border-bottom:1px solid #333;
+}
+.manager-table th{color:#bbb;background:#16161e}
+.manager-table td{overflow-wrap:anywhere;max-width:220px}
+
+button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,a:focus-visible,summary:focus-visible{
+  outline:2px solid #ff759f;outline-offset:3px;
+}
+
+@media(max-width:640px){
+  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat-card{padding:12px}
+  .stat-value{font-size:21px}
+  .manager-dialog{padding:16px}
+  .header-center{font-size:16px}
+  .actions .manager-link{flex:1}
+}  
 </style>
 </head>
 <body>
 
-<div class="page">
-
- <div class="header">
-  <div class="header-left" onclick="history.back()">←</div>
+<div class="header">
+  <button class="header-left" id="backBtn" aria-label="Retour">←</button>
   <div class="header-center">Gestion marchands</div>
-  <div class="header-right"></div>
+  <div class="header-right">
+    <a id="financeLink" href="admin-finance.html" hidden>Finance</a>
+  </div>
 </div>
+
+<main class="page" id="manager-root">
 
   <div class="hero">
-    <div class="hero-title">Administration</div>
-    <div class="hero-sub">Gérez les requêtes et les marchands actifs sur la plateforme.</div>
+    <div class="manager-row">
+      <div>
+        <h1 class="hero-title">Administration des boutiques</h1>
+        <p class="hero-sub">
+          Accès gratuit pour les marchands.
+          Commission courante de 3 % sur les ventes.
+        </p>
+      </div>
+      <button class="btn-dark" id="refreshBtn" data-lock="refresh">
+        Actualiser
+      </button>
+    </div>
+
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Rechercher par username, UID, boutique, type de produit ou code parrain...">
+      <label class="manager-label" for="searchInput">
+        Rechercher dans les demandes, boutiques et litiges
+      </label>
+      <input
+        id="searchInput"
+        type="search"
+        placeholder="Boutique, email, username, UID ou commande"
+      >
     </div>
   </div>
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">Demandes en attente</div>
-      <div class="stat-value" id="statPending">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Marchands actifs</div>
-      <div class="stat-value" id="statActiveMerchants">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Part admin future</div>
-      <div class="stat-value" id="statAdmin">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Part parrains future</div>
-      <div class="stat-value" id="statReferrer">0</div>
-    </div>
+  <div
+    class="manager-message"
+    id="managerMsg"
+    data-message
+    role="status"
+    aria-live="polite"
+  ></div>
+
+  <div class="stats-grid" id="managerStats">
+    <div class="empty-state">Chargement des données autorisées...</div>
   </div>
 
-  <div class="card">
-    <div class="section-title">Demandes marchands</div>
-    <div class="section-sub">Accepter ou refuser une demande en attente.</div>
-    <div class="card-list" id="requestsContainer"></div>
-  </div>
+  <div class="manager-note" id="legacyNote" hidden></div>
 
-  <div class="card">
-    <div class="section-title">Marchands actifs</div>
-    <div class="section-sub">Voir le profil d’un marchand actif ou lui retirer l’accès marchand.</div>
-    <div class="card-list" id="activeMerchantsContainer"></div>
-  </div>
+  <p class="section-sub">
+    Le montant en attente est une situation actuelle.
+    Les fonds libérés cumulés retracent les versements historiques,
+    avant les éventuels remboursements :
+    ce montant n’est pas un solde disponible.
+  </p>
 
-</div>
+  <section class="card">
+    <h2 class="section-title">Demandes d’accès</h2>
+    <p class="section-sub">
+      Approuver gratuitement ou refuser avec un motif.
+      La décision est enregistrée et notifiée par le serveur.
+    </p>
+    <div class="card-list" id="requestsContainer">
+      <div class="empty-state">Chargement...</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="manager-row">
+      <div>
+        <h2 class="section-title">Boutiques approuvées</h2>
+        <p class="section-sub">
+          La suspension conserve les produits, les photos,
+          les commandes et les historiques.
+        </p>
+      </div>
+      <div>
+        <label class="manager-label" for="merchantFilter">
+          Statut marchand
+        </label>
+        <select class="manager-input" id="merchantFilter">
+          <option value="all">Tous les statuts</option>
+          <option value="active">Actif</option>
+          <option value="suspended">Suspendu</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card-list" id="activeMerchantsContainer">
+      <div class="empty-state">Chargement...</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="manager-row">
+      <div>
+        <h2 class="section-title">Litiges et demandes d’examen</h2>
+        <p class="section-sub">
+          Consulte la commande, les explications et les preuves
+          avant de rendre une décision motivée.
+        </p>
+      </div>
+      <div>
+        <label class="manager-label" for="disputeFilter">Dossiers</label>
+        <select class="manager-input" id="disputeFilter">
+          <option value="open">Ouverts</option>
+          <option value="resolved">Résolus</option>
+          <option value="all">Tous</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card-list" id="disputesContainer">
+      <div class="empty-state">Chargement...</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">Consulter une commande</h2>
+    <p class="section-sub">
+      Recherche par numéro exact pour consulter
+      les montants et les mouvements autorisés.
+    </p>
+
+    <form id="orderLookup">
+      <label class="manager-label" for="orderIdInput">
+        Numéro de commande
+      </label>
+      <div class="manager-row">
+        <input
+          class="manager-input"
+          id="orderIdInput"
+          maxlength="128"
+          required
+          placeholder="Numéro de commande"
+        >
+        <button class="btn-blue" type="submit" data-lock="lookup">
+          Consulter
+        </button>
+      </div>
+    </form>
+  </section>
+
+</main>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
-  getFirestore,
-  collection,
-  getDocs,
-  getDoc,
-  doc,
-  query,
-  where,
-  deleteDoc // NOUVEAU : Import nécessaire pour supprimer les produits
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  initializeApp,
+  getApps
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-const firebaseConfig = {
-  apiKey:"AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
-  authDomain:"tstx-58474.firebaseapp.com",
-  projectId:"tstx-58474",
-  storageBucket:"tstx-58474.firebasestorage.app",
-  messagingSenderId:"1010020144942",
-  appId:"1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const auth = getAuth(getApps()[0] || initializeApp({
+  apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
+  authDomain: "tstx-58474.firebaseapp.com",
+  projectId: "tstx-58474",
+  storageBucket: "tstx-58474.firebasestorage.app",
+  messagingSenderId: "1010020144942",
+  appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
+}));
+
+const API = "https://hayticlip-server.onrender.com";
+
+const $ = (s, root = document) => root.querySelector(s);
+const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+
+const esc = v => String(v ?? "").replace(
+  /[&<>"']/g,
+  c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c])
+);
+
+const money = n => Number.isFinite(n)
+  ? new Intl.NumberFormat("fr-HT", {
+      maximumFractionDigits: 2
+    }).format(n) + " HTG"
+  : "—";
+
+const date = n => Number.isFinite(n) && n > 0
+  ? new Intl.DateTimeFormat("fr-FR", {
+      timeZone: "America/Port-au-Prince",
+      dateStyle: "short",
+      timeStyle: "short"
+    }).format(new Date(n))
+  : "—";
+
+const labels = {
+  pending: "En attente",
+  accepted: "À préparer",
+  shipping: "En livraison",
+  completed: "Terminée",
+  rejected: "Refusée",
+  cancelled: "Annulée",
+  refunded: "Remboursée",
+  disputed: "En litige",
+  active: "Actif",
+  suspended: "Suspendu",
+  open: "Ouvert",
+  resolved: "Résolu",
+  held: "Fonds en attente",
+  settled: "Fonds libérés",
+  failed: "Échoué",
+  merchant_order_created: "Réservation de commande",
+  merchant_order_paid: "Paiement de commande",
+  merchant_sale_pending: "Vente en attente",
+  merchant_sale_received: "Libération au marchand",
+  merchant_sale_fee: "Frais de vente",
+  merchant_order_refund: "Remboursement acheteur",
+  merchant_sale_refunded: "Reprise du net marchand",
+  merchant_sale_fee_refunded: "Reprise des frais",
+  merchant_platform_refund: "Remboursement financé par la plateforme"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const label = s => Object.prototype.hasOwnProperty.call(labels, s)
+  ? labels[s]
+  : String(s || "À vérifier");
 
-const API_BASE = "https://hayticlip-server.onrender.com";
+const badge = s => `
+  <span class="manager-status" data-status="${esc(s)}">
+    ${esc(label(s))}
+  </span>
+`;
 
-const requestsContainer = document.getElementById("requestsContainer");
-const activeMerchantsContainer = document.getElementById("activeMerchantsContainer");
-const searchInput = document.getElementById("searchInput");
+const initial = $("#manager-root").innerHTML;
+let session = 0;
+const urls = new Set();
 
-const statPending = document.getElementById("statPending");
-const statActiveMerchants = document.getElementById("statActiveMerchants");
-const statAdmin = document.getElementById("statAdmin");
-const statReferrer = document.getElementById("statReferrer");
-
-let allRequests = [];
-let allActiveMerchants = [];
-let allUsersMap = {};
-let processingIds = new Set();
-
-function escapeHTML(str=""){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function renderEmpty(container, text){
-  container.innerHTML = `<div class="empty-state">${text}</div>`;
-}
-
-function getAvatar(user){
-  return user?.avatar || `https://i.pravatar.cc/150?u=${user?.id || Math.random()}`;
-}
-
-function updateStats(requestsList, activeList){
-  statPending.textContent = requestsList.length;
-  statActiveMerchants.textContent = activeList.length;
-  statAdmin.textContent = (requestsList.length * 250) + " G";
-  statReferrer.textContent = (requestsList.length * 500) + " G";
-}
-
-async function preloadUsers(){
-  allUsersMap = {};
-  const snap = await getDocs(collection(db,"users"));
-  snap.forEach(d=>{
-    allUsersMap[d.id] = { id:d.id, ...d.data() };
-  });
-}
-
-async function loadRequests(){
-  allRequests = [];
-
-  const q = query(
-    collection(db,"merchantRequests"),
-    where("status","==","pending")
-  );
-
-  const snap = await getDocs(q);
-
-  snap.forEach(d=>{
-    allRequests.push({ id:d.id, ...d.data() });
-  });
-}
-
-async function loadActiveMerchants(){
-  allActiveMerchants = [];
-
-  const q = query(
-    collection(db,"users"),
-    where("merchantStatus","==","active")
-  );
-
-  const snap = await getDocs(q);
-
-  snap.forEach(d=>{
-    allActiveMerchants.push({ id:d.id, ...d.data() });
-  });
-}
-
-function renderRequests(list){
-  requestsContainer.innerHTML = "";
-
-  if(!list.length){
-    renderEmpty(requestsContainer, "Aucune demande marchand en attente.");
-    return;
+function close(d) {
+  if (d.close) {
+    d.close();
+  } else {
+    d.dispatchEvent(new Event("close"));
+    d.remove();
   }
-
-  list.forEach(data=>{
-    const user = allUsersMap[data.uid] || null;
-    const referrer = allUsersMap[data.referrerUid] || null;
-
-    const div = document.createElement("div");
-    div.className = "request-card";
-
-    div.innerHTML = `
-      <div class="request-top">
-        <div class="user-block">
-          <img src="${getAvatar(user)}" class="avatar">
-          <div class="user-meta">
-            <div class="username">${escapeHTML(user?.username || "Utilisateur")}</div>
-            <div class="uid">UID : ${escapeHTML(data.uid || "-")}</div>
-            <div class="meta-line">Boutique : ${escapeHTML(data.shopName || "-")}</div>
-            <div class="meta-line">Produits : ${escapeHTML(data.productType || "-")}</div>
-            <div class="meta-line">Code parrain : ${escapeHTML(data.referralCode || "-")}</div>
-            <div class="meta-line">Parrain : ${escapeHTML(referrer?.username || "Introuvable")}</div>
-            <div class="meta-line">Montant payé : ${Number(data.amountPaid || 0)} Gdes</div>
-          </div>
-        </div>
-
-        <div>
-          <span class="status-pill status-pending">EN ATTENTE</span>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="btn-blue" onclick="openProfile('${data.uid}')">Voir profil</button>
-        <button class="btn-success" onclick="approveMerchant('${data.id}')">Accepter</button>
-        <button class="btn-danger" onclick="toggleRejectBox('${data.id}')">Refuser</button>
-      </div>
-
-      <div class="reject-box" id="rejectBox_${data.id}">
-        <textarea id="rejectReason_${data.id}" placeholder="Motif du refus (facultatif)"></textarea>
-        <div class="actions">
-          <button class="btn-danger" onclick="rejectMerchant('${data.id}')">Confirmer refus</button>
-          <button class="btn-dark" onclick="toggleRejectBox('${data.id}')">Annuler</button>
-        </div>
-        <div class="quick-note">Le refus remboursera automatiquement 1500 Gdes à l’utilisateur.</div>
-      </div>
-    `;
-
-    requestsContainer.appendChild(div);
-  });
 }
 
-function renderActiveMerchants(list){
-  activeMerchantsContainer.innerHTML = "";
-
-  if(!list.length){
-    renderEmpty(activeMerchantsContainer, "Aucun marchand actif.");
-    return;
-  }
-
-  list.forEach(user=>{
-    const referrer = allUsersMap[user.merchantReferrerUid] || null;
-
-    const div = document.createElement("div");
-    div.className = "request-card";
-
-    div.innerHTML = `
-      <div class="request-top">
-        <div class="user-block">
-          <img src="${getAvatar(user)}" class="avatar">
-          <div class="user-meta">
-            <div class="username">${escapeHTML(user.username || "Utilisateur")}</div>
-            <div class="uid">UID : ${escapeHTML(user.id || "-")}</div>
-            <div class="meta-line">Boutique : ${escapeHTML(user.merchantShopName || "-")}</div>
-            <div class="meta-line">Produits : ${escapeHTML(user.merchantProductType || "-")}</div>
-            <div class="meta-line">Parrain : ${escapeHTML(referrer?.username || "Introuvable")}</div>
-            <div class="meta-line">Code parrain : ${escapeHTML(referrer?.referralCode || "-")}</div>
-          </div>
-        </div>
-
-        <div>
-          <span class="status-pill status-active">ACTIF</span>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="btn-blue" onclick="openProfile('${user.id}')">Voir profil</button>
-        <button class="btn-danger" onclick="removeMerchantAccess('${user.id}')">Retirer accès</button>
-      </div>
-    `;
-
-    activeMerchantsContainer.appendChild(div);
-  });
+function cleanup() {
+  $$("dialog").forEach(close);
+  for (const u of urls) URL.revokeObjectURL(u);
+  urls.clear();
 }
 
-async function refreshAll(){
-  await preloadUsers();
-  await loadRequests();
-  await loadActiveMerchants();
-  applySearch();
+function notice(text = "", type = "info", root = document) {
+  const n = $("[data-message]", root);
+
+  if (n) {
+    n.textContent = text;
+    n.dataset.type = type;
+  }
 }
 
-window.openProfile = (uid)=>{
-  window.location.href = `profil.html?uid=${uid}`;
-};
+function empty(node, text) {
+  node.innerHTML = `<div class="empty-state">${esc(text)}</div>`;
+}
 
-window.toggleRejectBox = (requestId)=>{
-  const box = document.getElementById(`rejectBox_${requestId}`);
-  if(!box) return;
+function modal(title, body) {
+  $$("dialog").forEach(close);
 
-  box.style.display = box.style.display === "block" ? "none" : "block";
-};
+  const d = document.createElement("dialog");
+  d.className = "manager-dialog";
 
-window.approveMerchant = async (requestId)=>{
-  if(processingIds.has(requestId)) return;
+  d.innerHTML = `
+    <div class="manager-row">
+      <h2>${esc(title)}</h2>
+      <button type="button" class="btn-dark" data-close aria-label="Fermer">
+        ✕
+      </button>
+    </div>
 
-  if(!confirm("Accepter cette demande marchand ?")) return;
+    <div
+      class="manager-message"
+      data-message
+      role="status"
+      aria-live="polite"
+    ></div>
 
-  processingIds.add(requestId);
+    ${body}
+  `;
 
-  try{
-    const user = auth.currentUser;
-    if(!user) throw new Error("Utilisateur non connecté");
+  document.body.appendChild(d);
 
-    const token = await user.getIdToken(true);
+  d.addEventListener("close", () => d.remove(), { once: true });
+  $("[data-close]", d).onclick = () => close(d);
 
-    const res = await fetch(`${API_BASE}/api/approveMerchant`,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      },
-      body: JSON.stringify({ requestId })
-    });
+  if (d.showModal) d.showModal();
+  else d.setAttribute("open", "");
 
-    const result = await res.json();
+  return d;
+}
 
-    if(!res.ok || !result.success){
-      throw new Error(result.error || "Erreur serveur");
-    }
+$("#backBtn").onclick = () => history.back();
 
-    await refreshAll();
-    alert("Demande acceptée");
+async function boot(user, epoch) {
+  let staff = null;
+  let access = false;
+  let overview = null;
+  let cases = null;
+  let overviewVersion = 0;
+  let casesVersion = 0;
 
-  }catch(err){
-    alert(err.message || "Erreur");
-  }finally{
-    processingIds.delete(requestId);
-  }
-};
+  const locks = new Set();
+  const pages = { requests: 1, merchants: 1, disputes: 1 };
 
-window.rejectMerchant = async (requestId)=>{
-  if(processingIds.has(requestId)) return;
+  const alive = () =>
+    session === epoch &&
+    auth.currentUser?.uid === user.uid;
 
-  if(!confirm("Refuser cette demande marchand ?")) return;
+  async function api(path, body, blob = false) {
+    const stale = () => Object.assign(
+      new Error("Session modifiée"),
+      { stale: true }
+    );
 
-  processingIds.add(requestId);
+    if (!alive()) throw stale();
 
-  try{
-    const user = auth.currentUser;
-    if(!user) throw new Error("Utilisateur non connecté");
+    const token = await auth.currentUser.getIdToken();
 
-    const rejectReason = document.getElementById(`rejectReason_${requestId}`)?.value.trim() || "";
-    const token = await user.getIdToken(true);
+    if (!alive()) throw stale();
 
-    const res = await fetch(`${API_BASE}/api/rejectMerchant`,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      },
-      body: JSON.stringify({
-        requestId,
-        rejectReason
-      })
-    });
+    const form = body instanceof FormData;
+    const controller = new AbortController();
 
-    const result = await res.json();
+    const timer = setTimeout(
+      () => controller.abort(),
+      form ? 120000 : 60000
+    );
 
-    if(!res.ok || !result.success){
-      throw new Error(result.error || "Erreur serveur");
-    }
+    try {
+      const r = await fetch(API + path, {
+        method: body === undefined ? "GET" : "POST",
+        headers: {
+          Authorization: "Bearer " + token,
+          ...(body !== undefined && !form
+            ? { "Content-Type": "application/json" }
+            : {})
+        },
+        body: body === undefined
+          ? undefined
+          : form
+            ? body
+            : JSON.stringify(body),
+        cache: "no-store",
+        signal: controller.signal
+      });
 
-    await refreshAll();
-    alert("Demande refusée");
+      if (!alive()) throw stale();
 
-  }catch(err){
-    alert(err.message || "Erreur");
-  }finally{
-    processingIds.delete(requestId);
-  }
-};
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({}));
 
-window.removeMerchantAccess = async (targetUid)=>{
-  if(processingIds.has(targetUid)) return;
-
-  // NOUVEAU MESSAGE D'AVERTISSEMENT
-  if(!confirm("ATTENTION : Retirer l’accès marchand à ce compte supprimera tous ses produits et ses photos de la base de données. Continuer ?")) return;
-
-  processingIds.add(targetUid);
-
-  try{
-    const user = auth.currentUser;
-    if(!user) throw new Error("Utilisateur non connecté");
-
-    // 1. Récupérer tous les produits pour trouver les liens des images à supprimer
-    const q = query(collection(db, "merchantProducts"), where("merchantUid", "==", targetUid));
-    const productsSnap = await getDocs(q);
-
-    let imageUrlsToDelete = [];
-    const deletePromises = [];
-
-    // 2. Supprimer les documents Firestore des produits et lister les images
-    productsSnap.forEach(d => {
-      const data = d.data();
-      if (data.imageUrl) imageUrlsToDelete.push(data.imageUrl);
-      if (data.images && Array.isArray(data.images)) {
-        imageUrlsToDelete.push(...data.images);
+        throw Object.assign(
+          new Error(e.error || `Service indisponible (${r.status})`),
+          { status: r.status }
+        );
       }
-      // On supprime le produit de la base de données
-      deletePromises.push(deleteDoc(d.ref)); 
+
+      const data = blob ? await r.blob() : await r.json();
+
+      if (!alive()) throw stale();
+
+      if (!blob && data.success !== true) {
+        throw new Error(data.error || "Réponse du serveur invalide.");
+      }
+
+      return data;
+
+    } catch (e) {
+      if (!alive()) throw stale();
+
+      if (e.name === "AbortError") {
+        throw new Error(
+          "Réponse non confirmée. Actualise le dossier " +
+          "avant de refaire une action."
+        );
+      }
+
+      throw e;
+
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function sync() {
+    if (!alive()) return;
+
+    $$("[data-lock]").forEach(n => {
+      n.disabled =
+        locks.has(n.dataset.lock) ||
+        (n.dataset.lock !== "refresh" && !access);
     });
 
-    // Attendre que tous les produits soient supprimés de Firestore
-    await Promise.all(deletePromises);
+    $("#financeLink").hidden =
+      !access || staff?.role !== "admin";
+  }
 
-    const token = await user.getIdToken(true);
+  function error(e, root = document) {
+    if (!alive() || e.stale) return;
 
-    // 3. Envoyer la requête au backend avec la liste des images à supprimer dans Supabase
-    const res = await fetch(`${API_BASE}/api/removeMerchantAccess`,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + token
-      },
-      body: JSON.stringify({ 
-        targetUid: targetUid,
-        imagesToDelete: imageUrlsToDelete // On transmet les URLs au backend
-      })
-    });
-
-    const result = await res.json();
-
-    if(!res.ok || !result.success){
-      throw new Error(result.error || "Erreur serveur");
+    if (e.status === 401) {
+      location.href = "login.html";
+      return;
     }
 
-    await refreshAll();
-    alert("Accès marchand retiré et produits supprimés");
+    if (e.status === 403) {
+      access = false;
+      sync();
+    }
 
-  }catch(err){
-    alert(err.message || "Erreur");
-  }finally{
-    processingIds.delete(targetUid);
-  }
-};
-
-function applySearch(){
-  const value = searchInput.value.toLowerCase().trim();
-
-  if(!value){
-    renderRequests(allRequests);
-    renderActiveMerchants(allActiveMerchants);
-    updateStats(allRequests, allActiveMerchants);
-    return;
+    notice(e.message || "Erreur réseau.", "error", root);
   }
 
-  const filteredRequests = allRequests.filter(r=>{
-    const user = allUsersMap[r.uid] || {};
-    const referrer = allUsersMap[r.referrerUid] || {};
+  async function run(key, fn, root = document) {
+    if (!alive() || locks.has(key)) return;
 
-    return (r.uid || "").toLowerCase().includes(value) ||
-           (r.shopName || "").toLowerCase().includes(value) ||
-           (r.productType || "").toLowerCase().includes(value) ||
-           (r.referralCode || "").toLowerCase().includes(value) ||
-           (user.username || "").toLowerCase().includes(value) ||
-           (referrer.username || "").toLowerCase().includes(value);
-  });
+    if (key !== "refresh" && !access) {
+      return notice(
+        "Actualise pour vérifier tes autorisations.",
+        "error",
+        root
+      );
+    }
 
-  const filteredActive = allActiveMerchants.filter(u=>{
-    const referrer = allUsersMap[u.merchantReferrerUid] || {};
+    locks.add(key);
+    sync();
 
-    return (u.id || "").toLowerCase().includes(value) ||
-           (u.username || "").toLowerCase().includes(value) ||
-           (u.merchantShopName || "").toLowerCase().includes(value) ||
-           (u.merchantProductType || "").toLowerCase().includes(value) ||
-           (referrer.username || "").toLowerCase().includes(value) ||
-           (referrer.referralCode || "").toLowerCase().includes(value);
-  });
+    try {
+      await fn();
+    } catch (e) {
+      error(e, root);
+    } finally {
+      locks.delete(key);
+      sync();
+    }
+  }
 
-  renderRequests(filteredRequests);
-  renderActiveMerchants(filteredActive);
-  updateStats(filteredRequests, filteredActive);
+  function button(
+    node,
+    title,
+    key,
+    fn,
+    cls = "btn-dark",
+    opening = false
+  ) {
+    const b = document.createElement("button");
+
+    b.type = "button";
+    b.className = cls;
+    b.textContent = title;
+    b.dataset.lock = key;
+
+    b.onclick = () => {
+      if (opening) {
+        if (access && !locks.has(key)) fn();
+      } else {
+        run(key, fn);
+      }
+    };
+
+    node.appendChild(b);
+    return b;
+  }
+
+  function link(node, title, href) {
+    const a = document.createElement("a");
+
+    a.className = "manager-link";
+    a.textContent = title;
+    a.href = href;
+
+    node.appendChild(a);
+  }
+
+  function slice(rows, key) {
+    pages[key] = Math.min(
+      Math.max(1, pages[key]),
+      Math.max(1, Math.ceil(rows.length / 20))
+    );
+
+    return rows.slice(
+      (pages[key] - 1) * 20,
+      pages[key] * 20
+    );
+  }
+
+  function pager(node, rows, key, render) {
+    if (rows.length <= 20) return;
+
+    const n = document.createElement("div");
+    n.className = "manager-pager";
+
+    const prev = document.createElement("button");
+    const next = document.createElement("button");
+    const text = document.createElement("span");
+
+    prev.type = next.type = "button";
+    prev.className = next.className = "btn-dark";
+
+    prev.textContent = "Précédent";
+    next.textContent = "Suivant";
+
+    prev.disabled = pages[key] <= 1;
+    next.disabled = pages[key] * 20 >= rows.length;
+
+    text.textContent =
+      `Page ${pages[key]} / ${Math.ceil(rows.length / 20)}` +
+      ` · ${rows.length} dossiers`;
+
+    prev.onclick = () => {
+      pages[key]--;
+      render();
+    };
+
+    next.onclick = () => {
+      pages[key]++;
+      render();
+    };
+
+    n.append(prev, text, next);
+    node.appendChild(n);
+  }
+
+  const term = () =>
+    $("#searchInput").value.trim().toLocaleLowerCase();
+
+  const matches = (row, fields) =>
+    fields.map(k => String(row[k] ?? ""))
+      .join(" ")
+      .toLocaleLowerCase()
+      .includes(term());
+
+  function stats() {
+    const stat = (name, value, note = "") => `
+      <div class="stat-card">
+        <div class="stat-label">${esc(name)}</div>
+        <div class="stat-value">${esc(value)}</div>
+        <div class="manager-small">${esc(note)}</div>
+      </div>
+    `;
+
+    $("#managerStats").innerHTML =
+      stat(
+        "Demandes en attente",
+        overview ? overview.requests.length : "—"
+      ) +
+      stat(
+        "Boutiques au statut actif",
+        overview
+          ? overview.merchants.filter(m => m.status === "active").length
+          : "—"
+      ) +
+      stat(
+        "Boutiques suspendues",
+        overview
+          ? overview.merchants.filter(m => m.status === "suspended").length
+          : "—"
+      ) +
+      stat(
+        "Dossiers ouverts",
+        cases ? cases.filter(d => d.status === "open").length : "—"
+      ) +
+      stat(
+        "Net marchand en attente",
+        money(overview?.heldNet),
+        "Situation actuelle"
+      ) +
+      stat(
+        "Fonds libérés cumulés",
+        money(overview?.releasedNet),
+        "Versements historiques"
+      );
+
+    const count = overview?.legacyOpenOrders || 0;
+
+    $("#legacyNote").hidden = !count;
+
+    $("#legacyNote").textContent =
+      `${count} ancienne(s) commande(s) nécessitent une migration ` +
+      "ou un rapprochement. Le montant en attente ci-dessus " +
+      "couvre les commandes déjà rapprochées.";
+  }
+
+  function reasonForm(
+    title,
+    key,
+    hint,
+    min,
+    max,
+    onSubmit,
+    extra = ""
+  ) {
+    const d = modal(title, `
+      <p class="manager-note">${esc(hint)}</p>
+
+      <form data-form>
+        <fieldset data-lock="${esc(key)}">
+          <label class="manager-label" for="reasonInput">
+            Motif obligatoire
+          </label>
+
+          <textarea
+            class="manager-input"
+            id="reasonInput"
+            minlength="${min}"
+            maxlength="${max}"
+            rows="4"
+            required
+          ></textarea>
+
+          ${extra}
+
+          <div class="actions">
+            <button type="submit" class="btn-blue">Confirmer</button>
+          </div>
+        </fieldset>
+      </form>
+    `);
+
+    $("[data-form]", d).onsubmit = e => {
+      e.preventDefault();
+
+      const reason = $("#reasonInput", d).value.trim();
+
+      if (reason.length < min) {
+        return notice(
+          `Ajoute au moins ${min} caractères.`,
+          "error",
+          d
+        );
+      }
+
+      run(key, () => onSubmit(reason, d), d);
+    };
+
+    sync();
+    return d;
+  }
+
+  async function recorded(text) {
+    const ok = await refresh();
+
+    if (alive()) {
+      notice(
+        text + (
+          ok
+            ? ""
+            : " Certaines données n’ont pas pu être rechargées. " +
+              "Utilise Actualiser."
+        ),
+        ok ? "success" : "info"
+      );
+    }
+  }
+
+  function renderRequests() {
+    const node = $("#requestsContainer");
+
+    if (!overview) {
+      return empty(node, "Demandes indisponibles. Utilise Actualiser.");
+    }
+
+    const rows = overview.requests.filter(r =>
+      matches(r, [
+        "uid",
+        "username",
+        "shopName",
+        "email",
+        "productType",
+        "description"
+      ])
+    );
+
+    node.innerHTML = "";
+
+    if (!rows.length) {
+      return empty(
+        node,
+        "Aucune demande correspondant à cette sélection."
+      );
+    }
+
+    for (const r of slice(rows, "requests")) {
+      const card = document.createElement("article");
+      card.className = "request-card";
+
+      card.innerHTML = `
+        <div class="request-top">
+          <div class="user-meta">
+            <h3 class="username">${esc(r.shopName || "Boutique")}</h3>
+
+            <div class="meta-line">
+              ${esc(r.username || "Utilisateur")}
+              · ${esc(date(r.createdAtMs))}
+            </div>
+
+            <div class="uid">UID : ${esc(r.uid)}</div>
+            <div class="meta-line">Email : ${esc(r.email || "—")}</div>
+            <div class="meta-line">
+              Catégorie : ${esc(r.productType || "—")}
+            </div>
+
+            <p class="meta-line">
+              ${esc(r.description || "Aucune description enregistrée.")}
+            </p>
+          </div>
+
+          ${badge("pending")}
+        </div>
+
+        ${r.legacyPaid ? `
+          <p class="manager-note">
+            Ancienne demande : tout remboursement éventuel doit
+            être vérifié par le serveur à partir de l’historique
+            du paiement.
+          </p>
+        ` : ""}
+
+        <div class="actions"></div>
+      `;
+
+      const a = $(".actions", card);
+      const key = "request:" + r.id;
+
+      link(
+        a,
+        "Profil",
+        "profil.html?uid=" + encodeURIComponent(r.uid)
+      );
+
+      button(
+        a,
+        "Approuver gratuitement",
+        key,
+        async () => {
+          if (!confirm("Approuver gratuitement cette boutique ?")) return;
+
+          await api("/api/approveMerchant", {
+            requestId: r.id
+          });
+
+          await recorded("Demande approuvée.");
+        },
+        "btn-success"
+      );
+
+      button(
+        a,
+        "Refuser avec motif",
+        key,
+        () => reasonForm(
+          "Refuser la demande",
+          key,
+          "Le motif sera communiqué à l’utilisateur.",
+          5,
+          1000,
+          async (reason, d) => {
+            await api("/api/rejectMerchant", {
+              requestId: r.id,
+              rejectReason: reason
+            });
+
+            close(d);
+            await recorded("Demande refusée avec motif.");
+          }
+        ),
+        "btn-danger",
+        true
+      );
+
+      node.appendChild(card);
+    }
+
+    pager(node, rows, "requests", renderRequests);
+    sync();
+  }
+
+  function renderMerchants() {
+    const node = $("#activeMerchantsContainer");
+
+    if (!overview) {
+      return empty(node, "Boutiques indisponibles. Utilise Actualiser.");
+    }
+
+    const selected = $("#merchantFilter").value;
+
+    const rows = overview.merchants.filter(m =>
+      (selected === "all" || m.status === selected) &&
+      matches(m, [
+        "uid",
+        "username",
+        "shopName",
+        "email",
+        "suspensionReason"
+      ])
+    );
+
+    node.innerHTML = "";
+
+    if (!rows.length) {
+      return empty(
+        node,
+        "Aucune boutique correspondant à cette sélection."
+      );
+    }
+
+    for (const m of slice(rows, "merchants")) {
+      const card = document.createElement("article");
+      card.className = "request-card";
+
+      card.innerHTML = `
+        <div class="request-top">
+          <div class="user-meta">
+            <h3 class="username">${esc(m.shopName || "Boutique")}</h3>
+
+            <div class="meta-line">
+              ${esc(m.username || "Utilisateur")}
+              · ${esc(m.email || "—")}
+            </div>
+
+            <div class="uid">UID : ${esc(m.uid)}</div>
+
+            ${m.suspensionReason ? `
+              <p class="meta-line">
+                Motif : ${esc(m.suspensionReason)}
+              </p>
+            ` : ""}
+          </div>
+
+          ${badge(m.status)}
+        </div>
+
+        <div class="actions"></div>
+      `;
+
+      const a = $(".actions", card);
+      const key = "merchant:" + m.uid;
+
+      link(
+        a,
+        "Profil",
+        "profil.html?uid=" + encodeURIComponent(m.uid)
+      );
+
+      link(
+        a,
+        "Boutique",
+        "merchant-products.html?uid=" + encodeURIComponent(m.uid)
+      );
+
+      if (m.status === "active") {
+        button(
+          a,
+          "Suspendre",
+          key,
+          () => reasonForm(
+            "Suspendre la boutique",
+            key,
+            "Les produits, photos, commandes et historiques seront " +
+            "conservés. Le motif sera notifié au marchand.",
+            5,
+            1000,
+            async (reason, d) => {
+              await api("/api/removeMerchantAccess", {
+                targetUid: m.uid,
+                reason
+              });
+
+              close(d);
+              await recorded("Boutique suspendue. Données conservées.");
+            }
+          ),
+          "btn-danger",
+          true
+        );
+      }
+
+      if (m.status === "suspended") {
+        button(
+          a,
+          "Réactiver gratuitement",
+          key,
+          async () => {
+            if (!confirm("Réactiver gratuitement cette boutique ?")) return;
+
+            await api("/api/merchant/reactivate", {
+              targetUid: m.uid
+            });
+
+            await recorded("Boutique réactivée gratuitement.");
+          },
+          "btn-success"
+        );
+      }
+
+      node.appendChild(card);
+    }
+
+    pager(node, rows, "merchants", renderMerchants);
+    sync();
+  }
+
+  async function order(id) {
+    const r = await api(
+      "/api/merchant/order/" + encodeURIComponent(id)
+    );
+
+    if (
+      !r.order ||
+      r.order.id !== id ||
+      !Array.isArray(r.history)
+    ) {
+      throw new Error("Données de commande incomplètes.");
+    }
+
+    return r;
+  }
+
+  function orderHTML(o) {
+    return `
+      <p class="uid">Commande : ${esc(o.id)}</p>
+      <h3>${esc(o.productName || "Produit")}</h3>
+
+      <p class="meta-line">
+        Date : ${esc(date(o.createdAtMs))}
+        · Quantité : ${esc(o.quantity)}
+      </p>
+
+      <p class="meta-line">
+        Montant client : ${esc(money(o.totalAmount))}<br>
+        Frais : ${esc(money(o.feeAmount))}<br>
+        Net marchand : ${esc(money(o.merchantNet))}
+      </p>
+
+      <p class="meta-line">
+        ${badge(o.status)} ${badge(o.fundsStatus)}
+      </p>
+
+      <p class="uid">
+        Marchand : ${esc(o.merchantUid)}<br>
+        Acheteur : ${esc(o.buyerUid)}
+      </p>
+
+      ${o.feePolicy === "legacy-fixed" ? `
+        <p class="manager-note">
+          Cette ancienne commande conserve ses frais historiques.
+        </p>
+      ` : ""}
+
+      ${o.requiresReconciliation || o.accountingVersion !== 2 ? `
+        <p class="manager-note">
+          Commande à rapprocher côté serveur
+          avant toute résolution financière.
+        </p>
+      ` : ""}
+
+      <details>
+        <summary>Coordonnées et livraison</summary>
+
+        ${[
+          [
+            "Client",
+            [o.customerPrenom, o.customerNom].filter(Boolean).join(" ")
+          ],
+          ["Email", o.customerEmail],
+          ["Appel", o.customerPhone],
+          ["WhatsApp", o.customerWhatsapp],
+          ["Détails", o.customerDetails],
+          ["Conditions de livraison", o.deliveryTerms]
+        ].map(([k, v]) => `
+          <p class="meta-line">
+            <strong>${esc(k)} :</strong> ${esc(v || "—")}
+          </p>
+        `).join("")}
+      </details>
+
+      ${o.disputeDeadlineMs ? `
+        <p class="manager-note">
+          Contestation possible jusqu’au
+          ${esc(date(o.disputeDeadlineMs))}.
+        </p>
+      ` : ""}
+    `;
+  }
+
+  async function viewOrder(id) {
+    const r = await order(id);
+
+    const d = modal(
+      "Commande et historique",
+      orderHTML(r.order) + `
+        <h3 style="margin-top:18px">Mouvements autorisés</h3>
+
+        <p class="manager-note">
+          Chaque ligne correspond à une opération et à un compte.
+          Les réservations et les libérations
+          ne constituent pas deux ventes.
+        </p>
+
+        <div data-history></div>
+      `
+    );
+
+    const node = $("[data-history]", d);
+
+    const rows = [...r.history].sort(
+      (a, b) => (b.atMs || 0) - (a.atMs || 0)
+    );
+
+    if (!rows.length) {
+      return empty(node, "Aucun mouvement enregistré.");
+    }
+
+    const key = "history:" + id;
+    pages[key] = 1;
+
+    const render = () => {
+      node.innerHTML = `
+        <div class="manager-table-wrap">
+          <table class="manager-table">
+            <thead>
+              <tr>
+                <th>Date / référence</th>
+                <th>Compte</th>
+                <th>Opération</th>
+                <th>Montant de référence</th>
+                <th>Variation du portefeuille</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              ${slice(rows, key).map(x => `
+                <tr>
+                  <td>
+                    ${esc(date(x.atMs))}
+                    <div class="uid">${esc(x.id)}</div>
+                  </td>
+
+                  <td class="uid">${esc(x.userId)}</td>
+
+                  <td>
+                    ${esc(label(x.type))}
+                    <div>${esc(label(x.status))}</div>
+                  </td>
+
+                  <td>${esc(money(x.amount))}</td>
+
+                  <td>${
+                    Number.isFinite(x.walletDelta)
+                      ? esc(
+                          (x.walletDelta > 0 ? "+" : "") +
+                          money(x.walletDelta)
+                        )
+                      : "—"
+                  }</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      pager(node, rows, key, render);
+    };
+
+    render();
+  }
+
+  async function proof(dossier, file) {
+    const blob = await api(
+      `/api/merchant/dispute-evidence/${
+        encodeURIComponent(dossier.id)
+      }/${encodeURIComponent(file.id)}`,
+      undefined,
+      true
+    );
+
+    if (![
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "video/mp4"
+    ].includes(blob.type.split(";")[0])) {
+      throw new Error("Format de preuve non pris en charge.");
+    }
+
+    const u = URL.createObjectURL(blob);
+    urls.add(u);
+
+    const d = modal(
+      "Preuve du dossier",
+      "<div data-proof></div>"
+    );
+
+    const media = document.createElement(
+      blob.type.startsWith("video/") ? "video" : "img"
+    );
+
+    media.className = "manager-proof";
+    media.src = u;
+
+    if (media.tagName === "VIDEO") {
+      media.controls = true;
+      media.preload = "metadata";
+    } else {
+      media.alt = "Pièce fournie au dossier";
+    }
+
+    $("[data-proof]", d).appendChild(media);
+
+    d.addEventListener("close", () => {
+      media.removeAttribute("src");
+      URL.revokeObjectURL(u);
+      urls.delete(u);
+    }, { once: true });
+  }
+
+  function note(dossier) {
+    reasonForm(
+      "Ajouter une note au dossier",
+      "dispute:" + dossier.id,
+      "La note sera visible par les participants au dossier.",
+      2,
+      2000,
+      async (text, d) => {
+        await api("/api/merchant/dispute-message", {
+          disputeId: dossier.id,
+          message: text
+        });
+
+        close(d);
+        await recorded("Note ajoutée au dossier.");
+      }
+    );
+  }
+
+  function attach(dossier) {
+    const key = "dispute:" + dossier.id;
+
+    const d = modal("Ajouter une pièce", `
+      <form data-form>
+        <fieldset data-lock="${esc(key)}">
+          <label class="manager-label" for="proofFile">
+            Photo JPG, PNG, WebP ou vidéo MP4 · 15 Mo maximum
+          </label>
+
+          <input
+            class="manager-input"
+            id="proofFile"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,video/mp4"
+            required
+          >
+
+          <div class="actions">
+            <button type="submit" class="btn-blue">
+              Ajouter la pièce
+            </button>
+          </div>
+        </fieldset>
+      </form>
+    `);
+
+    $("[data-form]", d).onsubmit = e => {
+      e.preventDefault();
+
+      const f = $("#proofFile", d).files[0];
+
+      if (
+        !f ||
+        f.size > 15 * 1024 * 1024 ||
+        ![
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "video/mp4"
+        ].includes(f.type)
+      ) {
+        return notice(
+          "Choisis un fichier autorisé de 15 Mo maximum.",
+          "error",
+          d
+        );
+      }
+
+      run(key, async () => {
+        const form = new FormData();
+
+        form.append("file", f);
+        form.append("disputeId", dossier.id);
+
+        await api("/api/merchant/dispute-evidence", form);
+
+        close(d);
+        await recorded("Pièce ajoutée au dossier.");
+      }, d);
+    };
+
+    sync();
+  }
+
+  async function resolution(dossier, decision) {
+    const r = await order(dossier.orderId);
+    const o = r.order;
+
+    if (o.accountingVersion !== 2 || o.requiresReconciliation) {
+      throw new Error(
+        "Cette commande doit être rapprochée " +
+        "avant une décision financière."
+      );
+    }
+
+    const refund = decision === "refund";
+    const held = o.fundsStatus === "held";
+
+    const extra = `
+      <div class="manager-note">
+        ${
+          refund
+            ? "Le remboursement porte sur le montant client. " +
+              "Le serveur vérifie les réservations ou les fonds " +
+              "disponibles avant de valider."
+            : held
+              ? "Les fonds en attente seront libérés uniquement " +
+                "si le serveur valide la décision."
+              : "Si les fonds ont déjà été libérés, la clôture " +
+                "ne doit pas créer un second versement."
+        }
+      </div>
+
+      ${refund && held ? `
+        <label class="manager-check">
+          <input id="restock" type="checkbox">
+          Remettre les unités en stock si les preuves le justifient
+        </label>
+      ` : ""}
+
+      ${refund && !held ? `
+        <label class="manager-label" for="funding">
+          Financement du remboursement
+        </label>
+
+        <select class="manager-input" id="funding">
+          <option value="sale">
+            Reprendre le net marchand et les frais disponibles
+          </option>
+
+          ${staff.role === "admin" ? `
+            <option value="platform">
+              Fonds disponibles de la plateforme
+            </option>
+          ` : ""}
+        </select>
+      ` : ""}
+
+      <label class="manager-check">
+        <input id="reviewed" type="checkbox" required>
+        J’ai examiné les explications, les preuves
+        et les mouvements de cette commande.
+      </label>
+    `;
+
+    const d = reasonForm(
+      refund
+        ? "Décider un remboursement"
+        : "Décider une libération / clôture",
+      "dispute:" + dossier.id,
+      "La décision doit être fondée sur les éléments du dossier. " +
+      "Une déclaration du marchand ne suffit pas.",
+      10,
+      2000,
+      async (reason, dialog) => {
+        if (!$("#reviewed", dialog).checked) {
+          throw new Error(
+            "Confirme l’examen des éléments du dossier."
+          );
+        }
+
+        const body = {
+          disputeId: dossier.id,
+          decision,
+          reason
+        };
+
+        if (refund) {
+          body.restock = $("#restock", dialog)?.checked === true;
+          body.funding = $("#funding", dialog)?.value || "sale";
+        }
+
+        await api("/api/merchant/resolve-dispute", body);
+
+        close(dialog);
+
+        await recorded(
+          refund
+            ? "Décision de remboursement enregistrée."
+            : "Décision de libération / clôture enregistrée."
+        );
+      },
+      extra
+    );
+
+    $("[data-form]", d).insertAdjacentHTML(
+      "beforebegin",
+      orderHTML(o)
+    );
+  }
+
+  function renderCases() {
+    const node = $("#disputesContainer");
+
+    if (!cases) {
+      return empty(node, "Dossiers indisponibles. Utilise Actualiser.");
+    }
+
+    const selected = $("#disputeFilter").value;
+
+    const rows = cases.filter(d =>
+      (selected === "all" || d.status === selected) &&
+      matches(d, [
+        "id",
+        "orderId",
+        "merchantUid",
+        "buyerUid",
+        "reason"
+      ])
+    );
+
+    node.innerHTML = "";
+
+    if (!rows.length) {
+      return empty(
+        node,
+        "Aucun dossier correspondant à cette sélection."
+      );
+    }
+
+    for (const x of slice(rows, "disputes")) {
+      const card = document.createElement("article");
+      card.className = "request-card";
+
+      const who = id => id === x.buyerUid
+        ? "Acheteur"
+        : id === x.merchantUid
+          ? "Marchand"
+          : id === user.uid
+            ? "Toi · équipe HaytiClips"
+            : "Équipe HaytiClips";
+
+      card.innerHTML = `
+        <div class="request-top">
+          <div class="user-meta">
+            <h3 class="username">Commande à examiner</h3>
+            <div class="uid">${esc(x.orderId)}</div>
+            <div class="meta-line">${esc(date(x.createdAtMs))}</div>
+          </div>
+
+          ${badge(x.status)}
+        </div>
+
+        <p class="meta-line">${esc(x.reason)}</p>
+
+        <p class="uid">
+          Marchand : ${esc(x.merchantUid)}<br>
+          Acheteur : ${esc(x.buyerUid)}
+        </p>
+
+        ${x.status === "resolved" ? `
+          <p class="manager-note">
+            Décision :
+            ${esc(
+              x.decision === "refund"
+                ? "Remboursement"
+                : x.decision === "release"
+                  ? "Libération / clôture"
+                  : x.decision || "À vérifier"
+            )}
+            <br>
+            ${esc(x.reasonDecision || "")}
+          </p>
+        ` : ""}
+
+        <details>
+          <summary>
+            Explications (${(x.messages || []).length})
+          </summary>
+
+          ${(x.messages || []).map(m => `
+            <p class="meta-line">
+              <strong>${esc(who(m.uid))}</strong>
+              · ${esc(date(m.atMs))}
+              <br>
+              ${esc(m.text)}
+            </p>
+          `).join("") || `
+            <p class="meta-line">Aucune explication enregistrée.</p>
+          `}
+        </details>
+
+        <div class="actions" data-proofs></div>
+        <div class="actions" data-actions></div>
+      `;
+
+      for (const [i, f] of (x.evidence || []).entries()) {
+        button(
+          $("[data-proofs]", card),
+          `Voir la preuve ${i + 1}`,
+          "proof:" + f.id,
+          () => proof(x, f)
+        );
+      }
+
+      const a = $("[data-actions]", card);
+      const key = "dispute:" + x.id;
+
+      button(
+        a,
+        "Consulter la commande",
+        key,
+        () => viewOrder(x.orderId),
+        "btn-blue"
+      );
+
+      if (x.status === "open") {
+        button(
+          a,
+          "Ajouter une note",
+          key,
+          () => note(x),
+          "btn-dark",
+          true
+        );
+
+        button(
+          a,
+          "Ajouter une pièce",
+          key,
+          () => attach(x),
+          "btn-dark",
+          true
+        );
+
+        button(
+          a,
+          "Rembourser",
+          key,
+          () => resolution(x, "refund"),
+          "btn-danger"
+        );
+
+        button(
+          a,
+          "Libérer / clôturer",
+          key,
+          () => resolution(x, "release"),
+          "btn-success"
+        );
+      }
+
+      node.appendChild(card);
+    }
+
+    pager(node, rows, "disputes", renderCases);
+    sync();
+  }
+
+  async function loadOverview() {
+    const version = ++overviewVersion;
+
+    try {
+      const r = await api("/api/merchant/admin/overview");
+
+      if (version !== overviewVersion || !access) return true;
+
+      if (
+        !Array.isArray(r.requests) ||
+        !Array.isArray(r.merchants) ||
+        !Number.isFinite(r.heldNet) ||
+        !Number.isFinite(r.releasedNet)
+      ) {
+        throw new Error("Vue de gestion incomplète.");
+      }
+
+      overview = r;
+
+      renderRequests();
+      renderMerchants();
+      stats();
+
+      return true;
+
+    } catch (e) {
+      if (alive() && access && version === overviewVersion) {
+        overview = null;
+
+        renderRequests();
+        renderMerchants();
+        stats();
+        error(e);
+      }
+
+      return false;
+    }
+  }
+
+  async function loadCases() {
+    const version = ++casesVersion;
+
+    try {
+      const r = await api("/api/merchant/disputes?staff=1");
+
+      if (version !== casesVersion || !access) return true;
+
+      if (!Array.isArray(r.disputes)) {
+        throw new Error("Liste des litiges invalide.");
+      }
+
+      cases = r.disputes;
+
+      renderCases();
+      stats();
+
+      return true;
+
+    } catch (e) {
+      if (alive() && access && version === casesVersion) {
+        cases = null;
+
+        renderCases();
+        stats();
+        error(e);
+      }
+
+      return false;
+    }
+  }
+
+  async function refresh() {
+    try {
+      const me = await api("/api/merchant/me");
+
+      if (
+        me.uid !== user.uid ||
+        me.suspended === true ||
+        !["admin", "merchant_manager"].includes(me.role)
+      ) {
+        access = false;
+        sync();
+        cleanup();
+
+        $("#manager-root").innerHTML = `
+          <div class="empty-state">
+            Accès réservé aux responsables autorisés.
+          </div>
+        `;
+
+        location.href = "feed.html";
+        return false;
+      }
+
+      staff = me;
+      access = true;
+      sync();
+
+    } catch (e) {
+      access = false;
+      sync();
+      error(e);
+      return false;
+    }
+
+    const result = await Promise.allSettled([
+      loadOverview(),
+      loadCases()
+    ]);
+
+    return result.every(
+      r => r.status === "fulfilled" && r.value === true
+    );
+  }
+
+  $("#refreshBtn").onclick = () =>
+    run("refresh", async () => {
+      if (await refresh()) {
+        notice("Données actualisées.", "success");
+      }
+    });
+
+  $("#searchInput").oninput = () => {
+    pages.requests = pages.merchants = pages.disputes = 1;
+
+    renderRequests();
+    renderMerchants();
+    renderCases();
+  };
+
+  $("#merchantFilter").onchange = () => {
+    pages.merchants = 1;
+    renderMerchants();
+  };
+
+  $("#disputeFilter").onchange = () => {
+    pages.disputes = 1;
+    renderCases();
+  };
+
+  $("#orderLookup").onsubmit = e => {
+    e.preventDefault();
+
+    const id = $("#orderIdInput").value.trim();
+
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(id)) {
+      return notice("Numéro de commande invalide.", "error");
+    }
+
+    run("lookup", () => viewOrder(id));
+  };
+
+  stats();
+  sync();
+
+  await run("refresh", refresh);
 }
 
-searchInput.addEventListener("input", applySearch);
+onAuthStateChanged(auth, user => {
+  const epoch = ++session;
 
-onAuthStateChanged(auth, async(user)=>{
-  if(!user){
+  cleanup();
+
+  $("#manager-root").innerHTML = initial;
+  $("#financeLink").hidden = true;
+
+  if (!user) {
     location.href = "login.html";
     return;
   }
 
-  const snap = await getDoc(doc(db,"users",user.uid));
+  boot(user, epoch).catch(e => {
+    if (epoch === session && !e.stale) {
+      notice(e.message || "Chargement impossible.", "error");
+    }
+  });
+});
 
-  if(!snap.exists()){
-    location.href = "feed.html";
-    return;
-  }
-
-  const role = snap.data().role || "";
-
-  if(role !== "admin" && role !== "merchant_manager"){
-    location.href = "feed.html";
-    return;
-  }
-
-  await refreshAll();
+window.addEventListener("pagehide", e => {
+  if (!e.persisted) cleanup();
 });
 </script>
 
