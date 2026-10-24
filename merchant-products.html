@@ -4,503 +4,226 @@
   <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#ff0050">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Boutique – HaytiClips</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-
-html,body{
-  background:#000;
-  color:#fff;
-  min-height:100%;
-  overflow-x:hidden;
-}
-
-body{min-height:100vh}
-
-/* HEADER */
-.header{
-  height:60px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 14px;
-  border-bottom:1px solid #222;
-  background:#000;
-  position:sticky;
-  top:0;
-  z-index:100;
-}
-
-.header-left{
-  font-size:24px;
-  cursor:pointer;
-  width:40px;
-}
-
-.header-center{
-  font-size:18px;
-  font-weight:700;
-}
-
-.header-right{
-  min-width:40px;
-  display:flex;
-  justify-content:flex-end;
-}
-
-/* PAGE */
-.page{
-  max-width:980px;
-  margin:0 auto;
-  padding:20px 16px 40px;
-}
-
-.topbar{display:none}
-
-.hero,.card,.product-card{
-  background:#000;
-  border:1px solid #222;
-  border-radius:16px;
-}
-
-.hero{
-  padding:16px;
-  margin-bottom:18px;
-}
-
-.shop-head{
-  display:flex;
-  gap:12px;
-  align-items:flex-start;
-}
-
-.shop-logo{
-  width:72px;
-  height:72px;
-  border-radius:16px;
-  object-fit:cover;
-  background:#111;
-  border:1px solid #333;
-  flex-shrink:0;
-}
-
-.shop-name-row{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  margin-bottom:4px;
-  flex-wrap:wrap;
-}
-
-.hero-title{
-  font-size:24px;
-  font-weight:800;
-}
-
-.hero-sub{
-  color:#aaa;
-  font-size:14px;
-  line-height:1.5;
-}
-
-.merchant-badge-mini{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.merchant-badge-mini svg{
-  width:16px;
-  height:16px;
-  filter:drop-shadow(0 0 4px rgba(255,255,255,.4));
-}
-
-.merchant-badge-mini path,
-.merchant-badge-mini circle{fill:#fff}
-
-.meta-row{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:8px;
-  margin-top:10px;
-}
-
-.pill{
-  display:inline-flex;
-  align-items:center;
-  padding:5px 10px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:800;
-  border:1px solid #333;
-  background:#111;
-  color:#ddd;
-}
-
-/* BOUTON PARTAGER */
-.btn-share{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:5px 12px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:700;
-  border:1px solid #333;
-  background:#1a1a1a;
-  color:#fff;
-  cursor:pointer;
-  transition:background 0.2s;
-}
-
-.btn-share:hover{
-  background:#333;
-}
-
-.controls{
-  display:grid;
-  grid-template-columns:1fr 170px;
-  gap:10px;
-  margin-bottom:18px;
-}
-
-.controls input,
-.controls select,
-#buyModal input,
-#buyModal select,
-#buyModal textarea{
-  width:100%!important;
-  padding:12px 16px!important;
-  border-radius:12px!important;
-  border:1px solid #333!important;
-  background:#111!important;
-  color:#fff!important;
-  outline:none!important;
-  font-size:16px!important;
-  margin-bottom:10px!important;
-}
-
-.controls input:focus,
-.controls select:focus,
-#buyModal input:focus,
-#buyModal select:focus,
-#buyModal textarea:focus{
-  border-color:#ff0050!important;
-}
-
-.card{
-  padding:16px;
-}
-
-.card h2{
-  font-size:18px;
-  margin-bottom:5px;
-}
-
-.card p{
-  color:#aaa;
-  font-size:14px;
-  margin-bottom:14px;
-}
-
-.products-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-}
-
-.product-card{
-  overflow:hidden;
-}
-
-.product-image{
-  width:100%;
-  aspect-ratio:1/1;
-  object-fit:cover;
-  display:block;
-  background:#111;
-}
-
-.product-body{
-  padding:12px;
-}
-
-.product-title{
-  font-size:15px;
-  font-weight:700;
-  margin-bottom:6px;
-  word-break:break-word;
-}
-
-.product-desc{
-  color:#aaa;
-  font-size:13px;
-  line-height:1.45;
-  min-height:36px;
-  margin-bottom:10px;
-}
-
-.product-meta{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:8px;
-  margin-bottom:10px;
-}
-
-.price{
-  font-size:17px;
-  font-weight:800;
-}
-
-.stock{
-  font-size:12px;
-  color:#aaa;
-}
-
-.actions{
-  display:flex;
-  gap:8px;
-}
-
-button{
-  border:none;
-  border-radius:30px;
-  padding:11px 14px;
-  font-size:14px;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.btn-buy{
-  background:#ff0050;
-  color:#fff;
-  flex:1;
-}
-
-.btn-contact{
-  background:#1a1a1a;
-  border:1px solid #333;
-  color:#fff;
-}
-
-.top-btn{
-  background:#ff0050;
-  color:#fff;
-  border:none;
-  border-radius:20px;
-  padding:8px 12px;
-  font-size:13px;
-  font-weight:700;
-}
-
-button:disabled{
-  background:#444;
-  opacity:.7;
-  cursor:not-allowed;
-}
-
-.empty-state{
-  border:1px dashed #333;
-  border-radius:16px;
-  padding:24px 16px;
-  text-align:center;
-  color:#aaa;
-}
-
-#buyModal > div{
-  background:#000!important;
-  border:1px solid #222!important;
-  border-radius:16px!important;
-}
-
-@media(max-width:900px){
-  .products-grid{grid-template-columns:repeat(2,1fr)}
-}
-
-@media(max-width:640px){
-  .page{padding:18px 14px 40px}
-  .controls{grid-template-columns:1fr}
-  .products-grid{grid-template-columns:1fr}
-  .hero-title{font-size:22px}
-}
-
+:root{color-scheme:dark;--edge:rgba(255,255,255,.22)}
+*{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 
-.header-left{
-  border:0;background:transparent;color:#fff;
-  padding:0;min-height:44px;
+html,body{
+  min-height:100%;background:#000;color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overflow-x:hidden;
 }
+body{min-height:100vh;touch-action:manipulation}
+button,input,select,textarea{font:inherit}
+a{color:#fff}
+
+button,.buyer-link{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:44px;padding:11px 14px;border:1px solid #ff0050;
+  border-radius:11px;background:#ff0050;color:#fff;
+  font-size:14px;font-weight:700;text-decoration:none;cursor:pointer;
+}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,a:focus-visible,summary:focus-visible,
+input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid #fff;outline-offset:3px;
+}
+
+.header{
+  position:sticky;top:0;z-index:100;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;min-height:60px;
+  padding:8px 16px;background:#000;border-bottom:1px solid var(--edge);
+}
+.header-left{
+  width:44px;padding:0;background:#000;border:0;font-size:25px;
+}
+.header-center{font-size:17px;font-weight:800}
+.header-right{min-width:44px}
+.header-right .buyer-link{font-size:13px;padding:9px 12px}
+.page{max-width:1080px;margin:auto;padding:20px 16px 55px}
+
+.hero,.card,.product-card{
+  background:#000;border:1px solid var(--edge);border-radius:16px;
+}
+.hero{padding:16px;margin-bottom:16px}
 .shop-banner{
-  display:block;width:100%;max-height:240px;object-fit:cover;
+  display:block;width:100%;max-height:230px;object-fit:cover;
   border-radius:12px;margin-bottom:16px;
 }
+.shop-head{display:flex;align-items:flex-start;gap:12px}
+.shop-logo{
+  width:68px;height:68px;object-fit:cover;border:1px solid var(--edge);
+  border-radius:14px;flex-shrink:0;
+}
+.shop-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hero-title{font-size:26px;line-height:1.2;overflow-wrap:anywhere}
+.hero-sub{font-size:14px;line-height:1.5;margin-top:7px}
 .shop-bio{white-space:pre-line;overflow-wrap:anywhere}
-.shop-meta{margin-top:12px;font-size:13px;line-height:1.6;color:#bbb}
-.shop-meta p{white-space:pre-line;overflow-wrap:anywhere}
-.shop-meta summary{cursor:pointer;color:#eee}
-.hero-title,.price{overflow-wrap:anywhere}
-
-.buyer-tabs{
-  display:flex;gap:8px;overflow:auto;
-  margin:18px 0;padding:3px 0 12px;
-}
-.buyer-tabs button{
-  white-space:nowrap;background:#151515;color:#ddd;
-  border:1px solid #333;min-height:44px;
-}
-.buyer-tabs button[aria-selected=true]{
-  color:#ff99b9;border-color:#a92d54;background:#32101d;
-}
+.meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+#productCountPill{display:none}
+.shop-meta{margin-top:14px;font-size:13px;line-height:1.6}
+.shop-meta summary{cursor:pointer}
+.shop-meta p{white-space:pre-line;overflow-wrap:anywhere;margin:8px 0}
+#contactShopBtn{margin-top:8px}
 
 .buyer-toolbar{
   display:flex;align-items:center;justify-content:space-between;
-  gap:10px;flex-wrap:wrap;margin:12px 0;
+  gap:10px;flex-wrap:wrap;margin:14px 0;
 }
 .buyer-toolbar>*{min-width:0}
-
-.buyer-toolbar input,
-.buyer-toolbar select,
-.buyer-field input,
-.buyer-field textarea,
-.buyer-field select{
-  width:100%;background:#111;color:#fff;border:1px solid #333;
-  border-radius:12px;padding:12px;font-size:16px;min-width:0;
-}
 .buyer-toolbar input{flex:1;min-width:150px}
 .buyer-toolbar select{width:auto;max-width:100%}
-.buyer-field{min-width:0;margin-bottom:14px}
-.buyer-field label{
-  display:block;font-size:13px;color:#bbb;margin-bottom:7px;
+.buyer-tabs{
+  display:flex;gap:8px;overflow:auto;margin:18px 0;padding:3px 0 10px;
 }
-.buyer-field textarea{min-height:90px;resize:vertical}
-.buyer-form-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:0 12px;
+.buyer-tabs button{
+  white-space:nowrap;background:#000;border-color:var(--edge);
 }
-.buyer-span{grid-column:1/-1}
+.buyer-tabs button[aria-selected=true]{
+  background:#ff0050;border-color:#ff0050;
+}
+.controls{
+  display:grid;grid-template-columns:1fr 180px;gap:10px;margin-bottom:16px;
+}
+.controls input,.controls select,.buyer-toolbar input,.buyer-toolbar select,
+.buyer-field input,.buyer-field textarea,.buyer-field select{
+  width:100%;min-width:0;min-height:46px;padding:11px 12px;
+  border:1px solid rgba(255,255,255,.35);border-radius:10px;
+  background:#000;color:#fff;font-size:16px;outline:none;
+}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,.65)}
+input::file-selector-button{
+  background:#ff0050;color:#fff;border:0;border-radius:6px;
+  padding:7px;font:inherit;
+}
+.controls input:focus,.controls select:focus,
+.buyer-field input:focus,.buyer-field textarea:focus,
+.buyer-field select:focus{border-color:#ff0050}
 
-.buyer-message{
-  padding:12px;border-radius:12px;margin:12px 0;
-  font-size:14px;line-height:1.5;overflow-wrap:anywhere;
+.card{padding:16px}
+.card h2{font-size:18px;margin-bottom:7px}
+.card>p{font-size:13px;line-height:1.5;margin-bottom:16px}
+.products-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;
 }
-.buyer-message:empty{display:none}
-.buyer-message[data-type=success]{background:#123025;color:#91edbf}
-.buyer-message[data-type=error]{
-  background:#3b1724;border:1px solid #713044;color:#ffbbce;
-}
-.buyer-message[data-type=info]{background:#162332;color:#dae8ff}
-
-.buyer-note{
-  padding:12px;border:1px solid #333;border-radius:12px;
-  background:#15151c;color:#bbb;font-size:13px;
-  line-height:1.6;margin:12px 0;overflow-wrap:anywhere;
-}
-.buyer-list{display:grid;gap:12px}
-.buyer-item{
-  border:1px solid #292929;background:#08080d;
-  border-radius:14px;padding:14px;min-width:0;
-}
-.buyer-item h3{
-  font-size:16px;overflow-wrap:anywhere;margin-bottom:7px;
-}
-.buyer-item p{
-  font-size:13px;line-height:1.6;color:#ccc;margin:6px 0;
-  white-space:pre-line;overflow-wrap:anywhere;
-}
-.buyer-ref{
-  font-size:11px!important;color:#999!important;overflow-wrap:anywhere;
-}
-.buyer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.buyer-actions button,.buyer-actions a{min-height:44px}
-.buyer-link{
-  display:inline-flex;align-items:center;justify-content:center;
-  text-decoration:none;border:1px solid #333;border-radius:30px;
-  padding:11px 14px;font-size:13px;font-weight:700;
-  background:#171717;color:white;
-}
-
-.buyer-status{
-  display:inline-flex;padding:5px 10px;border-radius:30px;
-  font-size:11px;font-weight:800;border:1px solid #333;
-  background:#20202b;color:#ddd;
-}
-.buyer-status[data-status=held],
-.buyer-status[data-status=pending],
-.buyer-status[data-status=open]{
-  background:#34290f;color:#ffcf70;
-}
-.buyer-status[data-status=completed],
-.buyer-status[data-status=settled],
-.buyer-status[data-status=resolved]{
-  background:#113023;color:#8debbb;
-}
-.buyer-status[data-status=disputed],
-.buyer-status[data-status=refunded]{
-  background:#381523;color:#ffb2cb;
-}
-
+.product-card{min-width:0;overflow:hidden}
 .product-gallery{
   display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
-  background:#111;
+}
+.product-image{
+  display:block;width:100%;aspect-ratio:1/1;
+  object-fit:cover;background:#000;
 }
 .product-gallery .product-image{
   min-width:100%;scroll-snap-align:start;
 }
-.product-desc{white-space:pre-line;overflow-wrap:anywhere}
-.product-body{min-width:0}
-
-.buyer-pager{
-  display:flex;justify-content:space-between;align-items:center;
-  gap:8px;flex-wrap:wrap;font-size:12px;color:#aaa;margin-top:16px;
+.product-body{padding:14px;min-width:0}
+.product-title{font-size:16px;margin-bottom:8px;overflow-wrap:anywhere}
+.product-desc{
+  font-size:13px;line-height:1.5;white-space:pre-line;
+  overflow-wrap:anywhere;margin-bottom:12px;
 }
+.product-meta{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;margin-bottom:12px;
+}
+.price{font-size:18px;overflow-wrap:anywhere}
+.stock{font-size:12px;white-space:nowrap}
+.actions,.buyer-actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions .btn-buy{flex:1}
+.buyer-actions{margin-top:12px}
+
+.empty-state{
+  grid-column:1/-1;text-align:center;padding:24px 16px;
+  border:1px dashed var(--edge);border-radius:12px;
+  font-size:14px;overflow-wrap:anywhere;
+}
+.buyer-message,.buyer-note{
+  background:#000;color:#fff;border:1px solid var(--edge);
+  border-radius:11px;padding:12px;font-size:13px;line-height:1.5;
+  margin:12px 0;overflow-wrap:anywhere;
+}
+.buyer-message:empty{display:none}
+.buyer-message[data-type=error]{border-color:#ff0050}
+.buyer-list{display:grid;gap:12px}
+.buyer-item{
+  padding:15px;border:1px solid var(--edge);border-radius:14px;min-width:0;
+}
+.buyer-item h3{font-size:16px;margin-bottom:8px;overflow-wrap:anywhere}
+.buyer-item p{
+  font-size:13px;line-height:1.5;margin:7px 0;overflow-wrap:anywhere;
+}
+.buyer-item details p{white-space:pre-line}
+.buyer-ref{font:10px ui-monospace,monospace!important;overflow-wrap:anywhere}
+.buyer-item details{margin-top:12px}
+.buyer-item summary{font-size:13px;cursor:pointer}
+.buyer-status{
+  display:inline-flex;border:1px solid rgba(255,255,255,.4);
+  border-radius:30px;padding:5px 9px;font-size:11px;font-weight:700;
+  background:#000;color:#fff;
+}
+.buyer-status[data-status=held],
+.buyer-status[data-status=disputed]{border-color:#ff0050}
+.buyer-pager{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;flex-wrap:wrap;margin-top:16px;font-size:12px;
+}
+
 .buyer-dialog{
   width:calc(100% - 24px);max-width:600px;max-height:90dvh;
-  overflow:auto;background:#08080d;color:white;
-  border:1px solid #444;border-radius:18px;padding:20px;
+  margin:auto;overflow:auto;background:#000;color:#fff;
+  border:1px solid rgba(255,255,255,.4);border-radius:16px;padding:18px;
 }
-.buyer-dialog::backdrop{background:rgba(0,0,0,.85)}
-.buyer-dialog h2{font-size:20px}
+.buyer-dialog::backdrop{background:rgba(0,0,0,.9)}
+.buyer-dialog h2{font-size:20px;flex:1}
 .buyer-dialog h3{margin-bottom:10px}
-.buyer-dialog fieldset{border:0;margin:0;padding:0;min-width:0}
-.buyer-total{
-  display:flex;justify-content:space-between;
-  gap:12px;font-size:20px;font-weight:800;margin:16px 0;
+.buyer-dialog fieldset{border:0;padding:0;margin:0;min-width:0}
+.buyer-field{margin-bottom:14px;min-width:0}
+.buyer-field label{display:block;font-size:13px;margin-bottom:7px}
+.buyer-field textarea{min-height:85px;resize:vertical}
+.buyer-form-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:0 12px;
 }
+.buyer-span{grid-column:1/-1}
+.buyer-totals{
+  border-top:1px solid var(--edge);padding-top:12px;margin:16px 0;
+}
+.buyer-totals>div{
+  display:flex;justify-content:space-between;gap:12px;
+  font-size:14px;margin:8px 0;
+}
+.buyer-totals .buyer-total{font-size:20px;font-weight:800}
+.buyer-total>*{min-width:0;overflow-wrap:anywhere}
 .delivery-code{
-  font:800 25px ui-monospace,monospace;letter-spacing:1px;
-  user-select:all;text-align:center;background:#131a26;
-  border:1px dashed #626c80;border-radius:12px;
-  padding:20px;margin:15px 0;overflow-wrap:anywhere;
+  font:800 24px ui-monospace,monospace;letter-spacing:1px;
+  text-align:center;user-select:all;border:1px dashed #ff0050;
+  border-radius:12px;padding:20px;margin:16px 0;overflow-wrap:anywhere;
 }
 .buyer-proof{
-  display:block;max-width:100%;max-height:65vh;
-  margin:auto;object-fit:contain;
+  display:block;max-width:100%;max-height:65vh;object-fit:contain;margin:auto;
 }
-.buyer-history{border-top:1px solid #333;margin-top:12px;padding-top:8px}
-.buyer-item details{margin-top:10px}
-.buyer-item summary{cursor:pointer;color:#ddd;font-size:13px}
-
-button:disabled{opacity:.5;cursor:not-allowed}
-button:focus-visible,
-a:focus-visible,
-summary:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible{
-  outline:2px solid #ff759f;outline-offset:3px;
+.buyer-history{
+  border-top:1px solid var(--edge);margin-top:12px;padding-top:8px;
 }
 
-@media(max-width:640px){
-  .buyer-form-grid{grid-template-columns:1fr}
-  .buyer-dialog{padding:16px}
+@media(max-width:900px){
+  .products-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .page{padding:16px 12px 45px}
+  .hero,.card{padding:14px}
+  .hero-title{font-size:23px}
+  .shop-logo{width:56px;height:56px}
   .shop-banner{max-height:160px}
-  .delivery-code{font-size:21px}
+  .controls,.products-grid,.buyer-form-grid{grid-template-columns:1fr}
+  .buyer-dialog{padding:15px}
   .buyer-actions>*{flex:1}
+  .buyer-toolbar input,.buyer-toolbar select{flex:1;width:100%}
 }
-  
 </style>
 </head>
 <body>
@@ -819,7 +542,66 @@ function minor(n) {
 
   return v;
 }
+  
+function deliveryQuote(shop) {
+  const rates = shop?.deliveryRates;
+  const version = shop?.deliveryRatesVersion;
 
+  if (
+    !Array.isArray(rates) ||
+    rates.length > 30 ||
+    !Number.isSafeInteger(version) ||
+    version < 0
+  ) {
+    throw new Error(
+      "Livraison indisponible. Actualise la boutique."
+    );
+  }
+
+  const ids = new Set();
+  const names = new Set();
+
+  for (const r of rates) {
+    const name = typeof r?.label === "string"
+      ? r.label.trim()
+          .normalize("NFC")
+          .replace(/\s+/g, " ")
+          .toLowerCase()
+      : "";
+
+    const cents = Math.round(r?.price * 100);
+
+    if (
+      !validId(r?.id) ||
+      ids.has(r.id) ||
+      !name ||
+      name.length < 2 ||
+      r.label.length > 60 ||
+      names.has(name) ||
+      typeof r.price !== "number" ||
+      !Number.isFinite(r.price) ||
+      r.price < 0 ||
+      !Number.isSafeInteger(cents) ||
+      cents > 100000000000 ||
+      Math.abs(cents / 100 - r.price) > 0.0000001
+    ) {
+      throw new Error("Tarifs de livraison invalides.");
+    }
+
+    ids.add(r.id);
+    names.add(name);
+  }
+
+  return {
+    version,
+    rates: rates.map(r => ({
+      id: r.id,
+      label: r.label,
+      price: r.price
+    }))
+  };
+}
+  
 function safeURL(v) {
   try {
     const u = new URL(v, location.origin);
@@ -1388,6 +1170,8 @@ async function boot(user, epoch) {
         throw new Error("Catalogue de boutique invalide.");
       }
 
+deliveryQuote(r.shop);
+
       for (const p of r.products) {
         minor(p.price);
 
@@ -1424,14 +1208,20 @@ async function boot(user, epoch) {
         ["Email", shop.email],
         ["Appel", shop.phone],
         ["WhatsApp", shop.whatsapp],
-        ["Zones de livraison", shop.zones],
-        ["Conditions de livraison", shop.delivery]
-      ].map(([k, v]) => `
-        <p>
-          <strong>${esc(k)} :</strong>
-          ${esc(v || "À convenir avec le marchand")}
-        </p>
-      `).join("");
+        ["Retrait", shop.address],
+        [
+          "Livraison",
+          shop.deliveryRates.length
+            ? shop.deliveryRates.map(r =>
+                r.label + " — " +
+                (r.price === 0 ? "Gratuit" : money(r.price))
+              ).join("\n")
+            : "Non proposée"
+        ],
+        ["Conditions", shop.delivery]
+      ].map(([k, v]) =>
+        `<p><strong>${esc(k)} :</strong> ${esc(v || "À convenir")}</p>`
+      ).join("");
 
       $("#shareShopBtn").disabled = false;
 
@@ -1472,7 +1262,7 @@ async function boot(user, epoch) {
       raw = localStorage.getItem(storageKey);
     } catch {
       throw new Error(
-        "Le stockage de la référence d’achat est indisponible sur cet appareil."
+        "Autorise le stockage du site pour acheter."
       );
     }
 
@@ -1484,24 +1274,42 @@ async function boot(user, epoch) {
       p = JSON.parse(raw);
     } catch {
       throw new Error(
-        "La référence de la tentative locale est illisible. " +
-        "Contacte l’assistance avant un nouvel achat."
+        "Achat local illisible. Contacte HaytiClips."
       );
     }
+
+    const body = p?.payload;
+    const mode = body?.deliveryMode ?? "pickup";
 
     if (
       !p ||
       p.buyerUid !== user.uid ||
       p.merchantUid !== merchantUid ||
       !/^[A-Za-z0-9_-]{16,80}$/.test(p.key) ||
-      !p.payload ||
-      !validId(p.payload.productId) ||
-      !Number.isInteger(p.payload.quantity)
+      !body ||
+      !validId(body.productId) ||
+      !Number.isInteger(body.quantity) ||
+      body.quantity < 1 ||
+      body.quantity > 1000 ||
+      !["pickup", "delivery"].includes(mode) ||
+      (
+        mode === "delivery" &&
+        (
+          !validId(body.deliveryZoneId) ||
+          typeof body.deliveryAddress !== "string" ||
+          body.deliveryAddress.trim().length < 5 ||
+          body.deliveryAddress.length > 300 ||
+          !Number.isSafeInteger(body.deliveryRatesVersion) ||
+          body.deliveryRatesVersion < 0
+        )
+      )
     ) {
       throw new Error(
-        "La tentative locale doit être vérifiée avec l’assistance."
+        "Achat local à vérifier avec HaytiClips."
       );
     }
+
+    minor(body.expectedTotal);
 
     return p;
   }
@@ -1536,10 +1344,7 @@ async function boot(user, epoch) {
 
       if (p) {
         $("#pendingText").textContent =
-          `Tentative à vérifier : ${p.name || "produit"}` +
-          ` · ${money(p.payload.expectedTotal)}. ` +
-          "Reprendre conserve la même référence " +
-          "pour éviter une deuxième commande.";
+          `Achat à vérifier : ${p.name || "produit"} · ${money(p.payload.expectedTotal)}.`;
       }
 
     } catch (e) {
@@ -1638,7 +1443,7 @@ async function boot(user, epoch) {
 
     if (alive()) {
       notice(
-        `Commande ${result.orderId} enregistrée` +
+        `Commande enregistrée` +
         ` · montant réservé : ${money(result.totalAmount)}.` +
         (
           ok
@@ -1665,8 +1470,7 @@ async function boot(user, epoch) {
     if (result) return finishCheckout(result, p.key);
 
     notice(
-      "Aucune commande n’est encore confirmée pour cette tentative. " +
-      "Reprendre réutilisera la même référence.",
+      "Achat non confirmé. Tu peux le reprendre.",
       "info"
     );
   }
@@ -1686,9 +1490,11 @@ async function boot(user, epoch) {
     return n;
   }
 
-  async function openCheckout(productId) {
+async function openCheckout(productId) {
     if (user.uid === merchantUid) {
-      throw new Error("Tu ne peux pas acheter tes propres produits.");
+      throw new Error(
+        "Tu ne peux pas acheter tes propres produits."
+      );
     }
 
     const pending = readIntent();
@@ -1699,17 +1505,23 @@ async function boot(user, epoch) {
       if (result) {
         return finishCheckout(result, pending.key);
       }
+
+      if (pending.payload.productId !== productId) {
+        throw new Error(
+          "Reprends d’abord l’achat en attente."
+        );
+      }
     }
 
     await loadMe();
 
     if (!me || me.suspended) {
-      throw new Error("Les achats ne sont pas autorisés pour ce compte.");
+      throw new Error("Achat non autorisé.");
     }
 
     if (!await loadShop()) {
       throw new Error(
-        "La boutique est indisponible. Ta tentative reste récupérable."
+        "Boutique indisponible. Réessaie plus tard."
       );
     }
 
@@ -1718,16 +1530,22 @@ async function boot(user, epoch) {
     const p = products.find(x => x.id === productId);
 
     if (!p || p.stock <= 0) {
-      throw new Error("Ce produit n’est plus disponible.");
+      throw new Error("Produit indisponible.");
     }
 
     const unit = minor(p.price);
+    const quote = deliveryQuote(shop);
+    const terms = shop.delivery || "";
+
+    const pickupAddress =
+      shop.address || "À convenir avec le marchand.";
+
     const known = pending?.payload || orders?.[0] || {};
 
-    const d = modal("Finaliser l’achat", `
+    const d = modal("Acheter", `
       <p class="buyer-note">
         <strong>${esc(p.name)}</strong><br>
-        ${esc(money(p.price))} par unité
+        ${esc(money(p.price))} / unité
       </p>
 
       <form id="checkoutForm">
@@ -1750,13 +1568,13 @@ async function boot(user, epoch) {
               wide: true
             })}
 
-            ${field("buyPhone", "Contact appel", {
+            ${field("buyPhone", "Téléphone", {
               required: true,
               type: "tel",
               max: 30
             })}
 
-            ${field("buyWhatsapp", "WhatsApp — facultatif si identique", {
+            ${field("buyWhatsapp", "WhatsApp — facultatif", {
               type: "tel",
               max: 30
             })}
@@ -1769,91 +1587,213 @@ async function boot(user, epoch) {
             })}
 
             <div class="buyer-field">
-              <label for="buySexe">Sexe — facultatif</label>
-              <select id="buySexe">
-                <option value="">Non précisé</option>
-                <option value="M">M</option>
-                <option value="F">F</option>
-                <option value="Autre">Autre</option>
+              <label for="buyMode">Réception</label>
+
+              <select id="buyMode">
+                <option value="pickup">Sans livraison</option>
+
+                <option
+                  value="delivery"
+                  ${quote.rates.length ? "" : "disabled"}
+                >Livraison</option>
               </select>
             </div>
 
-            ${field("buyDetails", "Adresse et détails utiles à la livraison", {
+            <div
+              id="buyDeliveryFields"
+              class="buyer-span"
+              hidden
+            >
+              <div class="buyer-field">
+                <label for="buyZone">Zone de livraison</label>
+
+                <select id="buyZone">
+                  <option value="">Choisir une zone</option>
+
+                  ${quote.rates.map(r => `
+                    <option value="${esc(r.id)}">
+                      ${esc(r.label)} —
+                      ${esc(
+                        r.price === 0
+                          ? "Gratuit"
+                          : money(r.price)
+                      )}
+                    </option>
+                  `).join("")}
+                </select>
+              </div>
+
+              ${field("buyAddress", "Adresse de livraison", {
+                area: true,
+                max: 300,
+                wide: true
+              })}
+            </div>
+
+            <p
+              id="buyPickupInfo"
+              class="buyer-note buyer-span"
+            >
+              Retrait : ${esc(pickupAddress)}
+            </p>
+
+            ${field("buyDetails", "Précisions — facultatif", {
               area: true,
               max: 1000,
               wide: true
             })}
           </div>
 
+          ${terms ? `
+            <p class="buyer-note">${esc(terms)}</p>
+          ` : ""}
+
           <p class="buyer-note">
-            ${esc(
-              shop.delivery ||
-              "Conviens des modalités de livraison avec le marchand."
-            )}
-            <br>
-            Le montant est réservé dans ton portefeuille.
-            Communique le code uniquement après réception et vérification.
+            Montant réservé. Donne le code après réception
+            et vérification.
           </p>
 
-          <div class="buyer-total">
-            <span>Montant à réserver</span>
-            <span id="checkoutTotal"></span>
+          <div class="buyer-totals" aria-live="polite">
+            <div>
+              <span>Produits</span>
+              <span id="checkoutItems"></span>
+            </div>
+
+            <div>
+              <span>Livraison</span>
+              <span id="checkoutDelivery"></span>
+            </div>
+
+            <div class="buyer-total">
+              <span>Total</span>
+              <span id="checkoutTotal"></span>
+            </div>
           </div>
 
-          <button type="submit" class="btn-buy" style="width:100%">
+          <button
+            type="submit"
+            class="btn-buy"
+            style="width:100%"
+          >
             Confirmer et réserver
           </button>
         </fieldset>
       </form>
     `);
 
-    const mapping = [
+    for (const [id, key] of [
       ["buyNom", "customerNom"],
       ["buyPrenom", "customerPrenom"],
       ["buyEmail", "customerEmail"],
       ["buyPhone", "customerPhone"],
       ["buyWhatsapp", "customerWhatsapp"],
-      ["buySexe", "customerSexe"],
       ["buyDetails", "customerDetails"]
-    ];
-
-    for (const [id, k] of mapping) {
-      $("#" + id, d).value = known[k] || "";
+    ]) {
+      $("#" + id, d).value = known[key] || "";
     }
 
     $("#buyEmail", d).value =
-      known.customerEmail || user.email || me?.email || "";
+      known.customerEmail || user.email || me.email || "";
 
     $("#buyEmail", d).autocomplete = "email";
     $("#buyNom", d).autocomplete = "family-name";
     $("#buyPrenom", d).autocomplete = "given-name";
 
-    $("#buyQuantity", d).max = Math.min(1000, p.stock);
+    const quantity = $("#buyQuantity", d);
+    const mode = $("#buyMode", d);
+    const zone = $("#buyZone", d);
+    const address = $("#buyAddress", d);
+    const submit = $("button[type='submit']", d);
 
-    $("#buyQuantity", d).value =
-      pending?.payload.productId === p.id
-        ? String(pending.payload.quantity)
-        : "1";
+    quantity.max = Math.min(1000, p.stock);
+    quantity.value = String(pending?.payload.quantity || 1);
 
-    const total = () => {
-      const qty = Number($("#buyQuantity", d).value);
-      const n = unit * qty;
+    mode.value =
+      pending?.payload.deliveryMode || "pickup";
 
-      return (
-        Number.isInteger(qty) &&
-        qty > 0 &&
-        qty <= Math.min(1000, p.stock) &&
-        Number.isSafeInteger(n) &&
-        n <= 100000000000
-      ) ? n : null;
-    };
+    zone.value =
+      pending?.payload.deliveryZoneId || "";
 
-    const update = () => {
+    address.value =
+      pending?.payload.deliveryAddress || "";
+
+    address.minLength = 5;
+    address.autocomplete = "street-address";
+
+    $("#buyDetails", d).placeholder =
+      "Repère, étage, consigne…";
+
+    function amounts() {
+      const qty = Number(quantity.value);
+      const items = unit * qty;
+      const delivery = mode.value === "delivery";
+
+      const rate = delivery
+        ? quote.rates.find(r => r.id === zone.value)
+        : null;
+
+      if (
+        !["pickup", "delivery"].includes(mode.value) ||
+        !Number.isInteger(qty) ||
+        qty < 1 ||
+        qty > Math.min(1000, p.stock) ||
+        !Number.isSafeInteger(items) ||
+        items > 100000000000 ||
+        (delivery && !rate)
+      ) {
+        return null;
+      }
+
+      const fee = delivery
+        ? Math.round(rate.price * 100)
+        : 0;
+
+      const total = items + fee;
+
+      if (
+        !Number.isSafeInteger(total) ||
+        total > 100000000000
+      ) {
+        return null;
+      }
+
+      return { qty, items, fee, total };
+    }
+
+    function update() {
+      const delivery = mode.value === "delivery";
+
+      $("#buyDeliveryFields", d).hidden = !delivery;
+      $("#buyPickupInfo", d).hidden = delivery;
+
+      zone.required = address.required = delivery;
+      zone.disabled = address.disabled = !delivery;
+
+      const bill = amounts();
+      const items = unit * Number(quantity.value);
+
+      $("#checkoutItems", d).textContent =
+        Number.isSafeInteger(items) &&
+        items > 0 &&
+        items <= 100000000000
+          ? money(items / 100)
+          : "—";
+
+      $("#checkoutDelivery", d).textContent = delivery
+        ? bill
+          ? money(bill.fee / 100)
+          : "Choisir une zone"
+        : money(0);
+
       $("#checkoutTotal", d).textContent =
-        total() === null ? "—" : money(total() / 100);
-    };
+        bill ? money(bill.total / 100) : "—";
 
-    $("#buyQuantity", d).oninput = update;
+      submit.disabled = !bill;
+    }
+
+    quantity.oninput = update;
+    mode.onchange = zone.onchange = update;
+
     update();
 
     for (const id of ["buyPhone", "buyWhatsapp"]) {
@@ -1870,8 +1810,9 @@ async function boot(user, epoch) {
 
     if (pending) {
       notice(
-        "Une tentative précédente existe. Sa référence sera réutilisée ; " +
-        "une commande déjà enregistrée sera récupérée sans nouvel achat.",
+        mode.value === "delivery" && !zone.value
+          ? "Zone indisponible. Choisis une autre zone ou sans livraison."
+          : "Reprise de ton achat.",
         "info",
         d
       );
@@ -1887,7 +1828,7 @@ async function boot(user, epoch) {
           throw new Error("Achat non autorisé.");
         }
 
-        let current = readIntent();
+        let current = readIntent() || pending;
 
         if (current) {
           const found = await lookupIntent(current);
@@ -1895,39 +1836,88 @@ async function boot(user, epoch) {
           if (found) {
             return finishCheckout(found, current.key, d);
           }
+
+          if (current.payload.productId !== p.id) {
+            throw new Error(
+              "Reprends d’abord l’achat en attente."
+            );
+          }
         }
 
         if (!alive()) return;
 
-        const qty = Number($("#buyQuantity", d).value);
-        const sum = total();
+        const bill = amounts();
 
-        if (sum === null) {
-          throw new Error("Quantité ou montant invalide.");
+        if (!bill) {
+          throw new Error(
+            "Vérifie la quantité et la zone."
+          );
+        }
+
+        const delivery = mode.value === "delivery";
+
+        const deliveryAddress = delivery
+          ? address.value.trim()
+          : "";
+
+        if (
+          delivery &&
+          (
+            deliveryAddress.length < 5 ||
+            deliveryAddress.length > 300
+          )
+        ) {
+          throw new Error(
+            "Indique une adresse de 5 à 300 caractères."
+          );
         }
 
         const payload = {
           productId: p.id,
-          quantity: qty,
+          quantity: bill.qty,
           customerNom: $("#buyNom", d).value.trim(),
           customerPrenom: $("#buyPrenom", d).value.trim(),
-          customerEmail: $("#buyEmail", d).value.trim().toLowerCase(),
-          customerPhone: haitiPhone($("#buyPhone", d).value),
+
+          customerEmail: $("#buyEmail", d).value
+            .trim()
+            .toLowerCase(),
+
+          customerPhone: haitiPhone(
+            $("#buyPhone", d).value
+          ),
+
           customerWhatsapp: haitiPhone(
             $("#buyWhatsapp", d).value.trim() ||
             $("#buyPhone", d).value
           ),
-          customerSexe: $("#buySexe", d).value,
-          customerDetails: $("#buyDetails", d).value.trim(),
-          expectedTotal: sum / 100
+
+          customerSexe:
+            pending?.payload.customerSexe || "",
+
+          customerDetails:
+            $("#buyDetails", d).value.trim(),
+
+          deliveryMode: mode.value,
+
+          deliveryZoneId: delivery
+            ? zone.value
+            : "",
+
+          deliveryAddress,
+          deliveryRatesVersion: quote.version,
+          expectedTotal: bill.total / 100
         };
 
         if (
           !payload.customerNom ||
           !payload.customerPrenom ||
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.customerEmail)
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            payload.customerEmail
+          )
         ) {
-          throw new Error("Vérifie le nom, le prénom et l’email.");
+          throw new Error(
+            "Vérifie le nom, le prénom et l’email."
+          );
         }
 
         current = {
@@ -1943,10 +1933,13 @@ async function boot(user, epoch) {
         pendingView();
 
         try {
-          const result = await api("/api/merchant/buy-product", {
-            ...payload,
-            requestKey: current.key
-          });
+          const result = await api(
+            "/api/merchant/buy-product",
+            {
+              ...payload,
+              requestKey: current.key
+            }
+          );
 
           await finishCheckout(result, current.key, d);
 
@@ -1965,15 +1958,17 @@ async function boot(user, epoch) {
 
           pendingView();
 
-          if (err.code === "PRICE_CHANGED") {
+          if (
+            ["PRICE_CHANGED", "DELIVERY_CHANGED"]
+              .includes(err.code)
+          ) {
             if (d.isConnected) close(d);
 
             await loadShop();
 
             if (alive()) {
               notice(
-                "Le prix a changé. Rouvre l’achat et confirme le nouveau montant. " +
-                "La référence de la tentative est conservée.",
+                "Tarif modifié. Reprends l’achat et confirme le nouveau total.",
                 "error"
               );
             }
@@ -2015,42 +2010,51 @@ async function boot(user, epoch) {
   }
 
   function orderInfo(o) {
+    const delivery = o.deliveryMode === "delivery";
+
+    const mode = delivery
+      ? "Livraison : " +
+        (o.deliveryZoneName || "Zone enregistrée")
+      : o.deliveryMode === "pickup"
+        ? "Sans livraison"
+        : "Livraison non précisée";
+
     return `
       <h3>${esc(o.productName || "Produit")}</h3>
-      <p class="buyer-ref">Commande : ${esc(o.id)}</p>
+
+      <p class="buyer-ref">N° ${esc(o.id)}</p>
 
       <p>
         ${esc(date(o.createdAtMs))}
-        · Quantité : ${esc(o.quantity)}
+        · ${esc(o.quantity)} unité(s)
       </p>
 
       <p>
-        Montant client : ${esc(money(o.totalAmount))}<br>
-        Frais de vente : ${esc(money(o.feeAmount))}<br>
-        Net marchand : ${esc(money(o.merchantNet))}
+        Produits :
+        ${esc(money(o.itemsSubtotal ?? o.totalAmount))}<br>
+
+        Livraison :
+        ${esc(money(o.deliveryFee ?? 0))}<br>
+
+        <strong>
+          Total : ${esc(money(o.totalAmount))}
+        </strong>
       </p>
 
       <p>${badge(o.status)} ${badge(o.fundsStatus)}</p>
+      <p><strong>${esc(mode)}</strong></p>
 
-      <p>
-        ${esc(o.deliveryTerms || "Modalités convenues avec le marchand")}
-      </p>
-
-      ${o.feePolicy === "legacy-fixed" ? `
-        <p class="buyer-note">
-          Cette ancienne commande conserve ses frais historiques.
-        </p>
+      ${delivery ? `
+        <p>Adresse : ${esc(o.deliveryAddress || "—")}</p>
       ` : ""}
 
-      ${o.requiresReconciliation ? `
-        <p class="buyer-note">
-          L’administration doit rapprocher cette ancienne commande.
-        </p>
-      ` : ""}
+      ${o.requiresReconciliation
+        ? '<p class="buyer-note">Commande en cours de vérification.</p>'
+        : ""}
 
       ${o.disputeDeadlineMs ? `
         <p class="buyer-note">
-          Contestation possible jusqu’au
+          Contestation jusqu’au
           ${esc(date(o.disputeDeadlineMs))}.
         </p>
       ` : ""}
@@ -2078,7 +2082,8 @@ async function boot(user, epoch) {
             ["Email", r.order.customerEmail],
             ["Appel", r.order.customerPhone],
             ["WhatsApp", r.order.customerWhatsapp],
-            ["Détails", r.order.customerDetails]
+            ["Précisions", r.order.customerDetails],
+            ["Conditions", r.order.deliveryTerms]
           ].map(([k, v]) => `
             <p><strong>${esc(k)} :</strong> ${esc(v || "—")}</p>
           `).join("")}
