@@ -192,9 +192,11 @@ function setupOwnerActionButton(isMerchantActive, username, avatarUrl) {
   if(!ownerActionBtn) return;
 
   if(isMerchantActive){
-    ownerActionBtn.textContent = "Mes produits";
+    ownerActionBtn.textContent = "Ma boutique";
     ownerActionBtn.onclick = () => {
-      window.location.href = "merchant-products.html";
+      window.location.href =
+        "merchant-products.html?uid=" +
+        encodeURIComponent(currentUser.uid);
     };
   } else {
     ownerActionBtn.textContent = "Partager";
@@ -347,6 +349,120 @@ onSnapshot(userRef, async snap => {
   if (!snap.exists()) return;
 
   const u = snap.data();
+
+  // L'accès gratuit ne dépend plus des anciennes dates
+  // d'expiration ni du renouvellement payant.
+  const isMerchantActive =
+    u.suspended !== true &&
+    u.merchantEnabled === true &&
+    u.merchantStatus === "active";
+
+  const merchantCertifiedBadge =
+    document.getElementById("merchantCertifiedBadge");
+
+  if(merchantCertifiedBadge){
+    merchantCertifiedBadge.style.display =
+      isMerchantActive ? "inline-flex" : "none";
+  }
+
+  // Boutique publique visible sur le profil d'un marchand actif.
+  if(viewProductsBtn){
+    viewProductsBtn.style.display =
+      !isOwner && isMerchantActive ? "block" : "none";
+
+    viewProductsBtn.textContent = "Boutique";
+
+    viewProductsBtn.onclick =
+      !isOwner && isMerchantActive
+        ? () => {
+            window.location.href =
+              "merchant-products.html?uid=" +
+              encodeURIComponent(profileUid);
+          }
+        : null;
+  }
+
+  // Présentation de l'accès marchand dans les paramètres.
+  let merchantLabel = "Ouvrir ma boutique";
+  let merchantTag = "Gratuit";
+  let merchantState = "none";
+
+  if(isMerchantActive){
+    merchantLabel = "Gérer ma boutique";
+    merchantTag = "Active";
+    merchantState = "active";
+
+  } else if(
+    u.suspended === true ||
+    u.merchantStatus === "suspended"
+  ){
+    merchantLabel = "Consulter mon accès marchand";
+    merchantTag = "Suspendu";
+    merchantState = "suspended";
+
+  } else if(u.merchantStatus === "pending"){
+    merchantLabel = "Suivre ma demande";
+    merchantTag = "En attente";
+    merchantState = "pending";
+
+  } else if(u.merchantStatus === "rejected"){
+    merchantLabel = "Consulter ma demande";
+    merchantTag = "Refusée";
+    merchantState = "rejected";
+
+  } else if(u.merchantStatus === "active"){
+    // Statut actif mais merchantEnabled désactivé :
+    // aucune réactivation automatique depuis le profil.
+    merchantLabel = "Consulter mon accès marchand";
+    merchantTag = "Désactivé";
+    merchantState = "suspended";
+  }
+
+  if(merchantRequestBtn){
+    merchantRequestBtn.style.display =
+      isOwner ? "flex" : "none";
+
+    merchantRequestBtn.dataset.merchantPage =
+      isMerchantActive
+        ? "merchant-dashboard.html"
+        : "merchant-request.html";
+
+    const label =
+      document.getElementById("merchantEntryLabel");
+
+    const tag =
+      document.getElementById("merchantEntryTag");
+
+    if(label){
+      label.textContent = merchantLabel;
+    }
+
+    if(tag){
+      tag.textContent = merchantTag;
+      tag.dataset.state = merchantState;
+    }
+  }
+
+  // Actualise aussi la visibilité du menu de gestion.
+  if(merchantManagerBtn){
+    merchantManagerBtn.style.display =
+      isOwner &&
+      u.suspended !== true &&
+      (
+        u.role === "admin" ||
+        u.role === "merchant_manager"
+      )
+        ? "block"
+        : "none";
+  }
+
+  if(isOwner){
+    setupOwnerActionButton(
+      isMerchantActive,
+      u.username,
+      u.avatar
+    );
+  }
   
   // 🔔 BADGE EXPIRÉ
 
@@ -439,35 +555,7 @@ document.getElementById("bioText").textContent = u.bio || "";
 document.getElementById("avatarImg").src =
   u.avatar || `https://i.pravatar.cc/150?u=${profileUid}`;
 
-const merchantCertifiedBadge = document.getElementById("merchantCertifiedBadge");
-const expireDate = u.merchantExpiresAt?.toDate?.() || null;
-const merchantExpired = !expireDate || expireDate.getTime() <= Date.now();
-const merchantBlocked = u.merchantRenewalBlocked === true;
-const isMerchantActive =
-  u.merchantEnabled === true &&
-  u.merchantStatus === "active" &&
-  !merchantBlocked &&
-  !merchantExpired;
 
-if(viewProductsBtn){
-  if(!isOwner && isMerchantActive){
-    viewProductsBtn.style.display = "block";
-    viewProductsBtn.textContent = "🛍 Produits";
-    viewProductsBtn.onclick = () => {
-      window.location.href = `merchant-products.html?uid=${profileUid}`;
-    };
-  } else {
-    viewProductsBtn.style.display = "none";
-  }
-}
-
-if(merchantCertifiedBadge){
-  merchantCertifiedBadge.style.display = isMerchantActive ? "inline-flex" : "none";
-}
-
-if(isOwner){
-  setupOwnerActionButton(isMerchantActive, u.username, u.avatar);
-}
 
     document.getElementById("followersCount").textContent = formatNumber(u.followersCount || 0);
 document.getElementById("followingCount").textContent = formatNumber(u.followingCount || 0);
@@ -818,7 +906,24 @@ if(rolesManagerBtn){
 
 if(merchantRequestBtn){
   merchantRequestBtn.onclick = () => {
-    window.location.href = "merchant-request.html";
+    const user = auth.currentUser;
+
+    if(!user){
+      window.location.href = "login.html";
+      return;
+    }
+
+    if(profileUid !== user.uid){
+      return;
+    }
+
+    closeSettingsPanel();
+
+    window.location.href =
+      merchantRequestBtn.dataset.merchantPage ===
+      "merchant-dashboard.html"
+        ? "merchant-dashboard.html"
+        : "merchant-request.html";
   };
 }
 

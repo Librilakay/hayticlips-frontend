@@ -256,6 +256,99 @@ font-size:13px;
 color:#aaa;
 }
 
+
+/* ESPACE MARCHAND */
+.profile-merchant-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:5px;
+  vertical-align:middle;
+}
+
+.profile-merchant-badge svg{
+  width:17px;
+  height:17px;
+}
+
+.merchant-menu-entry{
+  width:100%;
+  background:transparent;
+  color:#fff;
+  border:0;
+  border-bottom:1px solid #222;
+  border-radius:0;
+  font:inherit;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.merchant-entry-copy{
+  flex:1;
+  min-width:0;
+}
+
+.merchant-entry-copy strong{
+  display:block;
+  font-size:14px;
+  line-height:1.4;
+}
+
+.merchant-entry-copy small{
+  display:block;
+  margin-top:5px;
+  color:#aaa;
+  font-size:12px;
+  line-height:1.5;
+}
+
+.merchant-entry-tag{
+  flex-shrink:0;
+  padding:5px 8px;
+  border:1px solid #333;
+  border-radius:999px;
+  background:#1a1a1a;
+  color:#ddd;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.merchant-entry-tag[data-state="active"]{
+  background:#10291e;
+  border-color:#24583d;
+  color:#91edbd;
+}
+
+.merchant-entry-tag[data-state="pending"]{
+  background:#2a210c;
+  border-color:#5a4210;
+  color:#ffcf70;
+}
+
+.merchant-entry-tag[data-state="rejected"],
+.merchant-entry-tag[data-state="suspended"]{
+  background:#2a1111;
+  border-color:#6b1d1d;
+  color:#ffaaaa;
+}
+
+#ownerActionBtn,
+#viewProductsBtn{
+  color:#fff;
+  font-family:inherit;
+  cursor:pointer;
+}
+
+.merchant-menu-entry:focus-visible,
+#ownerActionBtn:focus-visible,
+#viewProductsBtn:focus-visible{
+  outline:2px solid #ff0050;
+  outline-offset:3px;
+}
+  
 </style>
 </head>
 
@@ -267,6 +360,30 @@ color:#aaa;
 <div class="header-center">
   <span id="headerUsername"></span>
   <span id="headerBadge"></span>
+
+  <span
+    id="merchantCertifiedBadge"
+    class="profile-merchant-badge"
+    style="display:none;"
+    role="img"
+    aria-label="Boutique active"
+    title="Boutique active sur HaytiClips"
+  >
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M3 10h18l-2-6H5l-2 6Z"/>
+      <path d="M5 10v10h14V10"/>
+      <path d="M9 20v-6h6v6"/>
+    </svg>
+  </span>
 </div>
   <div class="header-right">
 <div id="reportFlag" style="
@@ -551,9 +668,36 @@ Annuler
 </div>
    <div class="settings-item" id="certifiedAccount">Demande verification</div>
  <div class="settings-item" id="manageVideosBtn">Mes vidéos</div>
-<div class="settings-item" id="merchantRequestBtn">Espace marchand</div>
+<button
+  type="button"
+  class="settings-item merchant-menu-entry"
+  id="merchantRequestBtn"
+  style="display:none;"
+  aria-describedby="merchantEntryNote"
+>
+  <span class="merchant-entry-copy">
+    <strong id="merchantEntryLabel">Espace marchand</strong>
+    <small id="merchantEntryNote">
+      Accès gratuit
+    </small>
+  </span>
+
+  <span
+    id="merchantEntryTag"
+    class="merchant-entry-tag"
+    data-state="none"
+    aria-live="polite"
+  >Gratuit</span>
+</button>
 <div class="settings-item" id="transfersManagerBtn" style="display:none;">Transfert Manu</div>
-<div class="settings-item" id="merchantManagerBtn" style="display:none;">Gestion des marchands</div>
+<button
+  type="button"
+  class="settings-item merchant-menu-entry"
+  id="merchantManagerBtn"
+  style="display:none;"
+>
+  Gestion des marchands
+</button>
 <div class="settings-item" id="gestionAccount">gestion des badges</div>
 <div class="settings-item" id="adminPanelBtn" style="display:none;"> 
 panel ADM 
@@ -654,14 +798,23 @@ Annuler
 <div class="buttons" id="ownerButtons" style="display:none">
   <div class="btn" id="uploadBtn">publier</div>
   <div class="btn"> Modifier</div>
-  <div class="btn" id="ownerActionBtn">Partager</div>
+  <button type="button" class="btn" id="ownerActionBtn">
+  Partager
+</button>
 </div>
 
   <!-- BOUTONS VISITEUR -->
 <div class="buttons" id="visitorButtons" style="display:none">
   <div class="btn" id="followBtn">➕ Suivre</div>
   <div class="btn" id="messageBtn">💬 Message</div>
-  <div class="btn" id="viewProductsBtn" style="display:none;">Produits</div>
+<button
+  type="button"
+  class="btn"
+  id="viewProductsBtn"
+  style="display:none;"
+>
+  Boutique
+</button>
 </div>
 
 <div class="tabs" style="display:flex;border-bottom:1px solid #222;margin-top:20px;">
@@ -702,7 +855,7 @@ Annuler
   </div>
 </div>
 
-<script type="module" src="profil.js?v=4"></script>
+<script type="module" src="profil.js?v=5"></script>
 
      </body>
        </html>
