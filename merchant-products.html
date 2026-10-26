@@ -371,8 +371,7 @@ input::file-selector-button{
     <div class="card">
       <h2>Produits disponibles</h2>
       <p>
-        Le montant est réservé dans ton portefeuille
-        puis réglé après validation de la livraison.
+        montant réservé jusqu'à validation de la réception.
       </p>
 
       <div class="products-grid" id="productsGrid">
@@ -391,9 +390,7 @@ input::file-selector-button{
     hidden
   >
     <p class="buyer-note">
-      Tous tes achats HaytiClips restent consultables ici,
-      même si une boutique est indisponible.
-      Communique ton code uniquement après réception
+      Communique ton code au marchand uniquement après réception
       et vérification du produit.
     </p>
 
@@ -432,8 +429,6 @@ input::file-selector-button{
   >
     <p class="buyer-note">
       Décris le problème puis ajoute tes photos ou vidéos.
-      Les responsables autorisés examinent les éléments
-      avant toute décision.
     </p>
 
     <div class="buyer-list" id="buyerDisputes">
@@ -2158,7 +2153,6 @@ async function openCheckout(productId) {
       <p class="buyer-note">
         Communique ce code uniquement après réception
         et vérification du produit.
-        Ne l’envoie pas à l’avance et ne le publie pas.
       </p>
 
       <div class="delivery-code" data-code></div>
@@ -2254,9 +2248,7 @@ async function openCheckout(productId) {
           })}
 
           <p class="buyer-note">
-            Après enregistrement, ajoute tes preuves dans Mes réclamations.
-            Le serveur vérifie le délai de contestation applicable
-            à cette commande.
+            ajoute tes preuves dans Mes réclamations.
           </p>
 
           <button class="btn-buy" type="submit">

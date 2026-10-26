@@ -1095,7 +1095,7 @@ async function boot(user, epoch) {
         <p class="hc-note">
           Accepter une commande ne libère aucun montant.
           L’acheteur communique son code après réception
-          et vérification du produit.
+          et vérification.
         </p>
 
         <div class="hc-toolbar" style="margin-bottom:16px">
@@ -1183,8 +1183,7 @@ async function boot(user, epoch) {
               )}
 
               <p class="hc-muted">
-                En modification, sélectionner de nouvelles photos
-                remplace la sélection actuelle.
+                En modification, sélectionner de nouvelles photos.
               </p>
 
               <div class="hc-actions">
@@ -1322,9 +1321,7 @@ async function boot(user, epoch) {
 
         <h3>Historique de la période</h3>
         <p class="hc-muted">
-          La variation du portefeuille indique les entrées et sorties
-          effectives. Les réservations et les mouvements des ventes
-          en attente sont présentés séparément.
+          Entrées, sorties et Réservations.
         </p>
 
         <div id="dashboard-transactions"></div>
@@ -1342,8 +1339,6 @@ async function boot(user, epoch) {
         <h2>Litiges et commandes à examiner</h2>
         <p class="hc-note">
           Ajoute tes explications et tes preuves.
-          L’administration examine le dossier avant de décider
-          d’un remboursement ou d’une libération des fonds.
         </p>
         <div id="dashboard-disputes" class="hc-list"></div>
       </section>
@@ -2461,8 +2456,7 @@ async function boot(user, epoch) {
     const d = modal("Confirmer la remise du produit", `
       <p class="hc-note">
         Demande le code à l’acheteur après remise et vérification
-        du produit. Le serveur contrôle la commande, le paiement,
-        les tentatives et les litiges avant toute libération.
+        du produit.
       </p>
 
       <form id="delivery-form">
@@ -2538,8 +2532,6 @@ async function boot(user, epoch) {
       <p class="hc-note">
         Explique le problème : livraison sans confirmation,
         acheteur injoignable ou autre blocage.
-        Le serveur vérifie le délai applicable.
-        Cette demande ne libère aucun montant.
       </p>
 
       <form id="review-form">
