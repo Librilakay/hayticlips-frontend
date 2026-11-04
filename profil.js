@@ -173,11 +173,14 @@ async function triggerPushNotification(targetUid, title, body, extraData = {}) {
 /* AUTH */
 onAuthStateChanged(auth, async (currentUser) => {
 
-  if (!currentUser) {
-    window.location.href = "login.html";
+ if (!currentUser) {
+    const next = "profil.html" + window.location.search;
+
+    window.location.href =
+      "login.html?next=" + encodeURIComponent(next);
+
     return;
   }
-
   const params = new URLSearchParams(window.location.search);
   profileUid = params.get("uid") || currentUser.uid;
 
