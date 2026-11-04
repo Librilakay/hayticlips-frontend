@@ -327,8 +327,25 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
       }
     }
 
-    window.location.href = "feed.html";
+  const next =
+      new URLSearchParams(window.location.search).get("next");
 
+    let destination = "feed.html";
+
+    if (next) {
+      try {
+        const target = new URL(next, window.location.href);
+
+        if (
+          target.origin === window.location.origin &&
+          target.pathname === "/profil.html"
+        ) {
+          destination = target.pathname + target.search;
+        }
+      } catch {}
+    }
+
+    window.location.href = destination;
   } catch (error) {
     console.error("Erreur de connexion globale:", error);
     alert("Email ou mot de passe incorrect");

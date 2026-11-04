@@ -116,57 +116,45 @@ onAuthStateChanged(auth, async user => {
   return;
 }
   
-  try {
-  await updateDoc(doc(db,"users",user.uid),{
-    online:true,
-    lastActive: serverTimestamp()
-  });
-} catch (e) {
-  console.log("User doc n'existe pas encore, création...");
-await setDoc(doc(db,"users",user.uid),{
-  online:true,
-  lastActive: serverTimestamp()
-}, { merge:true });
-}
-
-window.addEventListener("beforeunload", ()=>{
-  updateDoc(doc(db,"users",user.uid),{
-    online:false
-  });
-});
-
-  const userRef = doc(db,"users",user.uid);
-let snap;
-
-try {
-  snap = await getDoc(userRef);
-} catch (err) {
-  console.error("Erreur lecture user:", err);
-}
-
-if (!snap || !snap.exists()) {
-  console.log("User doc n'existe pas, création...");
+ const userRef = doc(db, "users", user.uid);
+  let snap;
 
   try {
-    await setDoc(userRef, {
-      online: true,
-      lastActive: serverTimestamp(),
-      username: "Utilisateur"
-    }, { merge: true });
-
     snap = await getDoc(userRef);
   } catch (err) {
-    console.error("Erreur création user:", err);
+    console.error("Erreur lecture du profil :", err);
+    alert("Impossible de charger ton profil. Réessaie dans un instant.");
+    return;
   }
-}
 
-if (!snap || !snap.exists()) {
-  console.error("Impossible de charger le user");
-  return;
-}
+  if (auth.currentUser?.uid !== user.uid) return;
 
-  const data = snap.data();
-  
+  if (!snap.exists()) {
+    console.error("Profil Firestore introuvable :", user.uid);
+    alert("Profil introuvable. Reconnecte-toi ou contacte HaytiClips.");
+    return;
+  }
+
+  try {
+    await updateDoc(userRef, {
+      online: true,
+      lastActive: serverTimestamp()
+    });
+  } catch (err) {
+    console.warn("Présence non actualisée :", err);
+  }
+
+  if (auth.currentUser?.uid !== user.uid) return;
+
+  window.addEventListener("beforeunload", () => {
+    if (auth.currentUser?.uid !== user.uid) return;
+
+    updateDoc(userRef, {
+      online: false
+    }).catch(() => {});
+  });
+
+  const data = snap.data(); 
   if (!data.profileCompleted) {
   window.location.href = "interest.html";
   return;
