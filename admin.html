@@ -355,7 +355,7 @@ body {
 </div>
 
 <div class="search" id="searchContainer">
-  <input type="text" id="searchInput" placeholder="Rechercher un utilisateur...">
+  <input type="text" id="searchInput" placeholder="Rechercher un utilisateur ou UID...">
 </div>
 
 <div class="content-area">
@@ -537,11 +537,19 @@ function renderUsers(users){
   userList.innerHTML = html;
 }
 
-searchInput.addEventListener("input",()=>{
-  const value = searchInput.value.toLowerCase();
-  renderUsers(allUsers.filter(u=>{
-    const nameStr = (u.nom || "") + " " + (u.prenom || "") + " " + (u.username || "");
-    return nameStr.toLowerCase().includes(value);
+searchInput.addEventListener("input", () => {
+  const value = searchInput.value.trim().toLowerCase();
+
+  renderUsers(allUsers.filter(u => {
+    const nameStr =
+      (u.nom || "") + " " +
+      (u.prenom || "") + " " +
+      (u.username || "");
+
+    const uid = String(u.id || "");
+
+    return nameStr.toLowerCase().includes(value) ||
+           uid.toLowerCase().includes(value);
   }));
 });
 
