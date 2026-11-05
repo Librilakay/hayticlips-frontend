@@ -11,44 +11,77 @@ const firebaseConfig = {
   appId: "1:1010020144942:web:9b7d15db2bda42af9f8cbf"
 };
 
-const messaging = firebase.messaging();
-
-// Gestion des notifications en arrière-plan (quand l'onglet est fermé ou non actif)
-messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Notification reçue en arrière-plan:', payload);
-
-  const notificationTitle = payload.notification?.title || "HaytiClips";
-  const notificationOptions = {
-    body: payload.notification?.body || "Vous avez reçu une nouvelle notification.",
-    icon: payload.notification?.icon || "/icon-192.png", // Met le lien de ton icône ici
-    badge: "/icon.png",
-    data: payload.data
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+self.addEventListener("install", event => {
+  event.waitUntil(self.skipWaiting());
 });
 
-// Événement au clic sur la notification push
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener("notificationclick", event => {
+  const data = event.notification.data;
+
+  if (data?.hcPushKind !== "gift-v1") return;
+
+  event.stopImmediatePropagation();
   event.notification.close();
 
-  // Redirection selon les données transmises
-  let targetUrl = '/notif.html';
-  if (event.notification.data) {
-    if (event.notification.data.videoId) targetUrl = `/feed.html?videoId=${event.notification.data.videoId}`;
-    else if (event.notification.data.conversationId) targetUrl = `/chat.html?conv=${event.notification.data.conversationId}`;
+  const url = new URL(
+    data.videoId ? "/feed.html" : "/notif.html",
+    self.location.origin
+  );
+
+  if (data.videoId) {
+    url.searchParams.set("videoId", data.videoId);
   }
 
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (let client of windowClients) {
-        if (client.url.includes(targetUrl) && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
-      }
-    })
-  );
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({
+      type: "window",
+      includeUncontrolled: true
+    });
+
+    const existing = windows.find(
+      client => client.url === url.href
+    );
+
+    if (existing) return existing.focus();
+
+    return self.clients.openWindow(url.href);
+  })());
 });
+
+self.addEventListener("push", event => {
+  let payload;
+
+  try {
+    payload = event.data?.json();
+  } catch {
+    return;
+  }
+
+  const data = payload?.data;
+
+  if (payload?.notification || data?.hcPushKind !== "gift-v1") {
+    return;
+  }
+
+  event.stopImmediatePropagation();
+
+  event.waitUntil(self.registration.showNotification(
+    data.pushTitle || "Nouveau cadeau 🎁",
+    {
+      body: data.pushBody || "Tu as reçu un cadeau sur HaytiClips.",
+      icon: "/icons/icon-192.jpg",
+      data: {
+        hcPushKind: "gift-v1",
+        videoId: data.videoId || ""
+      }
+    }
+  ));
+});
+
+importScripts(
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js",
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"
+);
+
+firebase.initializeApp(firebaseConfig);
+firebase.messaging();
