@@ -326,10 +326,9 @@ import {
   getDoc,
   updateDoc,
   getDocs,
-  writeBatch,
-  setDoc
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
+import { getMessaging, getToken, deleteToken, isSupported } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBhIdds8Q7YR_F1h6dTLWDby-OvLgArCSk",
@@ -343,7 +342,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const messaging = getMessaging(app);
 
 const VAPID_KEY = "BGg-uKOpPvj6zFPfJ7MBW2Yopg_SixHzhXh2H9x5zRn6kBuUIj8BlK-2MU-yn8hlNTZFhegaHcqDWySIaop7m9c"; 
 
@@ -359,67 +357,197 @@ function closeAllNotifListeners() {
   activeNotifListeners = [];
 }
 
-// Vérification de l'état du Token FCM dans Firestore pour afficher ou masquer la bannière
-async function checkPushStatus(user) {
-  if (!("Notification" in window)) {
-    pushWarningBanner.style.display = "none";
-    return;
-  }
+const pushStatus = document.getElementById("pushStatus");
+const PUSH_OWNER_KEY = "hayticlips.pushOwner.v1";
+const PUSH_API = "https://hayticlip-server.onrender.com";
 
+let pushRegistration;
+
+function pushOwner() {
   try {
-    const userDocRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userDocRef);
-
-    if (userSnap.exists() && userSnap.data().fcmToken && Notification.permission === 'granted') {
-      // S'il a déjà son token et la permission, on cache la bannière
-      pushWarningBanner.style.display = "none";
-    } else {
-      // Sinon, on affiche l'avertissement à chaque fois qu'il arrive sur l'écran
-      pushWarningBanner.style.display = "flex";
-    }
-  } catch (err) {
-    console.error("Erreur vérification statut push :", err);
+    return localStorage.getItem(PUSH_OWNER_KEY);
+  } catch {
+    return null;
   }
 }
 
-// Clic sur le bouton Activer de la bannière
-enablePushBtn.onclick = async () => {
-  const user = auth.currentUser;
-  if (!user) return;
+async function registerPushWorker() {
+  const registration = await navigator.serviceWorker.register(
+    "/firebase-messaging-sw.js",
+    {
+      scope: "/firebase-cloud-messaging-push-scope",
+      updateViaCache: "none"
+    }
+  );
+
+  const deadline = Date.now() + 12000;
+
+  while (
+    registration.active?.state !== "activated" ||
+    registration.installing ||
+    registration.waiting
+  ) {
+    if (Date.now() >= deadline) {
+      throw new Error("Le service worker push ne s’est pas activé.");
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 150));
+  }
+
+  return registration;
+}
+
+async function checkPushStatus(user) {
+  pushWarningBanner.style.display = "flex";
+  enablePushBtn.hidden = true;
+
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  const installed = matchMedia("(display-mode: standalone)").matches ||
+    navigator.standalone === true;
+
+  if (isIOS && !installed) {
+    pushStatus.textContent =
+      "Sur iPhone, ouvre HaytiClips depuis son icône sur l’écran d’accueil.";
+    return;
+  }
+
+  if (!window.isSecureContext || !(await isSupported().catch(() => false))) {
+    pushStatus.textContent =
+      "Les notifications push ne sont pas disponibles ici.";
+    return;
+  }
+
+  if (auth.currentUser?.uid !== user.uid) return;
+
+  if (Notification.permission === "denied") {
+    pushStatus.textContent =
+      "Notifications bloquées. Autorise-les dans les réglages de l’appareil ou du navigateur.";
+    return;
+  }
+
+  pushStatus.textContent = "Préparation des notifications…";
 
   try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      
-      const currentToken = await getToken(messaging, { 
+    pushRegistration = await registerPushWorker();
+  } catch (error) {
+    console.error("PUSH_WORKER:", error.code || error.message);
+    pushStatus.textContent =
+      "Le service de notifications n’a pas démarré. Actualise la page.";
+    return;
+  }
+
+  if (auth.currentUser?.uid !== user.uid) return;
+
+  if (Notification.permission === "granted" && pushOwner() === user.uid) {
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid));
+
+      const token = await getToken(getMessaging(app), {
         vapidKey: VAPID_KEY,
-        serviceWorkerRegistration: registration 
+        serviceWorkerRegistration: pushRegistration
       });
 
-      if (currentToken) {
-        await setDoc(doc(db, "users", user.uid), {
-          fcmToken: currentToken
-        }, { merge: true });
-        
-        // Cache la bannière immédiatement après activation réussie
+      if (auth.currentUser?.uid !== user.uid) return;
+
+      if (token && snap.data()?.fcmToken === token) {
         pushWarningBanner.style.display = "none";
-        alert("✅ Notifications activées avec succès !");
+        return;
       }
-    } else {
-      alert("Permission refusée. Vous pourrez l'activer plus tard.");
+    } catch (error) {
+      console.error("PUSH_STATUS:", error.code || error.message);
     }
+  }
+
+  if (auth.currentUser?.uid !== user.uid) return;
+
+  pushStatus.textContent = "Reçois une alerte pour tes cadeaux.";
+  enablePushBtn.hidden = false;
+}
+
+enablePushBtn.onclick = async () => {
+  const user = auth.currentUser;
+
+  if (!user || !pushRegistration || enablePushBtn.disabled) return;
+
+  enablePushBtn.disabled = true;
+
+  try {
+    const permission = Notification.permission === "default"
+      ? await Notification.requestPermission()
+      : Notification.permission;
+
+    if (permission !== "granted") {
+      if (permission === "denied") {
+        enablePushBtn.hidden = true;
+        pushStatus.textContent =
+          "Notifications bloquées. Autorise-les dans les réglages.";
+      } else {
+        pushStatus.textContent = "Appuie sur Activer pour réessayer.";
+      }
+      return;
+    }
+
+    if (auth.currentUser?.uid !== user.uid) return;
+
+    pushStatus.textContent = "Activation en cours…";
+
+    const messaging = getMessaging(app);
+    const previousUid = pushOwner();
+
+    if (previousUid && previousUid !== user.uid) {
+      await deleteToken(messaging);
+    }
+
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: pushRegistration
+    });
+
+    if (!token) throw new Error("Jeton push introuvable.");
+    if (auth.currentUser?.uid !== user.uid) return;
+
+    const idToken = await user.getIdToken();
+
+    if (auth.currentUser?.uid !== user.uid) return;
+
+    const response = await fetch(PUSH_API + "/api/save-fcm-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + idToken
+      },
+      body: JSON.stringify({ fcmToken: token })
+    });
+
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || result?.success !== true) {
+      throw new Error(
+        "Enregistrement push refusé (HTTP " + response.status + ")."
+      );
+    }
+
+    if (auth.currentUser?.uid !== user.uid) return;
+
+    try {
+      localStorage.setItem(PUSH_OWNER_KEY, user.uid);
+    } catch {}
+
+    pushWarningBanner.style.display = "none";
   } catch (error) {
-    console.error("Erreur d'activation :", error);
-    alert("Impossible d'activer les notifications sur cet appareil.");
+    console.error("PUSH_ACTIVATION:", error.code || error.message);
+
+    if (auth.currentUser?.uid === user.uid) {
+      pushStatus.textContent =
+        "Activation impossible. Réessaie ou vérifie les réglages.";
+    }
+  } finally {
+    enablePushBtn.disabled = false;
   }
 };
-
-// Écoute des notifications en premier plan
-onMessage(messaging, (payload) => {
-  console.log("Notification reçue en premier plan :", payload);
-});
-
+  
 onAuthStateChanged(auth, async (user) => {
   if(!user){
     location.href="login.html";
@@ -427,7 +555,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   // Vérifier si on doit afficher le warning
-  await checkPushStatus(user);
+  void checkPushStatus(user);
 
   const q = query(
     collection(db,"notifications"),
