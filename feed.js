@@ -1,6 +1,6 @@
 /* ================= IMPORTS ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-
+import { bindFollow, publishSocialNotice } from "/social-push.js";
 import {
   getAuth, onAuthStateChanged,
   setPersistence,
@@ -71,25 +71,6 @@ let loading = false;
 let hasMoreDocs = true;
 const userCache = {};
 
-/* ================= PUSH NOTIFICATIONS ================= */
-async function triggerPushNotification(targetUid, title, body, extraData = {}) {
-  // On n'envoie pas de push à soi-même
-  if (!auth.currentUser || targetUid === auth.currentUser.uid) return;
-  
-  try {
-    const token = await auth.currentUser.getIdToken();
-    await fetch("https://hayticlip-server.onrender.com/api/send-push", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({ targetUid, title, body, extraData })
-    });
-  } catch (e) {
-    console.error("Erreur déclenchement push :", e);
-  }
-}
 
 
 // 🔑 AUTH
@@ -110,7 +91,6 @@ onAuthStateChanged(auth, async user => {
     return;
   }
 
-  console.log(await user.getIdToken());
   if (!user.emailVerified) {
   window.location.href = "verify.html";
   return;
@@ -557,6 +537,10 @@ async function initActions() {
   const boxes = document.querySelectorAll(".video-box");
 
   for (const box of boxes) {
+    
+    if (box.dataset.hcActionsBound) continue;
+box.dataset.hcActionsBound = "1";
+    
     const videoId = box.dataset.id;
     const userId = box.dataset.user;
 
@@ -568,166 +552,79 @@ async function initActions() {
       followBtn.style.display = "none";
     } else {
       const followingRef = doc(db, "users", currentUser.uid, "following", userId);
-      const followerRef = doc(db, "users", userId, "followers", currentUser.uid);
-
-      const followSnap = await getDoc(followingRef);
-      if (followSnap.exists()) followBtn.classList.add("following");
-
-      followBtn.addEventListener("click", async (e) => {
-  e.stopPropagation();
-
-  const followingRef = doc(db, "users", currentUser.uid, "following", userId);
-  const followerRef = doc(db, "users", userId, "followers", currentUser.uid);
-  const meRef = doc(db, "users", currentUser.uid);
-  const otherRef = doc(db, "users", userId);
-
-  await runTransaction(db, async (t) => {
-
-    const followSnap = await t.get(followingRef);
-    const meSnap = await t.get(meRef);
-    const otherSnap = await t.get(otherRef);
-
-    const myFollowing = meSnap.exists() ? (meSnap.data().followingCount || 0) : 0;
-    const theirFollowers = otherSnap.exists() ? (otherSnap.data().followersCount || 0) : 0;
-
-    if (!followSnap.exists()) {
-
-      if (myFollowing >= 8000) {
-        throw "Limite 8000 suivis atteinte";
-      }
-
-      // FOLLOW
-      t.set(followingRef, {
-        uid: userId,
-        createdAt: serverTimestamp()
-      });
-
-      t.set(followerRef, {
-        uid: currentUser.uid,
-        createdAt: serverTimestamp()
-      });
-
-      t.update(meRef, { followingCount: myFollowing + 1 });
-      t.update(otherRef, { followersCount: theirFollowers + 1 });
-
-      followBtn.classList.add("following");
-       
-         } else {
-
-      // UNFOLLOW
-      t.delete(followingRef);
-      t.delete(followerRef);
-
-      t.update(meRef, { followingCount: Math.max(0, myFollowing - 1) });
-      t.update(otherRef, { followersCount: Math.max(0, theirFollowers - 1) });
-
-      followBtn.classList.remove("following");
-    }
-  });
-// 🔔 NOTIFICATION FOLLOW
-if (userId !== currentUser.uid) {
-  await addDoc(collection(db,"notifications"),{
-    type:"follow",
-    from:currentUser.uid,
-    fromUsername:currentUser.username,
-    fromAvatar:currentUser.avatar || null,
-    to:userId,
-    read:false,
-    createdAt:serverTimestamp()
-  });
-  
-  // 👇 AJOUT DU PUSH
-  await triggerPushNotification(userId, "Nouveau Follower 🎉", `${currentUser.username} a commencé à vous suivre !`, { type: "follow" });
-}
-
+     bindFollow(db, auth, followBtn, userId, following => {
+  followBtn.classList.toggle("following", following);
 });
-
-
+      
 /* ================= LIKES ================= */
 const likeBtn = box.querySelector(".like");
 const countEl = likeBtn.querySelector(".like-count");
-
 const videoRef = doc(db, "videos", videoId);
 const likeRef = doc(db, "videos", videoId, "likes", currentUser.uid);
 
-// Sync compteur temps réel
 onSnapshot(videoRef, snap => {
-  if (!snap.exists()) return;
-  const data = snap.data();
-  countEl.textContent = formatNumber(data.likesCount || 0);
-});
-
-// Sync état bouton
-onSnapshot(likeRef, snap => {
   if (snap.exists()) {
-    likeBtn.classList.add("active");
-  } else {
-    likeBtn.classList.remove("active");
+    countEl.textContent = formatNumber(snap.data().likesCount || 0);
   }
 });
 
-// Toggle like sécurisé avec transaction
-likeBtn.addEventListener("click", async (e) => {
+onSnapshot(likeRef, snap => {
+  likeBtn.classList.toggle("active", snap.exists());
+});
+
+let likeBusy = false;
+
+likeBtn.addEventListener("click", async e => {
   e.stopPropagation();
 
+  const actor = currentUser;
+  if (likeBusy || !actor || auth.currentUser?.uid !== actor.uid) return;
+
+  likeBusy = true;
+
   try {
+    const owner = await runTransaction(db, async tx => {
+      const likeSnap = await tx.get(likeRef);
+      const videoSnap = await tx.get(videoRef);
+      if (!videoSnap.exists()) return null;
 
-    await runTransaction(db, async (t) => {
-
-      const likeSnap = await t.get(likeRef);
-      const videoSnap = await t.get(videoRef);
-
-      if (!videoSnap.exists()) return;
-
-      const currentLikes = videoSnap.data().likesCount || 0;
-      const currentScore = videoSnap.data().score || 0;
+      const video = videoSnap.data();
+      const count = video.likesCount || 0;
 
       if (likeSnap.exists()) {
-
-        t.delete(likeRef);
-
-        t.update(videoRef, {
-          likesCount: Math.max(0, currentLikes - 1),
+        tx.delete(likeRef);
+        tx.update(videoRef, {
+          likesCount: Math.max(0, count - 1),
           score: increment(-4)
         });
-
-      } else {
-
-        t.set(likeRef, {
-          uid: currentUser.uid,
-          createdAt: serverTimestamp()
-        });
-
-        t.update(videoRef, {
-          likesCount: currentLikes + 1,
-          score: increment(4)
-        });
+        return null;
       }
 
+      tx.set(likeRef, {
+        uid: actor.uid,
+        createdAt: serverTimestamp()
+      });
+
+      tx.update(videoRef, {
+        likesCount: count + 1,
+        score: increment(4)
+      });
+
+      return video.userId;
     });
-    
-// 🔔 NOTIFICATION LIKE
-if (userId !== currentUser.uid) {
-  await addDoc(collection(db,"notifications"),{
-    type:"like",
-    from:currentUser.uid,
-    fromUsername:currentUser.username,
-    fromAvatar:currentUser.avatar || null,
-    to:userId,
-    videoId:videoId,
-    read:false,
-    createdAt:serverTimestamp()
-  });
 
-  // 👇 AJOUT DU PUSH
-  await triggerPushNotification(userId, "Nouveau Like ❤️", `${currentUser.username} a aimé votre vidéo.`, { type: "like", videoId: videoId });
-}
-
-  } catch (err) {
-    console.error("LIKE ERROR:", err);
+    if (owner) {
+      await publishSocialNotice(db, auth, actor, {
+        type: "like", to: owner, videoId
+      });
+    }
+  } catch (error) {
+    console.error("LIKE ERROR:", error.message);
+  } finally {
+    likeBusy = false;
   }
 });
-
+      
     /* ================= CADEAUX ================= */
     const giftBtn = box.querySelector(".gift-btn");
     if (giftBtn) {
@@ -827,6 +724,9 @@ function openComments(videoId) {
 
   currentVideoId = videoId;
 
+replyingToCommentId = null;
+document.getElementById("commentText").placeholder = "Ajouter un commentaire…";
+  
   const sendBtn = document.getElementById("sendComment");
   sendBtn.disabled = false;
   sendBtn.style.opacity = "1";
@@ -1138,130 +1038,95 @@ document.getElementById("commentsList").addEventListener("click", (e) => {
 /* ================= ENVOYER COMMENTAIRE ================= */
 const sendBtn = document.getElementById("sendComment");
 const input = document.getElementById("commentText");
+
+let sendingComment = false;
+
 sendBtn.onclick = async () => {
+  const actor = currentUser;
+  const videoId = currentVideoId;
+  const parentId = replyingToCommentId;
   const text = input.value.trim();
-  
-  if (!currentUser || currentUser.isAnonymous) {
-    alert("Connecte-toi pour commenter !");
-    return;
+
+  if (sendingComment) return;
+
+  if (!actor || actor.isAnonymous || auth.currentUser?.uid !== actor.uid) {
+    return alert("Connecte-toi pour commenter !");
   }
 
-  if (!text) {
-    alert("Écris quelque chose !");
-    return;
-  }
+  if (!text) return alert("Écris quelque chose !");
+  if (!videoId) return alert("Aucune vidéo sélectionnée.");
 
-  if (!currentVideoId) {
-    alert("Erreur: aucune vidéo sélectionnée");
-    return;
-  }
+  sendingComment = true;
+  sendBtn.disabled = true;
 
-  // MODE RÉPONSE
-  if (replyingToCommentId) {
-    console.log("📝 ENVOYER RÉPONSE à:", replyingToCommentId);
-    
-    try {
-      // 1. Ajouter la réponse
-      await addDoc(
-        collection(db, "videos", currentVideoId, "comments", replyingToCommentId, "replies"),
-        {
-          uid: currentUser.uid,
-          username: currentUser.username || "Utilisateur",
-          text,
-          createdAt: serverTimestamp()
-        }
-      );
-      
-// 2. 🔔 AJOUT : NOTIFICATION DE RÉPONSE
-const parentCommentSnap = await getDoc(doc(db, "videos", currentVideoId, "comments", replyingToCommentId));
-if (parentCommentSnap.exists()) {
-  const parentOwner = parentCommentSnap.data().uid;
-  if (parentOwner !== currentUser.uid) {
-    await addDoc(collection(db, "notifications"), {
-      type: "reply",
-      from: currentUser.uid,
-      fromUsername: currentUser.username,
-      fromAvatar: currentUser.avatar || null,
-      to: parentOwner,
-      videoId: currentVideoId,
-      preview: text.substring(0, 100),
-      read: false,
-      createdAt: serverTimestamp()
-    });
-
-    // 👇 AJOUT DU PUSH
-    await triggerPushNotification(parentOwner, "Nouvelle Réponse 💬", `${currentUser.username} a répondu à votre commentaire.`, { type: "reply", videoId: currentVideoId });
-  }
-}
-
-      console.log("✅ RÉPONSE ENVOYÉE");
-      input.value = "";
-      replyingToCommentId = null;
-      input.placeholder = "Ajouter un commentaire…";
-      return; 
-      
-} catch (err) {
-      console.error("❌ ERREUR RÉPONSE:", err);
-      alert("Erreur réponse: " + err.message);
-      return; // <-- IMPORTANT : Stoppe la fonction ici en cas d'échec pour ne pas créer un vrai commentaire en dessous
-     }
-  } 
-  // MODE COMMENTAIRE NORMAL (seulement si PAS de réponse)
   try {
-    console.log("💬 ENVOYER COMMENTAIRE normal");
-    
-    // Créer le commentaire
-    await addDoc(collection(db, "videos", currentVideoId, "comments"), {
-      uid: currentUser.uid,
-      username: currentUser.username || "Utilisateur",
-avatar: currentUser.avatar,
+    const videoRef = doc(db, "videos", videoId);
+    const content = {
+      uid: actor.uid,
+      username: actor.username || "Utilisateur",
       text,
-      likesCount: 0,
       createdAt: serverTimestamp()
-    });
+    };
 
-    // Mettre à jour le compteur
-    const videoRef = doc(db, "videos", currentVideoId);
-    const videoSnap = await getDoc(videoRef);
-    if (videoSnap.exists()) {
-      const currentComments = videoSnap.data().commentsCount || 0;
-      await updateDoc(videoRef, {
-  commentsCount: increment(1),
-  score: increment(7)
-});
+    if (parentId) {
+      const parent = doc(db, "videos", videoId, "comments", parentId);
+      const parentSnap = await getDoc(parent);
 
-// 🔔 NOTIFICATION COMMENT
-const videoDoc = await getDoc(doc(db,"videos",currentVideoId));
-const videoOwner = videoDoc.data().userId;
+      if (!parentSnap.exists()) {
+        throw new Error("Ce commentaire n’existe plus.");
+      }
 
-if (videoOwner !== currentUser.uid) {
-  await addDoc(collection(db,"notifications"),{
-    type:"comment",
-    from:currentUser.uid,
-    fromUsername:currentUser.username,
-    fromAvatar:currentUser.avatar || null,
-    to:videoOwner,
-    videoId:currentVideoId,
-    preview: text.substring(0,100),
-    read:false,
-    createdAt:serverTimestamp()
-  });
+      const reply = await addDoc(collection(parent, "replies"), content);
 
-  // 👇 AJOUT DU PUSH
-  await triggerPushNotification(videoOwner, "Nouveau Commentaire 💬", `${currentUser.username} a commenté : ${text.substring(0, 30)}...`, { type: "comment", videoId: currentVideoId });
-}
+      await publishSocialNotice(db, auth, actor, {
+        type: "reply",
+        to: parentSnap.data().uid,
+        videoId,
+        preview: text.slice(0, 100)
+      }, { commentId: parentId, replyId: reply.id });
+    } else {
+      const video = await getDoc(videoRef);
 
+      if (!video.exists()) {
+        throw new Error("Cette vidéo n’existe plus.");
+      }
+
+      const posted = await addDoc(collection(videoRef, "comments"), {
+        ...content,
+        avatar: actor.avatar || "default-avatar.png",
+        likesCount: 0
+      });
+
+      try {
+        await updateDoc(videoRef, {
+          commentsCount: increment(1),
+          score: increment(7)
+        });
+      } catch (error) {
+        console.warn("Compteur commentaire :", error.message);
+      }
+
+      await publishSocialNotice(db, auth, actor, {
+        type: "comment",
+        to: video.data().userId,
+        videoId,
+        preview: text.slice(0, 100)
+      }, { commentId: posted.id });
     }
 
-    input.value = "";
-    console.log("✅ COMMENTAIRE ENVOYÉ");
-    
-  } catch (err) {
-    console.error("❌ ERREUR COMMENTAIRE:", err);
-    alert("Erreur: " + err.message);
+    if (currentVideoId === videoId && replyingToCommentId === parentId) {
+      if (input.value.trim() === text) input.value = "";
+      replyingToCommentId = null;
+      input.placeholder = "Ajouter un commentaire…";
+    }
+  } catch (error) {
+    console.error("COMMENT ERROR:", error.message);
+    alert(error.message || "Impossible d’envoyer le commentaire.");
+  } finally {
+    sendingComment = false;
+    if (currentVideoId) sendBtn.disabled = false;
   }
 };
-
 /* ================= NAVIGATION ================= */
 document.getElementById("nav-home").onclick = () => window.location.href = "feed.html";
 document.getElementById("nav-profile").onclick = () => window.location.href = "profil.html";

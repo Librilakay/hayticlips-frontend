@@ -1,4 +1,5 @@
 console.log("js charge");
+import { bindFollow } from "/social-push.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
@@ -151,24 +152,6 @@ twofaToggle.checked = data.security?.enabled === true;
 
 }
 
-/* ================= PUSH NOTIFICATIONS ================= */
-async function triggerPushNotification(targetUid, title, body, extraData = {}) {
-  if (!auth.currentUser || targetUid === auth.currentUser.uid) return;
-  
-  try {
-    const token = await auth.currentUser.getIdToken();
-    await fetch("https://hayticlip-server.onrender.com/api/send-push", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({ targetUid, title, body, extraData })
-    });
-  } catch (e) {
-    console.error("Erreur déclenchement push :", e);
-  }
-}
 
 /* AUTH */
 onAuthStateChanged(auth, async (currentUser) => {
@@ -347,6 +330,12 @@ if (myRole === "admin") {
 }
   const userRef = doc(db, "users", profileUid);
 
+if (!isOwner) {
+  bindFollow(db, auth, followBtn, profileUid, following => {
+    followBtn.textContent = following ? "✓ Abonné" : "➕ Suivre";
+  });
+}
+  
 onSnapshot(userRef, async snap => {
 
   if (!snap.exists()) return;
@@ -574,82 +563,7 @@ document.getElementById("totalLikes").textContent = formatNumber(u.totalLikes ||
 };
 
 
-    if (!isOwner) {
-      const followingRef = doc(db, "users", currentUser.uid, "following", profileUid);
-      
-      onSnapshot(followingRef, snap => {
-        if (snap.exists()) {
-          followBtn.textContent = "✓ Abonné";
-        } else {
-          followBtn.textContent = "➕ Suivre";
-        }
-      });
-
-      followBtn.onclick = async () => {
-        const followingRef = doc(db, "users", currentUser.uid, "following", profileUid);
-        const followerRef = doc(db, "users", profileUid, "followers", currentUser.uid);
-        const meRef = doc(db, "users", currentUser.uid);
-        const otherRef = doc(db, "users", profileUid);
-
-        await runTransaction(db, async (t) => {
-          const followSnap = await t.get(followingRef);
-          const meSnap = await t.get(meRef);
-          const otherSnap = await t.get(otherRef);
-
-const myFollowing = meSnap.exists() ? (meSnap.data().followingCount || 0) : 0;
-const theirFollowers = otherSnap.exists() ? (otherSnap.data().followersCount || 0) : 0;
-
-if (!followSnap.exists() && myFollowing >= 8000){
-  throw new Error("Limite de 8000 suivis atteinte");
-}
-
-          if (followSnap.exists()) {
-            // ❌ UNFOLLOW
-            t.delete(followingRef);
-            t.delete(followerRef);
-            t.update(meRef, { followingCount: Math.max(0, myFollowing - 1) });
-            t.update(otherRef, { followersCount: Math.max(0, theirFollowers - 1) });
-          } else {
-            // ✅ FOLLOW
-            t.set(followingRef, { uid: profileUid, createdAt: serverTimestamp() });
-            t.set(followerRef, { uid: currentUser.uid, createdAt: serverTimestamp() });
-            t.update(meRef, { followingCount: myFollowing + 1 });
-            t.update(otherRef, { followersCount: theirFollowers + 1 });
-          }
-        });
-        
-// 🔔 NOTIFICATION FOLLOW (PROFIL)
-if (profileUid !== currentUser.uid) {
-
-  // 1. Récupérer les infos de l'utilisateur courant pour éviter les appels multiples
-  const currentUserSnap = await getDoc(doc(db,"users",currentUser.uid));
-  const currentUsername = currentUserSnap.exists() ? currentUserSnap.data().username : "Quelqu'un";
-  const currentUserAvatar = currentUserSnap.exists() ? currentUserSnap.data().avatar : null;
-
-  // 2. Enregistrer la notification dans Firestore
-  await addDoc(collection(db,"notifications"),{
-    type:"follow",
-    from:currentUser.uid,
-    fromUsername: currentUsername,
-    fromAvatar: currentUserAvatar,
-    to:profileUid,
-    read:false,
-    createdAt:serverTimestamp()
-  });
-
-  // 3. Déclencher la notification Push
-  await triggerPushNotification(
-    profileUid, 
-    "Nouveau Follower 🎉", 
-    `${currentUsername} a commencé à vous suivre !`, 
-    { type: "follow", uid: currentUser.uid }
-  );
-
-}
-        
-      };
-    }
-
+  
     /** VISIBILITÉ **/
     document.getElementById("walletBox").style.display =
   currentUser && isOwner ? "block" : "none";

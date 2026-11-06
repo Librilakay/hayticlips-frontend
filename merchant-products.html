@@ -2776,6 +2776,10 @@ async function openCheckout(productId) {
     drawOrders();
   };
 
+if (new URLSearchParams(location.search).get("tab") === "orders") {
+  tab("orders");
+}
+  
   pendingView();
   sync();
 

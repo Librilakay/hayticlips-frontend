@@ -381,7 +381,7 @@ async function registerPushWorker() {
       updateViaCache: "none"
     }
   );
-
+await registration.update().catch(() => {});
   const deadline = Date.now() + 12000;
 
   while (
@@ -611,6 +611,15 @@ onAuthStateChanged(auth, async (user) => {
         if(data.type === "follow") return location.href = "profil.html?uid="+data.from;
       };
 
+if (data.type === "merchant_order") {
+  return location.href = "merchant-dashboard.html";
+}
+
+if (data.type === "merchant_order_update" && data.from) {
+  return location.href =
+    "merchant-products.html?tab=orders&uid=" + encodeURIComponent(data.from);
+}
+  
       container.appendChild(card);
 
       if (
@@ -680,7 +689,15 @@ function buildMessage(data){
     
     case "wallet_frozen": return `<strong style="color:#e74c3c;">Compte Gelé </strong><br><span style="font-size:13px;opacity:0.9;">Votre wallet a été bloqué et votre balance a été mise en sécurité.</span>`;
     case "wallet_unfrozen": return `<strong style="color:#2ecc71;">Compte Dégelé </strong><br><span style="font-size:13px;opacity:0.9;">Votre wallet est à nouveau actif et votre argent a été restauré.</span>`;
-    
+
+      case "merchant_order":
+  return "Tu as reçu une nouvelle commande à préparer.";
+
+case "merchant_order_update":
+  return data.event === "order_accepted"
+    ? "Le marchand a accepté ta commande."
+    : "Ta commande a été mise à jour.";
+      
     default: return "Nouvelle notification";
   }
 }
