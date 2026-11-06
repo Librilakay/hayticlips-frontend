@@ -325,7 +325,7 @@ import {
   orderBy,
   onSnapshot,
   doc,
-  getDoc,
+  getDocFromServer,
   updateDoc,
   getDocs,
   writeBatch
@@ -399,79 +399,181 @@ await registration.update().catch(() => {});
   return registration;
 }
 
-async function checkPushStatus(user) {
+const PUSH_HASH_KEY = "hayticlips.pushTokenHash.v1";
+
+function showPush(message, button = "") {
+  pushStatus.textContent = message;
+  enablePushBtn.hidden = !button;
+  enablePushBtn.textContent = button || "Activer";
   pushWarningBanner.style.display = "flex";
+}
+
+async function pushTokenHash(token) {
+  const bytes = new TextEncoder().encode(token);
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+
+  return Array.from(
+    new Uint8Array(hash),
+    b => b.toString(16).padStart(2, "0")
+  ).join("");
+}
+
+async function rememberPush(user, token) {
+  let hash;
+  try { hash = await pushTokenHash(token); } catch {}
+
+  if (auth.currentUser?.uid !== user.uid) return;
+
+  try {
+    localStorage.setItem(PUSH_OWNER_KEY, user.uid);
+
+    if (hash) {
+      localStorage.setItem(PUSH_HASH_KEY, user.uid + ":" + hash);
+    } else {
+      localStorage.removeItem(PUSH_HASH_KEY);
+    }
+  } catch {}
+
+  pushWarningBanner.style.display = "none";
+}
+
+async function savePushToken(user, token) {
+  const idToken = await user.getIdToken();
+
+  if (auth.currentUser?.uid !== user.uid) {
+    throw new Error("Le compte a changé.");
+  }
+
+  const response = await fetch(PUSH_API + "/api/save-fcm-token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + idToken
+    },
+    body: JSON.stringify({ fcmToken: token })
+  });
+
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || result?.success !== true) {
+    throw new Error(
+      "Enregistrement push refusé (HTTP " + response.status + ")."
+    );
+  }
+
+  await rememberPush(user, token);
+}
+
+async function checkPushStatus(user) {
+  const current = () => auth.currentUser?.uid === user.uid;
+  if (!current()) return;
+
   enablePushBtn.hidden = true;
 
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
   const installed = matchMedia("(display-mode: standalone)").matches ||
     navigator.standalone === true;
 
   if (isIOS && !installed) {
-    pushStatus.textContent =
-      "Sur iPhone, ouvre HaytiClips depuis son icône sur l’écran d’accueil.";
-    return;
+    return showPush("Ouvre HaytiClips depuis son icône sur l’écran d’accueil.");
   }
 
-  if (!window.isSecureContext || !(await isSupported().catch(() => false))) {
-    pushStatus.textContent =
-      "Les notifications push ne sont pas disponibles ici.";
-    return;
-  }
+  const supported = window.isSecureContext &&
+    await isSupported().catch(() => false);
 
-  if (auth.currentUser?.uid !== user.uid) return;
+  if (!current()) return;
+  if (!supported) return showPush("Le push n’est pas disponible ici.");
 
   if (Notification.permission === "denied") {
-    pushStatus.textContent =
-      "Notifications bloquées. Autorise-les dans les réglages de l’appareil ou du navigateur.";
-    return;
+    return showPush("Les notifications sont bloquées dans les réglages.");
   }
 
-  pushStatus.textContent = "Préparation des notifications…";
+  const owner = pushOwner();
+  const remembered = owner === user.uid &&
+    Notification.permission === "granted";
+
+  if (remembered) pushWarningBanner.style.display = "none";
+  else showPush("Préparation des notifications…");
+
+  let registration;
 
   try {
-    pushRegistration = await registerPushWorker();
+    registration = await registerPushWorker();
   } catch (error) {
     console.error("PUSH_WORKER:", error.code || error.message);
-    pushStatus.textContent =
-      "Le service de notifications n’a pas démarré. Actualise la page.";
+
+    if (current()) {
+      showPush("Le service push n’a pas démarré. Actualise la page.");
+    }
+
     return;
   }
 
-  if (auth.currentUser?.uid !== user.uid) return;
+  if (!current()) return;
+  pushRegistration = registration;
 
-  if (Notification.permission === "granted" && pushOwner() === user.uid) {
-    try {
-      const snap = await getDoc(doc(db, "users", user.uid));
-
-      const token = await getToken(getMessaging(app), {
-        vapidKey: VAPID_KEY,
-        serviceWorkerRegistration: pushRegistration
-      });
-
-      if (auth.currentUser?.uid !== user.uid) return;
-
-      if (token && snap.data()?.fcmToken === token) {
-        pushWarningBanner.style.display = "none";
-        return;
-      }
-    } catch (error) {
-      console.error("PUSH_STATUS:", error.code || error.message);
-    }
+  if (Notification.permission !== "granted" || (owner && owner !== user.uid)) {
+    return showPush("Reçois les alertes de ce compte sur cet appareil.", "Activer");
   }
 
-  if (auth.currentUser?.uid !== user.uid) return;
+  try {
+    const token = await getToken(getMessaging(app), {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration
+    });
 
-  pushStatus.textContent = "Reçois une alerte pour tes cadeaux.";
-  enablePushBtn.hidden = false;
+    if (!token) throw new Error("Jeton push introuvable.");
+
+    const snap = await getDocFromServer(doc(db, "users", user.uid));
+    if (!current()) return;
+
+    const savedToken = snap.data()?.fcmToken;
+
+    if (savedToken === token) {
+      return await rememberPush(user, token);
+    }
+
+    let wasSavedHere = false;
+
+    if (remembered && savedToken) {
+      try {
+        const savedHash = await pushTokenHash(savedToken);
+        wasSavedHere = localStorage.getItem(PUSH_HASH_KEY) ===
+          user.uid + ":" + savedHash;
+      } catch {}
+    }
+
+    if (!current()) return;
+
+    if (remembered && (!savedToken || wasSavedHere)) {
+      return await savePushToken(user, token);
+    }
+
+    showPush(
+      savedToken
+        ? "Le serveur a un autre jeton pour ce compte. Tu peux activer les alertes ici."
+        : "Reçois les alertes de ce compte sur cet appareil.",
+      savedToken ? "Activer ici" : "Activer"
+    );
+  } catch (error) {
+    console.error("PUSH_STATUS:", error.code || error.message);
+
+    if (current()) {
+      showPush(
+        remembered
+          ? "Ton choix est conservé. Actualise la page pour vérifier le push."
+          : "Impossible de vérifier le push. Actualise la page pour réessayer."
+      );
+    }
+  }
 }
 
 enablePushBtn.onclick = async () => {
   const user = auth.currentUser;
+  const registration = pushRegistration;
 
-  if (!user || !pushRegistration || enablePushBtn.disabled) return;
+  if (!user || !registration || enablePushBtn.disabled) return;
 
   enablePushBtn.disabled = true;
 
@@ -480,18 +582,16 @@ enablePushBtn.onclick = async () => {
       ? await Notification.requestPermission()
       : Notification.permission;
 
+    if (auth.currentUser?.uid !== user.uid) return;
+
     if (permission !== "granted") {
       if (permission === "denied") {
-        enablePushBtn.hidden = true;
-        pushStatus.textContent =
-          "Notifications bloquées. Autorise-les dans les réglages.";
+        showPush("Les notifications sont bloquées dans les réglages.");
       } else {
-        pushStatus.textContent = "Appuie sur Activer pour réessayer.";
+        showPush("Appuie sur Activer pour réessayer.", "Activer");
       }
       return;
     }
-
-    if (auth.currentUser?.uid !== user.uid) return;
 
     pushStatus.textContent = "Activation en cours…";
 
@@ -502,54 +602,26 @@ enablePushBtn.onclick = async () => {
       await deleteToken(messaging);
     }
 
+    if (auth.currentUser?.uid !== user.uid) return;
+
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: pushRegistration
+      serviceWorkerRegistration: registration
     });
 
     if (!token) throw new Error("Jeton push introuvable.");
-    if (auth.currentUser?.uid !== user.uid) return;
 
-    const idToken = await user.getIdToken();
-
-    if (auth.currentUser?.uid !== user.uid) return;
-
-    const response = await fetch(PUSH_API + "/api/save-fcm-token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + idToken
-      },
-      body: JSON.stringify({ fcmToken: token })
-    });
-
-    const result = await response.json().catch(() => null);
-
-    if (!response.ok || result?.success !== true) {
-      throw new Error(
-        "Enregistrement push refusé (HTTP " + response.status + ")."
-      );
-    }
-
-    if (auth.currentUser?.uid !== user.uid) return;
-
-    try {
-      localStorage.setItem(PUSH_OWNER_KEY, user.uid);
-    } catch {}
-
-    pushWarningBanner.style.display = "none";
+    await savePushToken(user, token);
   } catch (error) {
     console.error("PUSH_ACTIVATION:", error.code || error.message);
 
     if (auth.currentUser?.uid === user.uid) {
-      pushStatus.textContent =
-        "Activation impossible. Réessaie ou vérifie les réglages.";
+      showPush("Activation impossible. Réessaie.", "Activer");
     }
   } finally {
     enablePushBtn.disabled = false;
   }
-};
-  
+};  
 onAuthStateChanged(auth, async (user) => {
   if(!user){
     location.href="login.html";
@@ -604,21 +676,32 @@ onAuthStateChanged(auth, async (user) => {
         </div>
       `;
 
-      card.onclick = async ()=>{
-        await updateDoc(doc(db,"notifications",docSnap.id),{ read:true });
-        if(data.type === "message") return location.href = "chat.html?conv=" + data.conversationId;
-        if(data.videoId) return location.href = "feed.html?videoId="+data.videoId;
-        if(data.type === "follow") return location.href = "profil.html?uid="+data.from;
-      };
+      card.onclick = async () => {
+  let destination = "";
 
-if (data.type === "merchant_order") {
-  return location.href = "merchant-dashboard.html";
-}
+  if (data.type === "merchant_order") {
+    destination = "merchant-dashboard.html";
+  } else if (data.type === "merchant_order_update" && data.from) {
+    destination = "merchant-products.html?tab=orders&uid=" +
+      encodeURIComponent(data.from);
+  } else if (data.type === "message" && data.conversationId) {
+    destination = "chat.html?conv=" + encodeURIComponent(data.conversationId);
+  } else if (data.videoId) {
+    destination = "feed.html?videoId=" + encodeURIComponent(data.videoId);
+  } else if (data.type === "follow" && data.from) {
+    destination = "profil.html?uid=" + encodeURIComponent(data.from);
+  }
 
-if (data.type === "merchant_order_update" && data.from) {
-  return location.href =
-    "merchant-products.html?tab=orders&uid=" + encodeURIComponent(data.from);
-}
+  if (!data.read) {
+    try {
+      await updateDoc(doc(db, "notifications", docSnap.id), { read: true });
+    } catch (error) {
+      console.warn("Marquage de la notification :", error.message);
+    }
+  }
+
+  if (destination) location.href = destination;
+};
   
       container.appendChild(card);
 
