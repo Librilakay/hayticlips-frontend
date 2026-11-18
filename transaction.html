@@ -389,7 +389,8 @@ function renderTransactions(transactions, isInitial = false) {
       <div class="card" data-raw-date="${rawDate}">
         <div class="row">
           <span class="label">ID</span>
-          <span class="value" style="font-size:11px; opacity:0.7;">${tx.id}</span>
+          <span class="value tx-uid" style="font-size:11px; opacity:0.7;">${tx.id}</span>
+
         </div>
         <div class="row"><span class="label">Date</span><span class="value" style="font-size:13px;">${date}</span></div>
         <div class="row"><span class="label">Détails</span><span class="value" style="color:${color}; font-size:13px;">${label}</span></div>
