@@ -189,7 +189,9 @@
         <strong>Règles & Horaires (Retraits) :</strong>
         <ul style="margin-top: 5px; margin-left: 15px; font-size: 13px; opacity: 0.9;">
           <li style="margin-bottom: 4px;"><strong>Limite :</strong> Maximum 2 demandes de retraits par jour</li>
-          <li style="margin-bottom: 4px;"><strong>MonCash :</strong> 4h AM - 9h PM</li>
+          <li id="manualMonCashHours" style="margin-bottom: 4px;" hidden>
+  <strong>MonCash :</strong> 4 h – 21 h
+</li>
         </ul>
       </div>
 
@@ -254,232 +256,245 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
-    const API_BASE = "https://hayticlip-server.onrender.com";
+   const API_BASE = "https://hayticlip-server.onrender.com";
+const field = id => document.getElementById(id);
+const depositButton = field("btnSubmitDeposit");
+const withdrawButton = field("btnSubmitWithdraw");
+const instructions = field("depositInstructions");
+const monCashContent = [...instructions.childNodes];
 
-    // --- GESTION DES ONGLETS ---
-    const tabDeposit = document.getElementById("tabDeposit");
-    const tabWithdraw = document.getElementById("tabWithdraw");
-    const depositForm = document.getElementById("depositForm");
-    const withdrawForm = document.getElementById("withdrawForm");
+let settings = null;
+let busy = "";
+let configError = "";
+let loadVersion = 0;
 
-    tabDeposit.onclick = () => {
-      tabDeposit.classList.add("active");
-      tabWithdraw.classList.remove("active");
-      depositForm.classList.add("active");
-      withdrawForm.classList.remove("active");
-    };
+function showTab(deposit) {
+  field("tabDeposit").classList.toggle("active", deposit);
+  field("depositForm").classList.toggle("active", deposit);
+  field("tabWithdraw").classList.toggle("active", !deposit);
+  field("withdrawForm").classList.toggle("active", !deposit);
+}
 
-    tabWithdraw.onclick = () => {
-      tabWithdraw.classList.add("active");
-      tabDeposit.classList.remove("active");
-      withdrawForm.classList.add("active");
-      depositForm.classList.remove("active");
-    };
+field("tabDeposit").onclick = () => showTab(true);
+field("tabWithdraw").onclick = () => showTab(false);
 
-   onAuthStateChanged(auth, async user => {
-  const btnDeposit = document.getElementById("btnSubmitDeposit");
-  const btnWithdraw = document.getElementById("btnSubmitWithdraw");
-  const notice = document.getElementById("withdrawLimitNotice");
-  const instructions = document.getElementById("depositInstructions");
-  btnDeposit.disabled = btnWithdraw.disabled = true;
-  instructions.hidden = true;
+function haitiPhone(value) {
+  const number = value.trim().replace(/[ .()-]/g, "");
+  if (/^\d{8}$/.test(number)) return "+509" + number;
+  return /^\+?509\d{8}$/.test(number) ? "+" + number.replace(/^\+/, "") : "";
+}
 
-  if (!user) {
-    window.location.href = "login.html";
-    return;
+function showSettings() {
+  const c = settings?.uid === auth.currentUser?.uid ? settings : null;
+  const network = c?.manualNetwork;
+  const label = network === "natcash" ? "NatCash" : network === "moncash" ? "MonCash" : "";
+  const natNumber = typeof c?.manualNatCash === "string" ? haitiPhone(c.manualNatCash) : "";
+  const depositAllowed = c?.manualDepositAllowed === true && (network === "moncash" || !!natNumber);
+  const withdrawAllowed = c?.manualWithdrawAllowed === true && c.manualWithdrawRemaining > 0;
+
+  for (const id of ["depositMethod", "withdrawMethod"]) {
+    const select = field(id);
+    select.replaceChildren(new Option(
+      label || (configError ? "Indisponible" : "Vérification…"),
+      network || ""
+    ));
+    select.disabled = true;
   }
+
+  field("withdrawAccountName").previousElementSibling.textContent =
+    label ? "Nom sur le compte (" + label + ")" : "Nom sur le compte";
+
+  const monCashHours = field("manualMonCashHours");
+  if (monCashHours) monCashHours.hidden = network !== "moncash";
+
+  instructions.hidden = !depositAllowed;
+  if (depositAllowed) {
+    if (network === "moncash") {
+      instructions.replaceChildren(...monCashContent);
+    } else {
+      instructions.textContent = "Envoyez le montant par NatCash au " + natNumber +
+        ". Vérifiez le destinataire dans NatCash, puis joignez le reçu.";
+    }
+  }
+
+  depositButton.disabled = !!busy || !depositAllowed;
+  withdrawButton.disabled = !!busy || !withdrawAllowed;
+  depositButton.textContent = busy === "deposit" ? "Envoi en cours…" : !c
+    ? (configError ? "Vérification du compte indisponible" : "Vérification du compte…")
+    : depositAllowed ? "Soumettre la recharge" : "Recharge manuelle indisponible";
+  withdrawButton.textContent = busy === "withdraw" ? "Envoi en cours…" : "Demander le retrait";
+
+  field("withdrawLimitNotice").textContent = configError || (!c ? "Vérification du compte…"
+    : !c.manualWithdrawAllowed ? "Retrait manuel indisponible pour ce compte."
+    : "Demandes de retrait restantes aujourd’hui : " + c.manualWithdrawRemaining + " / 2.");
+}
+
+async function manualFetch(user, path, body) {
+  const isPost = body !== undefined;
+  const multipart = body instanceof FormData;
+  const fallback = isPost
+    ? "Impossible de confirmer l’envoi. Vérifiez vos demandes avant de réessayer."
+    : "Impossible de vérifier le compte. Actualisez la page.";
+
+  let response;
+  try {
+    const headers = { Authorization: "Bearer " + await user.getIdToken() };
+    if (isPost && !multipart) headers["Content-Type"] = "application/json";
+
+    response = await fetch(API_BASE + path, {
+      method: isPost ? "POST" : "GET",
+      cache: "no-store",
+      headers,
+      ...(isPost ? { body: multipart ? body : JSON.stringify(body) } : {})
+    });
+  } catch {
+    throw new Error(fallback);
+  }
+
+  if (response.status === 401) throw new Error("Reconnectez-vous à votre compte.");
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data || (isPost && data.success !== true)) {
+    throw new Error(data?.error || fallback);
+  }
+  return data;
+}
+
+async function loadManual(user) {
+  const version = ++loadVersion;
+  settings = null;
+  configError = "";
+  showSettings();
 
   try {
-    const res = await fetch(API_BASE + "/api/tranzak/wallet", {
-      cache: "no-store",
-      headers: { Authorization: "Bearer " + await user.getIdToken() }
-    });
-    if (!res.ok) throw new Error();
+    const data = await manualFetch(user, "/api/tranzak/wallet");
 
-    const cfg = await res.json();
-    const network = cfg.manualNetwork;
-    if (!["moncash", "natcash"].includes(network)) throw new Error();
-    const label = network === "natcash" ? "NatCash" : "MonCash";
-
-    for (const id of ["depositMethod", "withdrawMethod"]) {
-      document.getElementById(id).replaceChildren(new Option(label, network));
+    if (!["moncash", "natcash"].includes(data.manualNetwork) ||
+        typeof data.manualDepositAllowed !== "boolean" ||
+        typeof data.manualWithdrawAllowed !== "boolean" ||
+        !Number.isInteger(data.manualWithdrawRemaining) ||
+        data.manualWithdrawRemaining < 0 || data.manualWithdrawRemaining > 2) {
+      throw new Error("Le serveur n’a pas renvoyé les paramètres du transfert manuel.");
     }
 
-    if (network === "natcash" && cfg.manualNatCash) {
-      instructions.textContent = "Envoie le montant par NatCash au " + cfg.manualNatCash +
-        ". Vérifie le destinataire dans NatCash et joins le reçu.";
+    if (version === loadVersion && auth.currentUser?.uid === user.uid) {
+      settings = { ...data, uid: user.uid };
     }
-
-    document.getElementById("withdrawAccountName").previousElementSibling.textContent =
-      "Nom sur le compte (" + label + ")";
-    btnDeposit.disabled = !cfg.manualDepositAllowed;
-    instructions.hidden = !cfg.manualDepositAllowed;
-    btnWithdraw.disabled = !cfg.manualWithdrawAllowed || cfg.manualWithdrawRemaining === 0;
-    notice.textContent = !cfg.manualWithdrawAllowed ? "Retrait indisponible pour ce compte."
-      : "Demandes de retrait restantes aujourd’hui : " + cfg.manualWithdrawRemaining + " / 2.";
-    if (!cfg.manualDepositAllowed) btnDeposit.textContent = "Recharge manuelle indisponible";
-  } catch {
-    notice.textContent = "Impossible de vérifier le compte. Actualise la page.";
-    btnDeposit.textContent = "Vérification du compte indisponible";
+  } catch (e) {
+    if (version === loadVersion) configError = e.message;
+  } finally {
+    if (version === loadVersion) showSettings();
   }
+}
+
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    ++loadVersion;
+    settings = null;
+    showSettings();
+    window.location.replace("login.html");
+    return;
+  }
+  void loadManual(user);
 });
-   
-    // --- LOGIQUE DE CALCUL DES FRAIS ---
-    function calculateFee(amount) {
-      if (amount < 150) return 0;
-      if (amount <= 999) return 15;
-      if (amount <= 1999) return 30;
-      if (amount <= 3999) return 40;
-      if (amount <= 7999) return 60;
-      if (amount <= 11999) return 65;
-      if (amount <= 19999) return 75;
-      if (amount <= 39999) return 80;
-      if (amount <= 59999) return 115;
-      if (amount <= 74999) return 130;
-      return 150; // De 75000 HTG et plus
+
+window.addEventListener("pageshow", event => {
+  if (event.persisted && auth.currentUser && !busy) void loadManual(auth.currentUser);
+});
+
+const fees = [
+  [999, 15], [1999, 30], [3999, 40], [7999, 60], [11999, 65],
+  [19999, 75], [39999, 80], [59999, 115], [74999, 130]
+];
+const money = n => new Intl.NumberFormat("fr-HT").format(n) + " HTG";
+
+field("withdrawAmount").addEventListener("input", () => {
+  const amount = Number(field("withdrawAmount").value);
+  const valid = Number.isSafeInteger(amount) && amount >= 150;
+  const fee = valid ? (fees.find(([max]) => amount <= max)?.[1] ?? 150) : 0;
+
+  field("calcRequested").textContent = money(valid ? amount : 0);
+  field("calcFee").textContent = "− " + money(fee);
+  field("calcFinal").textContent = money(valid ? amount - fee : 0);
+});
+
+async function sendManual(type, body) {
+  const user = auth.currentUser;
+  if (!user || settings?.uid !== user.uid || busy) return;
+
+  busy = type;
+  showSettings();
+  let accepted = false;
+
+  try {
+    await manualFetch(user, "/api/manual-transfer", body);
+    accepted = true;
+    alert(type === "deposit"
+      ? "Votre demande de recharge est en attente de validation."
+      : "Votre demande de retrait est en attente de traitement.");
+    window.location.replace("profil.html");
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    if (!accepted) {
+      if (auth.currentUser?.uid === user.uid) await loadManual(user);
+      busy = "";
+      showSettings();
     }
-
-    const withdrawInput = document.getElementById("withdrawAmount");
-    const calcRequested = document.getElementById("calcRequested");
-    const calcFee = document.getElementById("calcFee");
-    const calcFinal = document.getElementById("calcFinal");
-
-    withdrawInput.addEventListener("input", (e) => {
-      const amount = parseFloat(e.target.value) || 0;
-      
-      if (amount > 0) {
-        const fee = calculateFee(amount);
-        const finalAmount = Math.max(0, amount - fee);
-
-        calcRequested.textContent = amount + " HTG";
-        calcFee.textContent = "- " + fee + " HTG";
-        calcFinal.textContent = finalAmount + " HTG";
-      } else {
-        calcRequested.textContent = "0 HTG";
-        calcFee.textContent = "- 0 HTG";
-        calcFinal.textContent = "0 HTG";
-      }
-    });
-
-    // --- SOUMISSION RECHARGE ---
-    document.getElementById("btnSubmitDeposit").onclick = async () => {
-      const btn = document.getElementById("btnSubmitDeposit");
-      const method = document.getElementById("depositMethod").value;
-      const amount = document.getElementById("depositAmount").value;
-      const phone = document.getElementById("depositPhone").value;
-      const receiptFile = document.getElementById("depositReceipt").files[0];
-
-      // Recharge
-if (!Number.isSafeInteger(Number(amount)) || Number(amount) < 100) {
-  return alert("Indique un montant entier d’au moins 100 HTG.");
+  }
 }
-      if(!phone) return alert("Veuillez indiquer le numéro de l'expéditeur.");
-      if(!receiptFile) return alert("La capture d'écran est obligatoire.");
-      if (receiptFile.size > 5 * 1024 * 1024) return alert("Le reçu ne doit pas dépasser 5 Mo.");
 
-      btn.disabled = true;
-      btn.textContent = "Envoi en cours...";
+depositButton.onclick = () => {
+  if (depositButton.disabled || !settings) return;
 
-      try {
-        const token = await auth.currentUser.getIdToken(true);
-        
-        const formData = new FormData();
-        formData.append("type", "deposit");
-        formData.append("method", method);
-        formData.append("amount", amount);
-        formData.append("phone", phone);
-        formData.append("receipt", receiptFile);
+  const amount = Number(field("depositAmount").value);
+  const phone = haitiPhone(field("depositPhone").value);
+  const receipt = field("depositReceipt").files[0];
 
-        const res = await fetch(`${API_BASE}/api/manual-transfer`, {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer " + token
-          },
-          body: formData 
-        });
+  if (!Number.isSafeInteger(amount) || amount < 100) {
+    return alert("Indiquez un montant entier d’au moins 100 HTG.");
+  }
+  if (!phone) return alert("Indiquez un numéro haïtien valide.");
+  if (!receipt?.size) return alert("Joignez une image du reçu.");
+  if (receipt.size > 5 * 1024 * 1024) return alert("Le reçu ne doit pas dépasser 5 Mo.");
+  if (!["image/png", "image/jpeg", "image/webp"].includes(receipt.type)) {
+    return alert("Utilisez une image JPG, PNG ou WebP.");
+  }
 
-        const result = await res.json();
+  const body = new FormData();
+  body.append("type", "deposit");
+  body.append("method", settings.manualNetwork);
+  body.append("amount", String(amount));
+  body.append("phone", phone);
+  body.append("receipt", receipt);
+  return sendManual("deposit", body);
+};
 
-        if(result.success) {
-          alert("Votre demande de recharge a été envoyée. Elle est en attente de validation.");
-          window.location.href = "profil.html";
-        } else {
-          alert(result.error || "Erreur serveur");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Erreur réseau ou serveur.");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Soumettre la Recharge";
-      }
-    };
+withdrawButton.onclick = () => {
+  if (withdrawButton.disabled || !settings) return;
 
-    // --- SOUMISSION RETRAIT ---
-    document.getElementById("btnSubmitWithdraw").onclick = async () => {
-      const btn = document.getElementById("btnSubmitWithdraw");
-      const method = document.getElementById("withdrawMethod").value;
-      const amount = document.getElementById("withdrawAmount").value;
-      const phone = document.getElementById("withdrawPhone").value;
-      const accountName = document.getElementById("withdrawAccountName").value;
-      const pin = document.getElementById("withdrawPin").value.trim();
+  const amountRequested = Number(field("withdrawAmount").value);
+  const phone = haitiPhone(field("withdrawPhone").value);
+  const accountName = field("withdrawAccountName").value.trim();
+  const pin = field("withdrawPin").value.trim();
 
-// Retrait
-if (!Number.isSafeInteger(Number(amount)) || Number(amount) < 150) {
-  return alert("Indique un montant entier d’au moins 150 HTG.");
-}
-      if(!phone) return alert("Veuillez indiquer le numéro de réception.");
-      if(!accountName.trim()) return alert("Veuillez indiquer le nom exact sur le compte.");
-      if(!pin || pin.length !== 6) return alert("Veuillez entrer votre code PIN à 6 chiffres.");
+  if (!Number.isSafeInteger(amountRequested) || amountRequested < 150) {
+    return alert("Indiquez un montant entier d’au moins 150 HTG.");
+  }
+  if (!phone) return alert("Indiquez un numéro haïtien valide.");
+  if (accountName.length < 2 || accountName.length > 150) {
+    return alert("Vérifiez le nom du bénéficiaire.");
+  }
+  if (!/^\d{6}$/.test(pin)) return alert("Entrez le code PIN à 6 chiffres.");
 
-      
-      const parsedAmount = parseFloat(amount);
-      const fee = calculateFee(parsedAmount);
-      const finalToReceive = parsedAmount - fee;
-
-      if(finalToReceive <= 0) return alert("Le montant est trop faible par rapport aux frais.");
-
-      btn.disabled = true;
-      btn.textContent = "Vérification...";
-
-      try {
-        const token = await auth.currentUser.getIdToken(true);
-
-        const res = await fetch(`${API_BASE}/api/manual-transfer`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
-          body: JSON.stringify({
-            type: "withdraw",
-            method: method,
-            amountRequested: parsedAmount,
-            feeApplied: fee,
-            amountToReceive: finalToReceive,
-            phone: phone,
-            accountName: accountName.trim(),
-            pin: pin
-          })
-        });
-
-        const result = await res.json();
-
-        if(result.success) {
-          alert("Votre demande de retrait a été envoyée. Elle sera traitée sous peu.");
-          window.location.href = "profil.html";
-        } else {
-          alert(result.error || "Erreur serveur");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Erreur réseau ou serveur.");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Demander le Retrait";
-      }
-    };
+  return sendManual("withdraw", {
+    type: "withdraw",
+    method: settings.manualNetwork,
+    amountRequested,
+    phone,
+    accountName,
+    pin
+  });
+};
   </script>
 </body>
 </html>
