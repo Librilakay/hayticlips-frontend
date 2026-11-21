@@ -154,7 +154,7 @@ button{
 }
 
 
-  
+  .recharge-grid[hidden]{display:none;}
 </style>
 </head>
 
@@ -166,7 +166,7 @@ button{
   </div>
 
 <div class="balance-card">
-  <h2>Solde actuel</h2>
+  <h2>Solde réel</h2>
   <div class="amount" id="balanceAmount">0 Gdes</div>
 
   <div style="margin-top:14px;font-size:14px;opacity:0.85;">
@@ -176,47 +176,12 @@ button{
 </div>
 
 <div class="section">
-<h3>Numéro de retrait</h3>
-
-<input type="text" id="savedNumber" placeholder="Numéro Digicel MonCash">
-
-<button id="saveNumberBtn" disabled class="beta-disabled">Enregistrer numéro</button>
-
-<div id="numberInfo" style="font-size:12px;opacity:0.7;margin-top:6px;"></div>
-
-</div>
-
-
-<div class="section">
-  <h3>Méthode alternative</h3>
-  <button onclick="window.location.href='manual-transfer.html'" style="background: #111; border: 1px solid #ff0033; margin-top: 10px;">
-    🔄 Faire un dépôt ou retrait manuel
+  <h3>Transfert manuel</h3>
+  <button type="button"
+    onclick="window.location.href='manual-transfer.html'"
+    style="background:#111;border:1px solid #ff0033;margin-top:10px;">
+    Faire un dépôt ou un retrait manuel
   </button>
-</div>
-
-
-<div class="section">
-  <h3>Retirer via MonCash</h3>
-
-  <div id="withdrawQuotaBox" style="
-    background:#111;
-    border:1px solid #222;
-    border-radius:10px;
-    padding:12px;
-    margin-bottom:12px;
-    font-size:13px;
-    line-height:1.5;
-    color:#ddd;
-  ">
-    <div>Limite du jour : <strong id="withdrawLimitText">0 Gdes</strong></div>
-    <div>Déjà retiré aujourd’hui : <strong id="withdrawUsedText">0 Gdes</strong></div>
-    <div>Reste disponible : <strong id="withdrawRemainingText">0 Gdes</strong></div>
-    <div style="opacity:0.7;margin-top:4px;">Réinitialisation à 12:00 AM</div>
-  </div>
-
-<input type="number" id="withdrawAmount" placeholder="Montant en Gdes" min="250" step="1">
-<button id="withdrawBtn" disabled class="beta-disabled">Demander retrait</button>
-<div class="beta-note">Recharge et retrait Automatique temporairement indisponibles. veuillez essayer le mode manuel ci-dessus.</div>
 </div>
 
 <div class="section">
@@ -228,14 +193,14 @@ button{
     <option value="moncash">MonCash</option>
     <option value="natcash">NatCash</option>
   </select>
-  <button id="twOpen" type="button" hidden>Reprendre le paiement</button>
+  <button id="twOpen" type="button" hidden>Reprendre le paiement si tu n'a pas encore paye</button>
   <button id="twCheck" type="button" hidden>Vérifier la recharge</button>
   <button id="twSimulate" type="button" hidden>Simuler MonCash</button>
 </div>
 <p id="twInfo"></p>
 <p id="twStatus" role="status"></p>
   
-  <div class="recharge-grid">
+  <div class="recharge-grid" hidden>
 
     <div class="recharge-item" data-amount="50">50 Gdes</div>
     <div class="recharge-item" data-amount="100">100 Gdes</div>
@@ -247,8 +212,7 @@ button{
 
   </div>
 
-  <button id="buyBtn" type="button" disabled >Acheter</button>
-<div class="beta-note">*</div>
+<button id="buyBtn" type="button" disabled hidden>Choisir un montant</button>
 </div>
 
 <div class="transactions">
@@ -277,468 +241,224 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const API_BASE = "https://hayticlip-server.onrender.com";
-const BETA_WALLET_LOCKED = true;
+const byId = id => document.getElementById(id);
+const grid = document.querySelector(".recharge-grid");
+const items = [...grid.querySelectorAll(".recharge-item")];
+const networkSelect = byId("twNetwork");
+const buy = byId("buyBtn");
+const open = byId("twOpen");
+const check = byId("twCheck");
+const simulate = byId("twSimulate");
+const keys = new Map();
+const htg = n => new Intl.NumberFormat("fr-HT").format(n) + " HTG";
 
+let config = null, amount = null, busy = false, error = "";
 
-const balanceAmount = document.getElementById("balanceAmount");
-const lockedAmount = document.getElementById("lockedAmount");
-const availableAmount = document.getElementById("availableAmount");
-const withdrawBtn = document.getElementById("withdrawBtn");
-const savedNumberInput = document.getElementById("savedNumber");
-const saveNumberBtn = document.getElementById("saveNumberBtn");
-const numberInfo = document.getElementById("numberInfo");
+function draw() {
+  const c = config, p = c?.pending;
+  const enabled = c?.enabled === true;
+  const ready = enabled && c.rechargeAllowed === true && !p && !busy;
 
-const withdrawLimitText = document.getElementById("withdrawLimitText");
-const withdrawUsedText = document.getElementById("withdrawUsedText");
-const withdrawRemainingText = document.getElementById("withdrawRemainingText");
+  grid.hidden = buy.hidden = byId("twControls").hidden = !enabled;
+  buy.disabled = !ready || amount === null;
+  buy.textContent = amount === null ? "Choisir un montant" : "Recharger " + htg(amount);
+  networkSelect.disabled = !ready;
 
-function getLocalDateString(date = new Date()) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function formatGdes(n){
-  return Number(n || 0) + " Gdes";
-}
-
-function updateWithdrawQuotaUI(userData){
-  const role = userData.role || "user";
-  const limit = role === "admin" ? 80000 : 20000;
-
-  const today = getLocalDateString();
-  const resetAt = userData.withdrawResetAt || "";
-  const used = resetAt === today ? Number(userData.withdrawDailyTotal || 0) : 0;
-  const remaining = Math.max(0, limit - used);
-
-  withdrawLimitText.textContent = formatGdes(limit);
-  withdrawUsedText.textContent = formatGdes(used);
-  withdrawRemainingText.textContent = formatGdes(remaining);
-}
-
-
-onAuthStateChanged(auth, async user => {
-  if(!user){
-    window.location.href = "login.html";
-    return;
+  if (enabled) {
+    networkSelect.value = c.network;
+    networkSelect.querySelector('[value="natcash"]').disabled =
+      !c.natcashAllowed && c.network !== "natcash";
   }
 
-  try{
-    const userSnap = await getDoc(doc(db, "users", user.uid));
-
-    if(!userSnap.exists()){
-      alert("Profil introuvable");
-      return;
-    }
-
-    const userData = userSnap.data() || {};
-const wallet = Number(userData.wallet || 0);
-const locked = Number(userData.walletLocked || 0);
-const available = Math.max(0, wallet - locked);
-
-balanceAmount.textContent = wallet + " Gdes";
-lockedAmount.textContent = locked + " Gdes";
-availableAmount.textContent = available + " Gdes";
-updateWithdrawQuotaUI(userData);
-
-await loadWithdrawNumber(user.uid);
-
-  }catch(e){
-    console.error("LOAD WALLET ERROR:", e);
-    alert("Impossible de charger le wallet");
+  for (const item of items) {
+    item.classList.toggle("selected", Number(item.dataset.amount) === amount);
   }
-});
 
-withdrawBtn.onclick = async () => {
-  if(withdrawBtn.disabled) return;
-  withdrawBtn.disabled = true;
+  byId("twInfo").textContent = !c ? "Chargement de la recharge…"
+    : !enabled ? "Recharge automatique indisponible. Le transfert manuel reste accessible."
+    : c.mode === "test" ? "Sandbox : " + htg(c.testBalance) + " fictifs."
+    : "Choisis ton réseau avant la première recharge.";
 
-  try{
-    const user = auth.currentUser;
+  open.hidden = !p?.redirectUrl;
+  check.hidden = !p;
+  simulate.hidden = !(c?.mode === "test" && p?.network === "moncash");
+  open.disabled = check.disabled = simulate.disabled = busy;
 
-    if(!user){
-      alert("Utilisateur non connecté");
-      return;
-    }
-
-    const amount = Number(document.getElementById("withdrawAmount").value);
-
-if(!Number.isInteger(amount) || amount <= 0){
-  alert("Montant invalide");
-  return;
+  byId("twStatus").textContent = error || (busy ? "Vérification en cours…"
+    : p ? "Recharge en attente. Si tu as déjà payé, vérifie son statut. Référence : " + p.id
+    : c?.last?.status === "completed" ? "Recharge confirmée : " + htg(c.last.amount) + "."
+    : c?.last?.status === "failed" ? "La dernière recharge n’a pas abouti."
+    : enabled && !c.rechargeAllowed ? "Recharge bloquée pour ce compte." : "");
 }
 
-if(amount < 250){
-  alert("Minimum retrait : 250 Gdes");
-  return;
-}
+async function api(user, route, body) {
+  const headers = { Authorization: "Bearer " + await user.getIdToken() };
+  if (body) headers["Content-Type"] = "application/json";
 
-const userSnap = await getDoc(doc(db, "users", user.uid));
-
-if(!userSnap.exists()){
-  alert("Utilisateur introuvable");
-  return;
-}
-
-const userData = userSnap.data() || {};
-const role = userData.role || "user";
-const dailyLimit = role === "admin" ? 80000 : 20000;
-
-const today = getLocalDateString();
-const usedToday = userData.withdrawResetAt === today
-  ? Number(userData.withdrawDailyTotal || 0)
-  : 0;
-
-const remainingToday = Math.max(0, dailyLimit - usedToday);
-
-if(amount > remainingToday){
-  alert("Limite journalière dépassée. Reste disponible : " + remainingToday + " Gdes");
-  return;
-}
-
-    const pin = prompt("Entrez votre code PIN");
-
-    if(!/^\d{6}$/.test(pin || "")){
-      alert("PIN invalide");
-      return;
-    }
-
-    const token = await user.getIdToken(true);
-
-    const res = await fetch(`${API_BASE}/api/requestWithdraw`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({
-        amount,
-        pin
-      })
-    });
-
-    const result = await res.json();
-
-    console.log("REPONSE SERVEUR:", result);
-
-    if(result.success){
-  alert("Retrait effectué");
-  document.getElementById("withdrawAmount").value = "";
-
-  const freshSnap = await getDoc(doc(db, "users", user.uid));
-  if(freshSnap.exists()){
-    const freshData = freshSnap.data() || {};
-    const freshWallet = Number(freshData.wallet || 0);
-const freshLocked = Number(freshData.walletLocked || 0);
-const freshAvailable = Math.max(0, freshWallet - freshLocked);
-
-balanceAmount.textContent = freshWallet + " Gdes";
-lockedAmount.textContent = freshLocked + " Gdes";
-availableAmount.textContent = freshAvailable + " Gdes";
-
-updateWithdrawQuotaUI(freshData);
-  }
-}else{
-  alert(result.error || "Erreur serveur");
-}
-
-  }catch(e){
-    console.error("WITHDRAW ERROR:", e);
-    alert("Erreur lors du retrait");
-  }finally{
-    withdrawBtn.disabled = false;
-  }
-};
-
-let selectedRechargeAmount = null;
-const hcBuy = document.getElementById("buyBtn");
-const hcControls = document.getElementById("twControls");
-const hcNetwork = document.getElementById("twNetwork");
-const hcInfo = document.getElementById("twInfo");
-const hcStatus = document.getElementById("twStatus");
-const hcOpen = document.getElementById("twOpen");
-const hcCheck = document.getElementById("twCheck");
-const hcSim = document.getElementById("twSimulate");
-const hcItems = document.querySelectorAll(".recharge-grid .recharge-item");
-const hcLabel = n => n === "natcash" ? "NatCash" : "MonCash";
-const hcKeys = new Map();
-let hcCfg, hcBusy = false;
-
-async function hcAPI(path, body) {
-  const user = auth.currentUser;
-  if (!user) throw new Error("Reconnecte-toi.");
-  const token = await user.getIdToken();
-  const res = await fetch(API_BASE + path, {
-    method: body ? "POST" : "GET", cache: "no-store",
-    headers: { Authorization: "Bearer " + token, ...(body ? { "Content-Type": "application/json" } : {}) },
+  const res = await fetch(API_BASE + route, {
+    method: body ? "POST" : "GET",
+    cache: "no-store",
+    headers,
     ...(body ? { body: JSON.stringify(body) } : {})
   });
+
+  if (res.status === 401) throw new Error("Reconnecte-toi puis reviens au wallet.");
   const data = await res.json().catch(() => null);
-  if (!res.ok || !data || data.success === false) {
-    throw new Error(data?.error || "Vérifie le statut avant de réessayer.");
+
+  if (!res.ok || !data || (body && data.success !== true)) {
+    throw new Error(data?.error || "Impossible de vérifier la recharge. Actualise la page.");
   }
   return data;
 }
 
-function hcDraw() {
-  const c = hcCfg, p = c?.pending;
-  hcControls.hidden = !c?.enabled;
-  hcBuy.hidden = c?.enabled === false;
-  hcBuy.disabled = hcBusy || !c?.rechargeAllowed || !!p || selectedRechargeAmount === null;
-  hcNetwork.disabled = hcBusy || !c?.rechargeAllowed || !!p;
-
-  if (!c?.enabled) {
-    hcInfo.textContent = "Recharge automatique indisponible. Le transfert manuel reste accessible.";
-    hcStatus.textContent = "";
-    return;
+async function load(user) {
+  const data = await api(user, "/api/tranzak/wallet");
+  if (typeof data.enabled !== "boolean" ||
+      (data.enabled && !["test", "live"].includes(data.mode))) {
+    throw new Error("Configuration de recharge indisponible.");
   }
-
-  hcNetwork.value = c.network;
-  hcNetwork.querySelector('[value="natcash"]').disabled = !c.natcashAllowed && c.network !== "natcash";
-  hcInfo.textContent = c.mode === "test"
-    ? "Sandbox : " + c.testBalance + " HTG fictifs sur " + hcLabel(c.network) + "."
-    : "Réseau du portefeuille : " + hcLabel(c.network) + ".";
-  hcOpen.hidden = !p?.redirectUrl;
-  hcCheck.hidden = !p;
-  hcSim.hidden = !(c.mode === "test" && p?.network === "moncash");
-  hcOpen.disabled = hcCheck.disabled = hcSim.disabled = hcBusy;
-  hcStatus.textContent = p ? "Recharge en attente. Référence : " + p.id
-    : c.last?.status === "completed" ? "Recharge confirmée : " + c.last.amount + " HTG."
-    : c.last?.status === "failed" ? "La dernière recharge n’a pas abouti." : "";
+  if (auth.currentUser?.uid === user.uid) config = data;
+  return data;
 }
 
-async function hcLoad() {
-  hcCfg = await hcAPI("/api/tranzak/wallet");
-  if (hcCfg.mode !== "live" || !auth.currentUser) return;
+async function loadBalance(user) {
+  const ids = ["balanceAmount", "lockedAmount", "availableAmount"];
 
   try {
-    const data = (await getDoc(doc(db, "users", auth.currentUser.uid))).data() || {};
+    const snap = await getDocFromServer(doc(db, "users", user.uid));
+    if (!snap.exists()) throw new Error("Profil introuvable.");
+    if (auth.currentUser?.uid !== user.uid) return;
+
+    const data = snap.data();
     const total = Number(data.wallet || 0), locked = Number(data.walletLocked || 0);
-    for (const [id, n] of [
-      ["balanceAmount", total], ["lockedAmount", locked], ["availableAmount", Math.max(0, total - locked)]
-    ]) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = new Intl.NumberFormat("fr-HT").format(n) + " HTG";
+    [total, locked, Math.max(0, total - locked)].forEach((n, i) => {
+      byId(ids[i]).textContent = htg(n);
+    });
+  } catch {
+    if (auth.currentUser?.uid === user.uid) {
+      ids.forEach(id => { byId(id).textContent = "—"; });
     }
-  } catch {}
-}
-
-async function hcRun(fn) {
-  if (hcBusy) return;
-  hcBusy = true;
-  const mode = hcCfg?.mode;
-  hcDraw();
-  let error;
-  try {
-    await fn(mode);
-    await hcLoad();
-  } catch (e) {
-    error = e.message;
-    await hcLoad().catch(() => {});
-  } finally {
-    hcBusy = false;
-    hcDraw();
-    if (error) hcStatus.textContent = error;
   }
 }
 
-for (const item of hcItems) {
-  item.addEventListener("click", () => {
-    if (hcBusy || !hcCfg?.rechargeAllowed || hcCfg.pending) return;
-    const amount = Number(item.dataset.amount);
-    if (![50, 100, 250, 500, 1000, 5000, 10000].includes(amount)) return;
-    selectedRechargeAmount = amount;
-    for (const el of hcItems) el.classList.toggle("active", el === item);
-    hcDraw();
-  });
+async function run(action) {
+  const user = auth.currentUser;
+  if (!user || busy) return;
+
+  busy = true;
+  error = "";
+  draw();
+  let navigating = false;
+
+  try {
+    navigating = await action(user) === true;
+    if (!navigating) await load(user);
+  } catch (e) {
+    error = e.message || "Vérifie le statut avant de réessayer.";
+    try { await load(user); } catch { config = null; }
+  } finally {
+    busy = false;
+    draw();
+    if (!navigating) void loadBalance(user);
+  }
 }
 
-hcNetwork.addEventListener("change", () => {
-  const network = hcNetwork.value;
-  if (network === hcCfg?.network) return;
-  if (hcCfg?.mode === "test" && !confirm("Changer le réseau remet le solde fictif à zéro. Continuer ?")) {
-    hcDraw();
+for (const item of items) {
+  item.onclick = () => {
+    if (busy || !config?.rechargeAllowed || config.pending) return;
+    amount = Number(item.dataset.amount);
+    draw();
+  };
+}
+
+networkSelect.onchange = () => {
+  if (networkSelect.disabled || !config) return;
+
+  const network = networkSelect.value;
+  const mode = config.mode;
+  if (network === config.network) return;
+
+  if (mode === "test" && !confirm("Changer de réseau remet le solde fictif à zéro. Continuer ?")) {
+    draw();
     return;
   }
-  void hcRun(mode => hcAPI("/api/tranzak/network", { mode, network }));
-});
 
-hcBuy.addEventListener("click", () => {
-  if (hcBuy.disabled || !hcCfg) return;
-  void hcRun(async mode => {
-    const network = hcCfg.network, amount = selectedRechargeAmount;
-    const slot = ["hayticlips-recharge", auth.currentUser.uid, mode, network, amount].join(":");
-    let requestKey = hcKeys.get(slot);
+  amount = null;
+  void run(user => api(user, "/api/tranzak/network", { mode, network }));
+};
+
+buy.onclick = () => {
+  if (buy.disabled || !config) return;
+  const { mode, network } = config;
+  const selected = amount;
+
+  void run(async user => {
+    const slot = ["hayticlips-recharge", user.uid, mode, network, selected].join(":");
+    let requestKey = keys.get(slot);
     try { requestKey ||= sessionStorage.getItem(slot); } catch {}
     requestKey ||= crypto.randomUUID();
-    hcKeys.set(slot, requestKey);
+    keys.set(slot, requestKey);
     try { sessionStorage.setItem(slot, requestKey); } catch {}
 
-    const result = await hcAPI("/api/requestRecharge", { mode, network, amount, requestKey });
-    hcKeys.delete(slot);
+    const result = await api(user, "/api/requestRecharge", {
+      mode, network, amount: selected, requestKey
+    });
+    keys.delete(slot);
     try { sessionStorage.removeItem(slot); } catch {}
+    amount = null;
 
-    if (result.redirectUrl) window.location.assign(result.redirectUrl);
-  });
-});
-
-hcOpen.addEventListener("click", () => {
-  if (hcCfg?.pending?.redirectUrl) window.location.assign(hcCfg.pending.redirectUrl);
-});
-hcCheck.addEventListener("click", () => void hcRun(mode => hcAPI("/api/tranzak/check", { mode })));
-hcSim.addEventListener("click", () => void hcRun(mode => hcAPI("/api/tranzak/check", { mode, simulate: true })));
-
-onAuthStateChanged(auth, async user => {
-  if (!user) { hcCfg = null; hcDraw(); return; }
-
-  await hcRun(async () => {
-    await hcLoad();
-    const url = new URL(location.href);
-    if (url.searchParams.get("tranzak") === "retour" && hcCfg.enabled) {
-      url.searchParams.delete("tranzak");
-      history.replaceState(null, "", url);
-      await hcAPI("/api/tranzak/check", { mode: hcCfg.mode });
+    if (result.redirectUrl) {
+      window.location.assign(result.redirectUrl);
+      return true;
     }
   });
-});
-  
-async function loadWithdrawNumber(uid){
-
-const snap = await getDoc(doc(db,"users",uid));
-
-if(!snap.exists()) return;
-
-const data = snap.data();
-
-if(data.withdrawNumber){
-
-savedNumberInput.value = data.withdrawNumber;
-
-const last = data.withdrawNumberUpdatedAt?.toMillis?.() || 0;
-const now = Date.now();
-
-const days150 = 150 * 24 * 60 * 60 * 1000;
-
-const date = data.withdrawNumberUpdatedAt?.toDate()?.toLocaleDateString();
-
-numberInfo.textContent = "Dernière modification : " + date;
-
-if(now - last < days150){
-
-savedNumberInput.disabled = true;
-saveNumberBtn.disabled = true;
-
-}else{
-
-savedNumberInput.disabled = false;
-saveNumberBtn.disabled = false;
-
-numberInfo.textContent += " (vous pouvez modifier)";
-
-}
-
-}
-
-}
-
-
-saveNumberBtn.onclick = async ()=>{
-
-try{
-
-const user = auth.currentUser;
-
-if(!user){
-alert("Utilisateur non connecté");
-return;
-}
-
-let number = savedNumberInput.value.trim();
-
-let clean = number.replace(/\D/g,"");
-
-if(clean.length === 8){
-clean = "509" + clean;
-}
-
-const allowedPrefixes = [
-"31","34","36","37","38","39","44","46","47","49"
-];
-
-if(
-clean.length !== 11 ||
-!clean.startsWith("509") ||
-!allowedPrefixes.includes(clean.slice(3,5))
-){
-alert("Numéro Digicel invalide");
-return;
-}
-
-const userRef = doc(db,"users",user.uid);
-
-const snap = await getDoc(userRef);
-
-if(!snap.exists()){
-alert("Utilisateur introuvable");
-return;
-}
-
-const data = snap.data();
-
-const last = data.withdrawNumberUpdatedAt?.toMillis?.() || 0;
-
-const now = Date.now();
-
-const days150 = 150 * 24 * 60 * 60 * 1000;
-
-if(last && now - last < days150){
-
-alert("Vous pouvez modifier le numéro tous les 150 jours");
-
-return;
-
-}
-
-const token = await auth.currentUser.getIdToken(true);
-
-const res = await fetch(`${API_BASE}/api/saveWithdrawNumber`,{
-method:"POST",
-headers:{
-"Content-Type":"application/json",
-"Authorization":"Bearer " + token
-},
-body: JSON.stringify({
-number: clean
-})
-});
-
-const result = await res.json();
-
-if(result.success){
-
-savedNumberInput.value = clean;
-savedNumberInput.disabled = true;
-saveNumberBtn.disabled = true;
-
-numberInfo.textContent = "Numéro enregistré (modification possible dans 150 jours)";
-
-alert("Numéro enregistré");
-
-}else{
-
-alert(result.error || "Erreur serveur");
-
-}
-
-}catch(e){
-
-console.error("ERREUR ENREGISTREMENT NUMERO:", e);
-alert("Erreur: " + e.message);
-
-}
-
 };
+
+open.onclick = () => {
+  if (!busy && config?.pending?.redirectUrl) {
+    window.location.assign(config.pending.redirectUrl);
+  }
+};
+
+function checkRecharge(simulatePayment = false) {
+  if (!config?.enabled || !config.pending || busy) return;
+  const { mode } = config;
+  if (simulatePayment && (mode !== "test" || config.pending.network !== "moncash")) return;
+
+  void run(user => api(user, "/api/tranzak/check", {
+    mode, ...(simulatePayment ? { simulate: true } : {})
+  }));
+}
+
+check.onclick = () => checkRecharge();
+simulate.onclick = () => checkRecharge(true);
+
+async function refreshOnOpen(user) {
+  const url = new URL(window.location.href);
+
+  if (url.searchParams.get("tranzak") === "retour") {
+    const c = await load(user);
+    if (!c.enabled) return;
+    if (c.pending) await api(user, "/api/tranzak/check", { mode: c.mode });
+    url.searchParams.delete("tranzak");
+    window.history.replaceState(null, "", url);
+  }
+}
+
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    config = null;
+    draw();
+    window.location.replace("login.html");
+    return;
+  }
+
+  void run(refreshOnOpen);
+});
+
+window.addEventListener("pageshow", event => {
+  if (event.persisted) void run(refreshOnOpen);
+});
 </script>
 
 </body>
