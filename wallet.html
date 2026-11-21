@@ -222,6 +222,19 @@ button{
 <div class="section">
   <h3>Recharger le wallet</h3>
 
+<div id="twControls" hidden>
+  <label for="twNetwork">Réseau du portefeuille</label>
+  <select id="twNetwork">
+    <option value="moncash">MonCash</option>
+    <option value="natcash">NatCash</option>
+  </select>
+  <button id="twOpen" type="button" hidden>Reprendre le paiement</button>
+  <button id="twCheck" type="button" hidden>Vérifier la recharge</button>
+  <button id="twSimulate" type="button" hidden>Simuler MonCash</button>
+</div>
+<p id="twInfo"></p>
+<p id="twStatus" role="status"></p>
+  
   <div class="recharge-grid">
 
     <div class="recharge-item" data-amount="50">50 Gdes</div>
@@ -234,7 +247,7 @@ button{
 
   </div>
 
-  <button id="buyBtn" disabled class="beta-disabled">Acheter</button>
+  <button id="buyBtn" type="button" disabled >Acheter</button>
 <div class="beta-note">*</div>
 </div>
 
@@ -439,76 +452,157 @@ updateWithdrawQuotaUI(freshData);
 };
 
 let selectedRechargeAmount = null;
+const hcBuy = document.getElementById("buyBtn");
+const hcControls = document.getElementById("twControls");
+const hcNetwork = document.getElementById("twNetwork");
+const hcInfo = document.getElementById("twInfo");
+const hcStatus = document.getElementById("twStatus");
+const hcOpen = document.getElementById("twOpen");
+const hcCheck = document.getElementById("twCheck");
+const hcSim = document.getElementById("twSimulate");
+const hcItems = document.querySelectorAll(".recharge-grid .recharge-item");
+const hcLabel = n => n === "natcash" ? "NatCash" : "MonCash";
+const hcKeys = new Map();
+let hcCfg, hcBusy = false;
 
-document.querySelectorAll(".recharge-item").forEach(item => {
+async function hcAPI(path, body) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Reconnecte-toi.");
+  const token = await user.getIdToken();
+  const res = await fetch(API_BASE + path, {
+    method: body ? "POST" : "GET", cache: "no-store",
+    headers: { Authorization: "Bearer " + token, ...(body ? { "Content-Type": "application/json" } : {}) },
+    ...(body ? { body: JSON.stringify(body) } : {})
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data || data.success === false) {
+    throw new Error(data?.error || "Vérifie le statut avant de réessayer.");
+  }
+  return data;
+}
 
-  item.onclick = () => {
+function hcDraw() {
+  const c = hcCfg, p = c?.pending;
+  hcControls.hidden = !c?.enabled;
+  hcBuy.hidden = c?.enabled === false;
+  hcBuy.disabled = hcBusy || !c?.rechargeAllowed || !!p || selectedRechargeAmount === null;
+  hcNetwork.disabled = hcBusy || !c?.rechargeAllowed || !!p;
 
-    document.querySelectorAll(".recharge-item")
-      .forEach(i => i.classList.remove("selected"));
+  if (!c?.enabled) {
+    hcInfo.textContent = "Recharge automatique indisponible. Le transfert manuel reste accessible.";
+    hcStatus.textContent = "";
+    return;
+  }
 
-    item.classList.add("selected");
+  hcNetwork.value = c.network;
+  hcNetwork.querySelector('[value="natcash"]').disabled = !c.natcashAllowed && c.network !== "natcash";
+  hcInfo.textContent = c.mode === "test"
+    ? "Sandbox : " + c.testBalance + " HTG fictifs sur " + hcLabel(c.network) + "."
+    : "Réseau du portefeuille : " + hcLabel(c.network) + ".";
+  hcOpen.hidden = !p?.redirectUrl;
+  hcCheck.hidden = !p;
+  hcSim.hidden = !(c.mode === "test" && p?.network === "moncash");
+  hcOpen.disabled = hcCheck.disabled = hcSim.disabled = hcBusy;
+  hcStatus.textContent = p ? "Recharge en attente. Référence : " + p.id
+    : c.last?.status === "completed" ? "Recharge confirmée : " + c.last.amount + " HTG."
+    : c.last?.status === "failed" ? "La dernière recharge n’a pas abouti." : "";
+}
 
-    selectedRechargeAmount = parseInt(item.dataset.amount);
+async function hcLoad() {
+  hcCfg = await hcAPI("/api/tranzak/wallet");
+  if (hcCfg.mode !== "live" || !auth.currentUser) return;
 
-    document.getElementById("buyBtn").disabled = BETA_WALLET_LOCKED ? true : false;
+  try {
+    const data = (await getDoc(doc(db, "users", auth.currentUser.uid))).data() || {};
+    const total = Number(data.wallet || 0), locked = Number(data.walletLocked || 0);
+    for (const [id, n] of [
+      ["balanceAmount", total], ["lockedAmount", locked], ["availableAmount", Math.max(0, total - locked)]
+    ]) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = new Intl.NumberFormat("fr-HT").format(n) + " HTG";
+    }
+  } catch {}
+}
 
-  };
+async function hcRun(fn) {
+  if (hcBusy) return;
+  hcBusy = true;
+  const mode = hcCfg?.mode;
+  hcDraw();
+  let error;
+  try {
+    await fn(mode);
+    await hcLoad();
+  } catch (e) {
+    error = e.message;
+    await hcLoad().catch(() => {});
+  } finally {
+    hcBusy = false;
+    hcDraw();
+    if (error) hcStatus.textContent = error;
+  }
+}
 
+for (const item of hcItems) {
+  item.addEventListener("click", () => {
+    if (hcBusy || !hcCfg?.rechargeAllowed || hcCfg.pending) return;
+    const amount = Number(item.dataset.amount);
+    if (![50, 100, 250, 500, 1000, 5000, 10000].includes(amount)) return;
+    selectedRechargeAmount = amount;
+    for (const el of hcItems) el.classList.toggle("active", el === item);
+    hcDraw();
+  });
+}
+
+hcNetwork.addEventListener("change", () => {
+  const network = hcNetwork.value;
+  if (network === hcCfg?.network) return;
+  if (hcCfg?.mode === "test" && !confirm("Changer le réseau remet le solde fictif à zéro. Continuer ?")) {
+    hcDraw();
+    return;
+  }
+  void hcRun(mode => hcAPI("/api/tranzak/network", { mode, network }));
 });
 
+hcBuy.addEventListener("click", () => {
+  if (hcBuy.disabled || !hcCfg) return;
+  void hcRun(async mode => {
+    const network = hcCfg.network, amount = selectedRechargeAmount;
+    const slot = ["hayticlips-recharge", auth.currentUser.uid, mode, network, amount].join(":");
+    let requestKey = hcKeys.get(slot);
+    try { requestKey ||= sessionStorage.getItem(slot); } catch {}
+    requestKey ||= crypto.randomUUID();
+    hcKeys.set(slot, requestKey);
+    try { sessionStorage.setItem(slot, requestKey); } catch {}
 
-document.getElementById("buyBtn").onclick = async () => {
-  const btn = document.getElementById("buyBtn");
+    const result = await hcAPI("/api/requestRecharge", { mode, network, amount, requestKey });
+    hcKeys.delete(slot);
+    try { sessionStorage.removeItem(slot); } catch {}
 
-  if(btn.disabled) return;
-  btn.disabled = true;
+    if (result.redirectUrl) window.location.assign(result.redirectUrl);
+  });
+});
 
-  try{
-    if(!selectedRechargeAmount){
-      alert("Choisissez un montant");
-      return;
+hcOpen.addEventListener("click", () => {
+  if (hcCfg?.pending?.redirectUrl) window.location.assign(hcCfg.pending.redirectUrl);
+});
+hcCheck.addEventListener("click", () => void hcRun(mode => hcAPI("/api/tranzak/check", { mode })));
+hcSim.addEventListener("click", () => void hcRun(mode => hcAPI("/api/tranzak/check", { mode, simulate: true })));
+
+onAuthStateChanged(auth, async user => {
+  if (!user) { hcCfg = null; hcDraw(); return; }
+
+  await hcRun(async () => {
+    await hcLoad();
+    const url = new URL(location.href);
+    if (url.searchParams.get("tranzak") === "retour" && hcCfg.enabled) {
+      url.searchParams.delete("tranzak");
+      history.replaceState(null, "", url);
+      await hcAPI("/api/tranzak/check", { mode: hcCfg.mode });
     }
-
-    const user = auth.currentUser;
-
-    if(!user){
-      alert("Utilisateur non connecté");
-      return;
-    }
-
-    const token = await user.getIdToken(true);
-
-    const res = await fetch(`${API_BASE}/api/requestRecharge`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({
-        amount: selectedRechargeAmount
-      })
-    });
-
-    const result = await res.json();
-
-    console.log("RECHARGE:", result);
-
-    if(result.success && result.redirectUrl){
-      window.location.href = result.redirectUrl;
-      return;
-    }
-
-    alert(result.error || "Impossible de démarrer la recharge");
-
-  }catch(e){
-    console.error("RECHARGE ERROR:", e);
-    alert("Erreur lors de la recharge");
-  }finally{
-    btn.disabled = false;
-  }
-};
-
+  });
+});
+  
 async function loadWithdrawNumber(uid){
 
 const snap = await getDoc(doc(db,"users",uid));

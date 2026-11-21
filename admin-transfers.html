@@ -241,204 +241,239 @@
       if (!user) return window.location.href = "login.html";
       
       const userSnap = await getDoc(doc(db, "users", user.uid));
-      if (!userSnap.exists() || userSnap.data().role !== "admin") {
-        alert("Accès refusé.");
-        return window.location.href = "profil.html";
-      }
+      if (!userSnap.exists() || userSnap.data().role !== "admin" || userSnap.data().suspended === true) {
+  alert("Accès refusé.");
+  return window.location.href = "profil.html";
+}
 
       loadPendingTransfers();
       loadTodayStats();
     });
 
-    const formatMoney = (n) => new Intl.NumberFormat('fr-FR').format(n);
+    const formatMoney = n => new Intl.NumberFormat("fr-HT").format(n);
+const hcTime = { timeZone: "America/Port-au-Prince" };
+const hcProcessing = new Set();
+const hcEl = (tag, css, text) => {
+  const e = document.createElement(tag);
+  if (css) e.className = css;
+  if (text !== undefined) e.textContent = text;
+  return e;
+};
 
-    // 📊 1. CHARGER LES STATS DU JOUR
-    function loadTodayStats() {
-      // Pour éviter les erreurs d'index, on prend les derniers transferts et on filtre par JavaScript
-      const qRecent = query(collection(db, "manualTransfers"), orderBy("createdAt", "desc"), limit(300));
-      
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
+async function hcAdmin(path, payload) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Reconnecte-toi.");
+  const res = await fetch(API_BASE + path, {
+    method: payload ? "POST" : "GET", cache: "no-store",
+    headers: {
+      Authorization: "Bearer " + await user.getIdToken(),
+      ...(payload ? { "Content-Type": "application/json" } : {})
+    },
+    ...(payload ? { body: JSON.stringify(payload) } : {})
+  });
+  const result = await res.json().catch(() => null);
+  if (!res.ok || !result?.success) throw new Error(result?.error || "Vérifie le statut de la demande.");
+  return result;
+}
 
-      onSnapshot(qRecent, (snap) => {
-        let approvedCount = 0;
-        let rejectedCount = 0;
-        let volumeToday = 0;
+function loadTodayStats() {
+  const q = query(collection(db, "manualTransfers"), orderBy("createdAt", "desc"), limit(300));
 
-        snap.forEach(d => {
-          const t = d.data();
-          // On vérifie si ça a été traité aujourd'hui (ou créé aujourd'hui)
-          const dateToCheck = t.processedAt ? t.processedAt.toDate() : (t.createdAt ? t.createdAt.toDate() : new Date());
-          
-          if (dateToCheck >= startOfDay) {
-            if (t.status === "approved") {
-              approvedCount++;
-              volumeToday += Number(t.type === 'deposit' ? t.amount : (t.amountRequested || 0));
-            } else if (t.status === "rejected") {
-              rejectedCount++;
-            }
-          }
-        });
+  onSnapshot(q, snap => {
+    const today = new Date().toLocaleDateString("fr-FR", hcTime);
+    let approved = 0, rejected = 0, total = 0;
 
-        document.getElementById("statApprovedToday").textContent = formatMoney(approvedCount);
-        document.getElementById("statRejectedToday").textContent = formatMoney(rejectedCount);
-        document.getElementById("statVolumeToday").textContent = formatMoney(volumeToday) + " HTG";
-      });
-    }
+    snap.forEach(d => {
+      const t = d.data(), when = t.processedAt?.toDate?.() || t.createdAt?.toDate?.();
+      if (!when || when.toLocaleDateString("fr-FR", hcTime) !== today) return;
+      if (t.status === "approved") {
+        approved++;
+        total += Number(t.amountRequested ?? t.amount) || 0;
+      }
+      if (t.status === "rejected") rejected++;
+    });
 
-    // 📋 2. CHARGER LES LISTES EN ATTENTE
-    function loadPendingTransfers() {
-      const qPending = query(
-        collection(db, "manualTransfers"), 
-        where("status", "==", "pending"),
-        orderBy("createdAt", "asc") // asc pour traiter les plus vieux en premier
+    document.getElementById("statApprovedToday").textContent = approved;
+    document.getElementById("statRejectedToday").textContent = rejected;
+    document.getElementById("statVolumeToday").textContent = formatMoney(total) + " HTG";
+  });
+}
+
+function hcReceiptURL(value) {
+  try {
+    const u = new URL(value);
+    return u.protocol === "https:" && !u.username && !u.password && !u.port &&
+      u.hostname.endsWith(".supabase.co") &&
+      /^\/storage\/v1\/object\/(?:public\/media|sign\/manual-receipts)\//.test(u.pathname) ? u.href : null;
+  } catch { return null; }
+}
+
+function loadPendingTransfers() {
+  const q = query(collection(db, "manualTransfers"), where("status", "==", "pending"));
+
+  onSnapshot(q, snap => {
+    const dep = document.getElementById("depositList"), wit = document.getElementById("withdrawList");
+    dep.replaceChildren();
+    wit.replaceChildren();
+
+    let depCount = 0, depVol = 0, witCount = 0, witVol = 0;
+    const docs = [...snap.docs].sort((a, b) =>
+      (a.data().createdAt?.toMillis?.() || 0) - (b.data().createdAt?.toMillis?.() || 0));
+
+    for (const d of docs) {
+      const t = d.data(), id = d.id, isDeposit = t.type === "deposit";
+      if (!isDeposit && t.type !== "withdraw") continue;
+
+      const method = String(t.method ?? "moncash").trim().toLowerCase();
+      const label = method === "moncash" ? "MonCash" : method === "natcash" ? "NatCash" : "";
+      const amount = Number(isDeposit ? t.amount : (t.amountRequested ?? t.amount));
+      const net = Number(t.amountToReceive), beneficiary = String(t.accountName || "").trim();
+      const legacy = t.source !== "server-v2" && !t.legacyReviewedBy;
+      const tel = String(t.phone || "").trim();
+      const canApprove = !legacy && !!label && Number.isFinite(amount) && amount > 0 &&
+        (isDeposit || (/^(?:\+?509)?\d{8}$/.test(tel.replace(/[ .()-]/g, "")) &&
+          beneficiary && Number.isFinite(net) && net > 0 && net <= amount));
+
+      if (isDeposit) { depCount++; depVol += Number.isFinite(amount) ? amount : 0; }
+      else { witCount++; witVol += Number.isFinite(amount) ? amount : 0; }
+
+      const card = hcEl("div", "transfer-card " + (isDeposit ? "deposit-card" : "withdraw-card"));
+      const header = hcEl("div", "card-header");
+      header.append(
+        hcEl("span", "badge " + (isDeposit ? "badge-deposit" : "badge-withdraw"), label || "Réseau inconnu"),
+        hcEl("span", "amount", Number.isFinite(amount) ? formatMoney(amount) + " HTG" : "Montant invalide")
       );
 
-      onSnapshot(qPending, (snap) => {
-        const depositList = document.getElementById("depositList");
-        const withdrawList = document.getElementById("withdrawList");
-        
-        depositList.innerHTML = "";
-        withdrawList.innerHTML = "";
+      const profile = hcEl("a", "user-link", "Profil utilisateur");
+      profile.href = "profil.html?uid=" + encodeURIComponent(String(t.userId ?? ""));
+      card.append(header, profile);
+      if (typeof t.userId === "string" && t.userId && !t.userId.includes("/")) {
+        getDoc(doc(db, "users", t.userId)).then(u => {
+          if (u.exists()) profile.textContent = u.data().username || "Profil utilisateur";
+        }).catch(() => {});
+      }
 
-        let depCount = 0, depVol = 0;
-        let witCount = 0, witVol = 0;
+      const row = (label, value) => card.append(hcEl("div", "info-row", label + " : " + (value ?? "")));
+      row("Téléphone", tel);
+      row("Réf. demande", id);
+      if (t.createdAt?.toDate) row("Date", t.createdAt.toDate().toLocaleString("fr-FR", hcTime));
 
-        if (snap.empty) {
-          depositList.innerHTML = `<div class="empty-state">Aucune recharge en attente.</div>`;
-          withdrawList.innerHTML = `<div class="empty-state">Aucun retrait en attente.</div>`;
+      if (!isDeposit) {
+        row("Bénéficiaire", beneficiary);
+        row("Frais", (t.feeApplied ?? "?") + " HTG");
+        row("À envoyer", Number.isFinite(net) ? formatMoney(net) + " HTG" : "Montant invalide");
+      } else {
+        const preview = hcEl("div");
+        const show = url => {
+          const safe = hcReceiptURL(url);
+          if (!safe) throw new Error("Lien de reçu invalide.");
+          const image = hcEl("img", "receipt");
+          image.referrerPolicy = "no-referrer";
+          image.alt = "Reçu de transfert";
+          image.src = safe;
+          preview.replaceChildren(image);
+        };
+
+        if (t.receiptStorage === "private-v1") {
+          const view = hcEl("button", "btn", "Voir le reçu");
+          view.type = "button";
+          view.onclick = async () => {
+            view.disabled = true;
+            try { show((await hcAdmin("/api/admin/manual-receipt/" + encodeURIComponent(id))).url); }
+            catch (e) { alert(e.message); }
+            finally { view.disabled = false; }
+          };
+          card.append(view, preview);
+        } else if (hcReceiptURL(t.receiptUrl)) {
+          show(t.receiptUrl);
+          card.append(preview);
+        }
+      }
+
+      if (legacy) {
+        const review = hcEl("button", "btn", "Rapprocher l’ancienne demande");
+        review.type = "button";
+        review.onclick = async () => {
+          const reason = prompt(
+            "Après vérification du mouvement chez l’opérateur et du journal du portefeuille, décris ce que tu as vérifié (15 caractères minimum)."
+          )?.trim();
+          if (!reason || reason.length < 15) return;
+
+          review.disabled = true;
+          try { await hcAdmin("/api/admin/review-legacy-manual-transfer", { transferId: id, reason }); }
+          catch (e) { alert(e.message); }
+          finally { review.disabled = false; }
+        };
+        card.append(review);
+      } else {
+        const proof = hcEl("input"), reason = hcEl("input");
+        proof.type = reason.type = "text";
+        proof.maxLength = 80;
+        reason.maxLength = 1000;
+        proof.placeholder = "Référence réelle du mouvement (si validé)";
+        reason.placeholder = "Motif (si refusé)";
+
+        const actions = hcEl("div", "action-area"), group = hcEl("div", "btn-group");
+        const yes = hcEl("button", "btn btn-approve", isDeposit ? "Valider l’encaissement" : "Marquer payé");
+        const no = hcEl("button", "btn btn-reject", "Refuser");
+        yes.type = no.type = "button";
+        yes.disabled = !canApprove || hcProcessing.has(id);
+        no.disabled = hcProcessing.has(id);
+
+        async function decide(status) {
+          if (hcProcessing.has(id)) return;
+          const approved = status === "approved";
+          const operatorRef = proof.value.trim(), note = reason.value.trim();
+
+          if (approved && (!canApprove || !/^[A-Za-z0-9][A-Za-z0-9._:/-]{3,79}$/.test(operatorRef))) {
+            alert("Indique la référence du mouvement relevée chez l’opérateur.");
+            return;
+          }
+          if (!approved && note.length < 5) { alert("Indique un motif de refus."); return; }
+
+          const message = !approved ? "Confirmer le refus ?" : isDeposit
+            ? "As-tu vérifié l’encaissement de " + formatMoney(amount) + " HTG dans " + label + " ?"
+            : "As-tu déjà envoyé " + formatMoney(net) + " HTG via " + label + " au " + tel + " (" + beneficiary + ") ?";
+          if (!confirm(message)) return;
+
+          hcProcessing.add(id);
+          yes.disabled = no.disabled = true;
+          let done = false;
+          try {
+            await hcAdmin("/api/admin/process-manual-transfer", {
+              transferId: id, status, method, reason: note, operatorRef
+            });
+            done = true;
+          } catch (e) {
+            alert(e.message || "Vérifie le statut avant de réessayer.");
+          } finally {
+            hcProcessing.delete(id);
+            if (!done) { yes.disabled = !canApprove; no.disabled = false; }
+          }
         }
 
-        snap.forEach(d => {
-          const t = d.data();
-          const transferId = d.id;
-          const isDeposit = t.type === 'deposit';
-          const dateStr = t.createdAt ? t.createdAt.toDate().toLocaleString('fr-FR') : "Date inconnue";
-          
-          // Mise à jour des compteurs
-          if (isDeposit) {
-            depCount++;
-            depVol += Number(t.amount || 0);
-          } else {
-            witCount++;
-            witVol += Number(t.amountRequested || t.amount || 0);
-          }
-          
-          const card = document.createElement("div");
-          card.className = `transfer-card ${isDeposit ? 'deposit-card' : 'withdraw-card'}`;
-          
-          let cardHTML = `
-            <div class="card-header">
-              <span class="badge ${isDeposit ? 'badge-deposit' : 'badge-withdraw'}">
-                ${t.method.toUpperCase()}
-              </span>
-              <span class="amount">${formatMoney(t.amountRequested || t.amount)} HTG</span>
-            </div>
-            
-            <div class="info-row">
-              <strong>Utilisateur :</strong> 
-              <a href="profil.html?uid=${t.userId}" class="user-link" id="userlink-${transferId}">
-                Chargement... 🔗
-              </a>
-            </div>
-            <div class="info-row" style="font-size:11px; color:#666;">UID: ${t.userId}</div>
-            <div class="info-row"><strong>Tél :</strong> ${t.phone}</div>
-          `;
+        yes.onclick = () => void decide("approved");
+        no.onclick = () => void decide("rejected");
+        group.append(yes, no);
+        actions.append(proof, reason, group);
+        card.append(actions);
+      }
 
-          if (!isDeposit) {
-            cardHTML += `
-              <div class="info-row"><strong>Bénéficiaire :</strong> ${t.accountName}</div>
-              <div class="info-row"><strong>Frais HaytiClips :</strong> ${t.feeApplied} HTG</div>
-              <div class="info-row"><strong>À ENVOYER :</strong> <span class="highlight-text">${formatMoney(t.amountToReceive)} HTG</span></div>
-            `;
-          }
-
-          cardHTML += `<div class="info-row"><strong>Date :</strong> ${dateStr}</div>`;
-
-          if (isDeposit && t.receiptUrl) {
-            cardHTML += `<img src="${t.receiptUrl}" class="receipt" onclick="window.open('${t.receiptUrl}', '_blank')" alt="Reçu">`;
-          }
-
-          cardHTML += `
-            <div class="action-area">
-              <input type="text" id="reason-${transferId}" placeholder="Motif (obligatoire si refusé)">
-              <div class="btn-group">
-                <button class="btn btn-approve" id="btn-approve-${transferId}" onclick="processTransfer('${transferId}', 'approved')">✓ Accepter</button>
-                <button class="btn btn-reject" id="btn-reject-${transferId}" onclick="processTransfer('${transferId}', 'rejected')">✕ Refuser</button>
-              </div>
-            </div>
-          `;
-
-          card.innerHTML = cardHTML;
-          
-          // Ajouter à la bonne colonne
-          if (isDeposit) {
-            depositList.appendChild(card);
-          } else {
-            withdrawList.appendChild(card);
-          }
-
-          // 🔄 Récupération asynchrone du nom d'utilisateur
-          getDoc(doc(db, "users", t.userId)).then(uSnap => {
-            const linkEl = document.getElementById(`userlink-${transferId}`);
-            if (linkEl && uSnap.exists()) {
-              linkEl.innerHTML = `${uSnap.data().username} 🔗`;
-            } else if (linkEl) {
-              linkEl.innerHTML = `Utilisateur inconnu 🔗`;
-            }
-          }).catch(() => {});
-
-        });
-
-        // Afficher Empty state si une des colonnes est vide malgré des données dans l'autre
-        if (depCount === 0) depositList.innerHTML = `<div class="empty-state">Aucune recharge en attente.</div>`;
-        if (witCount === 0) withdrawList.innerHTML = `<div class="empty-state">Aucun retrait en attente.</div>`;
-
-        // MAJ Stats Attente
-        document.getElementById("statPendingDepCount").textContent = formatMoney(depCount);
-        document.getElementById("statPendingDepVol").textContent = formatMoney(depVol) + " HTG";
-        
-        document.getElementById("statPendingWitCount").textContent = formatMoney(witCount);
-        document.getElementById("statPendingWitVol").textContent = formatMoney(witVol) + " HTG";
-      });
+      (isDeposit ? dep : wit).append(card);
     }
 
-    // ⚡ 3. ACTION (VALIDER/REFUSER)
-    window.processTransfer = async (transferId, status) => {
-      const reasonInput = document.getElementById(`reason-${transferId}`);
-      const reason = reasonInput.value.trim();
-
-      if (status === 'rejected' && !reason) {
-        alert("Merci d'indiquer un motif pour le refus (le client le verra).");
-        reasonInput.focus();
-        return;
-      }
-
-      if (!confirm(status === 'approved' ? "Confirmer la VALIDATION définitive ?" : "Confirmer le REFUS définitif ?")) return;
-
-      const btnApprove = document.getElementById(`btn-approve-${transferId}`);
-      const btnReject = document.getElementById(`btn-reject-${transferId}`);
-      btnApprove.disabled = true;
-      btnReject.disabled = true;
-
-      try {
-        const token = await auth.currentUser.getIdToken(true);
-        const res = await fetch(`${API_BASE}/api/admin/process-manual-transfer`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-          body: JSON.stringify({ transferId, status, reason })
-        });
-
-        const result = await res.json();
-        if (!result.success) alert(result.error || "Erreur serveur.");
-      } catch (err) {
-        alert("Erreur de connexion avec le serveur.");
-      } finally {
-        // En cas d'erreur on réactive les boutons, sinon la carte disparaîtra d'elle-même (grâce au snapshot)
-        if (btnApprove) btnApprove.disabled = false;
-        if (btnReject) btnReject.disabled = false;
-      }
-    };
+    if (!depCount) dep.append(hcEl("div", "empty-state", "Aucune recharge en attente."));
+    if (!witCount) wit.append(hcEl("div", "empty-state", "Aucun retrait en attente."));
+    document.getElementById("statPendingDepCount").textContent = depCount;
+    document.getElementById("statPendingDepVol").textContent = formatMoney(depVol) + " HTG";
+    document.getElementById("statPendingWitCount").textContent = witCount;
+    document.getElementById("statPendingWitVol").textContent = formatMoney(witVol) + " HTG";
+  }, () => {
+    for (const id of ["depositList", "withdrawList"]) {
+      document.getElementById(id).replaceChildren(hcEl("div", "empty-state", "Chargement impossible."));
+    }
+  });
+}
   </script>
 </body>
 </html>

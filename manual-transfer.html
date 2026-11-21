@@ -151,7 +151,7 @@
   <div class="section">
     
     <div class="form-container active" id="depositForm">
-      <div class="info-box">
+      <div class="info-box" id="depositInstructions" hidden>
         <strong>Instructions :</strong><br>
         1. Envoyez le montant souhaité sur notre numéro.
         <li> MonCash: <strong>+509 38 03 79 16</strong></li>
@@ -176,9 +176,9 @@
       <input type="text" id="depositPhone" placeholder="Le numéro avec lequel vous avez payé">
 
       <label>Preuve de transfert (Capture d'écran) - <b>Obligatoire</b></label>
-      <input type="file" id="depositReceipt" accept="image/png, image/jpeg, image/jpg">
+      <input type="file" id="depositReceipt" accept="image/png, image/jpeg, image/webp">
 
-      <button class="submit-btn" id="btnSubmitDeposit">Soumettre la Recharge</button>
+      <button class="submit-btn" id="btnSubmitDeposit" disabled>Soumettre la Recharge</button>
     </div>
 
     <div class="form-container" id="withdrawForm">
@@ -188,7 +188,7 @@
         <br><br>
         <strong>Règles & Horaires (Retraits) :</strong>
         <ul style="margin-top: 5px; margin-left: 15px; font-size: 13px; opacity: 0.9;">
-          <li style="margin-bottom: 4px;"><strong>Limite :</strong> Maximum 2 retraits par jour</li>
+          <li style="margin-bottom: 4px;"><strong>Limite :</strong> Maximum 2 demandes de retraits par jour</li>
           <li style="margin-bottom: 4px;"><strong>MonCash :</strong> 4h AM - 9h PM</li>
         </ul>
       </div>
@@ -231,7 +231,7 @@
       <label>Code PIN de sécurité (6 chiffres)</label>
       <input type="password" id="withdrawPin" placeholder="******" maxlength="6" inputmode="numeric">
 
-      <button class="submit-btn" id="btnSubmitWithdraw">Demander le Retrait</button>
+      <button class="submit-btn" id="btnSubmitWithdraw" disabled>Demander le Retrait</button>
     </div>
 
   </div>
@@ -277,102 +277,54 @@
       depositForm.classList.remove("active");
     };
 
-    // --- FONCTION DE VÉRIFICATION DU NOMBRE DE RETRAITS AUJOURD'HUI ---
-    async function getTodayWithdrawalsCount(uid) {
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
+   onAuthStateChanged(auth, async user => {
+  const btnDeposit = document.getElementById("btnSubmitDeposit");
+  const btnWithdraw = document.getElementById("btnSubmitWithdraw");
+  const notice = document.getElementById("withdrawLimitNotice");
+  const instructions = document.getElementById("depositInstructions");
+  btnDeposit.disabled = btnWithdraw.disabled = true;
+  instructions.hidden = true;
 
-      try {
-        const q = query(
-          collection(db, "walletTransactions"),
-          where("userId", "==", uid),
-          where("type", "in", ["withdraw", "withdrawal", "retrait"]),
-          where("createdAt", ">=", Timestamp.fromDate(startOfDay))
-        );
-        const snap = await getDocs(q);
-        return snap.size;
-      } catch (error) {
-        console.warn("Fallback de vérification de la limite quotidienne:", error);
-        // Fallback côté client si un index composé Firestore manque
-        try {
-          const qSimple = query(
-            collection(db, "walletTransactions"),
-            where("userId", "==", uid),
-            limit(50)
-          );
-          const snapSimple = await getDocs(qSimple);
-          let count = 0;
-          snapSimple.forEach(d => {
-            const tx = d.data();
-            if (["withdraw", "withdrawal", "retrait"].includes(tx.type)) {
-              let txDate = null;
-              if (tx.createdAt?.toDate) txDate = tx.createdAt.toDate();
-              else if (tx.createdAt?.seconds) txDate = new Date(tx.createdAt.seconds * 1000);
-              else if (tx.createdAt) txDate = new Date(tx.createdAt);
-              
-              if (txDate && txDate >= startOfDay) {
-                count++;
-              }
-            }
-          });
-          return count;
-        } catch (e) {
-          return 0;
-        }
-      }
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  try {
+    const res = await fetch(API_BASE + "/api/tranzak/wallet", {
+      cache: "no-store",
+      headers: { Authorization: "Bearer " + await user.getIdToken() }
+    });
+    if (!res.ok) throw new Error();
+
+    const cfg = await res.json();
+    const network = cfg.manualNetwork;
+    if (!["moncash", "natcash"].includes(network)) throw new Error();
+    const label = network === "natcash" ? "NatCash" : "MonCash";
+
+    for (const id of ["depositMethod", "withdrawMethod"]) {
+      document.getElementById(id).replaceChildren(new Option(label, network));
     }
 
-    onAuthStateChanged(auth, async user => {
-      if(!user) {
-        window.location.href = "login.html";
-      } else {
-        try {
-          // 1. Vérification du statut du compte (Gelé)
-          const userRef = doc(db, "users", user.uid);
-          const userSnap = await getDoc(userRef);
-          
-          if (userSnap.exists() && userSnap.data().walletLocked === true) {
-            const btnDeposit = document.getElementById("btnSubmitDeposit");
-            btnDeposit.disabled = true;
-            btnDeposit.textContent = "Opération impossible (Compte Gelé)";
-            btnDeposit.style.background = "#555";
-            btnDeposit.style.cursor = "not-allowed";
+    if (network === "natcash" && cfg.manualNatCash) {
+      instructions.textContent = "Envoie le montant par NatCash au " + cfg.manualNatCash +
+        ". Vérifie le destinataire dans NatCash et joins le reçu.";
+    }
 
-            const btnWithdraw = document.getElementById("btnSubmitWithdraw");
-            btnWithdraw.disabled = true;
-            btnWithdraw.textContent = "Opération impossible (Compte Gelé)";
-            btnWithdraw.style.background = "#555";
-            btnWithdraw.style.cursor = "not-allowed";
-            return;
-          }
-
-          // 2. Vérification de la limite de 2 retraits par jour
-          const withdrawalsToday = await getTodayWithdrawalsCount(user.uid);
-          const limitNotice = document.getElementById("withdrawLimitNotice");
-          const btnWithdraw = document.getElementById("btnSubmitWithdraw");
-
-          if (withdrawalsToday >= 2) {
-            btnWithdraw.disabled = true;
-            btnWithdraw.textContent = "Limite quotidienne atteinte (2/2)";
-            btnWithdraw.style.background = "#555";
-            btnWithdraw.style.cursor = "not-allowed";
-            if (limitNotice) {
-              limitNotice.style.color = "#ff4d4f";
-              limitNotice.textContent = "🚫 Vous avez atteint la limite maximale de 2 retraits par jour.";
-            }
-          } else {
-            if (limitNotice) {
-              limitNotice.style.color = "#2ecc71";
-              limitNotice.textContent = `ℹ️ Retraits effectués aujourd'hui : ${withdrawalsToday} / 2`;
-            }
-          }
-
-        } catch (error) {
-          console.error("Erreur lors de la vérification du statut:", error);
-        }
-      }
-    });
-
+    document.getElementById("withdrawAccountName").previousElementSibling.textContent =
+      "Nom sur le compte (" + label + ")";
+    btnDeposit.disabled = !cfg.manualDepositAllowed;
+    instructions.hidden = !cfg.manualDepositAllowed;
+    btnWithdraw.disabled = !cfg.manualWithdrawAllowed || cfg.manualWithdrawRemaining === 0;
+    notice.textContent = !cfg.manualWithdrawAllowed ? "Retrait indisponible pour ce compte."
+      : "Demandes de retrait restantes aujourd’hui : " + cfg.manualWithdrawRemaining + " / 2.";
+    if (!cfg.manualDepositAllowed) btnDeposit.textContent = "Recharge manuelle indisponible";
+  } catch {
+    notice.textContent = "Impossible de vérifier le compte. Actualise la page.";
+    btnDeposit.textContent = "Vérification du compte indisponible";
+  }
+});
+   
     // --- LOGIQUE DE CALCUL DES FRAIS ---
     function calculateFee(amount) {
       if (amount < 150) return 0;
@@ -418,9 +370,13 @@
       const phone = document.getElementById("depositPhone").value;
       const receiptFile = document.getElementById("depositReceipt").files[0];
 
-      if(!amount || amount < 100) return alert("Le montant minimum est de 100 HTG.");
+      // Recharge
+if (!Number.isSafeInteger(Number(amount)) || Number(amount) < 100) {
+  return alert("Indique un montant entier d’au moins 100 HTG.");
+}
       if(!phone) return alert("Veuillez indiquer le numéro de l'expéditeur.");
       if(!receiptFile) return alert("La capture d'écran est obligatoire.");
+      if (receiptFile.size > 5 * 1024 * 1024) return alert("Le reçu ne doit pas dépasser 5 Mo.");
 
       btn.disabled = true;
       btn.textContent = "Envoi en cours...";
@@ -469,18 +425,15 @@
       const accountName = document.getElementById("withdrawAccountName").value;
       const pin = document.getElementById("withdrawPin").value.trim();
 
-      if(!amount || amount < 150) return alert("Le montant minimum de retrait est de 150 HTG.");
+// Retrait
+if (!Number.isSafeInteger(Number(amount)) || Number(amount) < 150) {
+  return alert("Indique un montant entier d’au moins 150 HTG.");
+}
       if(!phone) return alert("Veuillez indiquer le numéro de réception.");
       if(!accountName.trim()) return alert("Veuillez indiquer le nom exact sur le compte.");
       if(!pin || pin.length !== 6) return alert("Veuillez entrer votre code PIN à 6 chiffres.");
 
-      // Double vérification de la limite de 2 retraits avant envoi
-      const withdrawalsToday = await getTodayWithdrawalsCount(auth.currentUser.uid);
-      if (withdrawalsToday >= 2) {
-        alert("Vous avez déjà effectué 2 retraits aujourd'hui. Vous ne pouvez plus faire de retrait avant demain.");
-        return;
-      }
-
+      
       const parsedAmount = parseFloat(amount);
       const fee = calculateFee(parsedAmount);
       const finalToReceive = parsedAmount - fee;
